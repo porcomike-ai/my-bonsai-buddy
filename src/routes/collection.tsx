@@ -49,7 +49,8 @@ function CollectionPage() {
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Collection</p>
           <h1 className="mt-1 font-display text-4xl font-semibold">Mes bonsaïs</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {bonsais.length} arbre{bonsais.length > 1 ? "s" : ""} dans votre carnet
+            {actifsCount} arbre{actifsCount > 1 ? "s" : ""} dans votre collection
+            {bonsais.length > actifsCount && ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
           </p>
         </div>
         <Link
