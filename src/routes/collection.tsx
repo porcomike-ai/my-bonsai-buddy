@@ -22,10 +22,14 @@ function CollectionPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const [q, setQ] = useState("");
   const [styleFilter, setStyleFilter] = useState<string>("");
+  const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous">("actifs");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return bonsais.filter((b) => {
+      const dans = b.dansCollection ?? true;
+      if (statutFilter === "actifs" && !dans) return false;
+      if (statutFilter === "sortis" && dans) return false;
       if (styleFilter && b.style !== styleFilter) return false;
       if (!needle) return true;
       return (
@@ -34,7 +38,9 @@ function CollectionPage() {
         (b.origine ?? "").toLowerCase().includes(needle)
       );
     });
-  }, [bonsais, q, styleFilter]);
+  }, [bonsais, q, styleFilter, statutFilter]);
+
+  const actifsCount = bonsais.filter((b) => (b.dansCollection ?? true)).length;
 
   return (
     <AppShell>
