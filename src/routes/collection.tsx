@@ -22,10 +22,14 @@ function CollectionPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const [q, setQ] = useState("");
   const [styleFilter, setStyleFilter] = useState<string>("");
+  const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous">("actifs");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return bonsais.filter((b) => {
+      const dans = b.dansCollection ?? true;
+      if (statutFilter === "actifs" && !dans) return false;
+      if (statutFilter === "sortis" && dans) return false;
       if (styleFilter && b.style !== styleFilter) return false;
       if (!needle) return true;
       return (
@@ -34,7 +38,9 @@ function CollectionPage() {
         (b.origine ?? "").toLowerCase().includes(needle)
       );
     });
-  }, [bonsais, q, styleFilter]);
+  }, [bonsais, q, styleFilter, statutFilter]);
+
+  const actifsCount = bonsais.filter((b) => (b.dansCollection ?? true)).length;
 
   return (
     <AppShell>
@@ -43,7 +49,8 @@ function CollectionPage() {
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Collection</p>
           <h1 className="mt-1 font-display text-4xl font-semibold">Mes bonsaïs</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {bonsais.length} arbre{bonsais.length > 1 ? "s" : ""} dans votre carnet
+            {actifsCount} arbre{actifsCount > 1 ? "s" : ""} dans votre collection
+            {bonsais.length > actifsCount && ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
           </p>
         </div>
         <Link
@@ -76,6 +83,15 @@ function CollectionPage() {
             </option>
           ))}
         </select>
+        <select
+          value={statutFilter}
+          onChange={(e) => setStatutFilter(e.target.value as "actifs" | "sortis" | "tous")}
+          className="h-11 rounded-full border border-input bg-card px-4 text-sm"
+        >
+          <option value="actifs">Dans la collection</option>
+          <option value="sortis">Sortis de la collection</option>
+          <option value="tous">Tous</option>
+        </select>
       </div>
 
       {filtered.length === 0 ? (
@@ -107,8 +123,13 @@ function CollectionPage() {
                 params={{ id: b.id }}
                 className="group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg"
               >
-                <div className="aspect-[4/5] w-full overflow-hidden">
-                  <BonsaiPhoto photoId={b.photoPrincipale} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                <div className="relative aspect-[4/5] w-full overflow-hidden">
+                  <BonsaiPhoto photoId={b.photoPrincipale} className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${(b.dansCollection ?? true) ? "" : "grayscale"}`} />
+                  {!(b.dansCollection ?? true) && (
+                    <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
+                      Sorti
+                    </span>
+                  )}
                 </div>
                 <div className="space-y-1 p-4">
                   <div className="flex items-baseline justify-between gap-2">

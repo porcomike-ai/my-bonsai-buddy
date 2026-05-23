@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ImagePlus } from "lucide-react";
 
 const schema = z.object({
@@ -28,6 +29,7 @@ const schema = z.object({
   origine: z.string().optional(),
   poterieId: z.string().optional(),
   notes: z.string().optional(),
+  dansCollection: z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -50,6 +52,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       origine: initial?.origine ?? "",
       poterieId: initial?.poterieId ?? "",
       notes: initial?.notes ?? "",
+      dansCollection: initial?.dansCollection ?? true,
     },
   });
 
@@ -86,6 +89,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       poterieId: values.poterieId || undefined,
       notes: values.notes?.trim() || undefined,
       photoPrincipale: photoId,
+      dansCollection: values.dansCollection,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
 
@@ -160,6 +164,24 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
         <Field label="Notes">
           <Textarea {...form.register("notes")} rows={4} placeholder="Histoire, observations, projets de mise en forme…" />
         </Field>
+
+        <Controller
+          control={form.control}
+          name="dansCollection"
+          render={({ field }) => (
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
+              <div>
+                <p className="text-sm font-medium">Dans la collection</p>
+                <p className="text-xs text-muted-foreground">
+                  {field.value
+                    ? "Cet arbre fait partie de votre collection active."
+                    : "Cet arbre est sorti de la collection (vendu, donné, perdu…)."}
+                </p>
+              </div>
+              <Switch checked={field.value} onCheckedChange={field.onChange} />
+            </div>
+          )}
+        />
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => navigate({ to: "/collection" })}>

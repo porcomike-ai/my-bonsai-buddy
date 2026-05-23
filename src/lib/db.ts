@@ -23,6 +23,7 @@ export interface Bonsai {
   photoPrincipale?: string; // photo id
   poterieId?: string;
   notes?: string;
+  dansCollection?: boolean; // true = encore dans la collection, false = sorti (vendu, donné, perdu…)
   createdAt: string;
 }
 

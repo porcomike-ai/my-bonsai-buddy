@@ -99,7 +99,14 @@ function BonsaiDetail() {
 
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-accent">{styleLabel(b.style)}</p>
-          <h1 className="mt-1 font-display text-5xl font-semibold leading-tight">{b.nom}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-5xl font-semibold leading-tight">{b.nom}</h1>
+            {!(b.dansCollection ?? true) && (
+              <span className="rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Sorti de la collection
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-lg italic text-muted-foreground">{b.espece}</p>
 
           <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
