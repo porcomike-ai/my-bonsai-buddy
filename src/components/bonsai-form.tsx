@@ -28,6 +28,7 @@ const schema = z.object({
   origine: z.string().optional(),
   poterieId: z.string().optional(),
   notes: z.string().optional(),
+  dansCollection: z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
 
