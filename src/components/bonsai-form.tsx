@@ -22,8 +22,8 @@ const schema = z.object({
   style: z.enum([
     "chokkan", "moyogi", "shakan", "kengai", "han-kengai", "bunjin", "yose-ue", "ishitsuki", "autre",
   ]),
-  ageEstime: z.coerce.number().int().min(0).max(2000).optional().or(z.literal("")),
-  hauteurCm: z.coerce.number().min(0).max(500).optional().or(z.literal("")),
+  ageEstime: z.string().optional(),
+  hauteurCm: z.string().optional(),
   dateAcquisition: z.string().optional(),
   origine: z.string().optional(),
   poterieId: z.string().optional(),
