@@ -9,19 +9,43 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PoteriesRouteImport } from './routes/poteries'
+import { Route as JournalRouteImport } from './routes/journal'
 import { Route as CollectionRouteImport } from './routes/collection'
+import { Route as CalendrierRouteImport } from './routes/calendrier'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PoterieIdRouteImport } from './routes/poterie.$id'
 import { Route as BonsaiNouveauRouteImport } from './routes/bonsai.nouveau'
 import { Route as BonsaiIdRouteImport } from './routes/bonsai.$id'
 
+const PoteriesRoute = PoteriesRouteImport.update({
+  id: '/poteries',
+  path: '/poteries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JournalRoute = JournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionRoute = CollectionRouteImport.update({
   id: '/collection',
   path: '/collection',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalendrierRoute = CalendrierRouteImport.update({
+  id: '/calendrier',
+  path: '/calendrier',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoterieIdRoute = PoterieIdRouteImport.update({
+  id: '/poterie/$id',
+  path: '/poterie/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BonsaiNouveauRoute = BonsaiNouveauRouteImport.update({
@@ -37,40 +61,95 @@ const BonsaiIdRoute = BonsaiIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calendrier': typeof CalendrierRoute
   '/collection': typeof CollectionRoute
+  '/journal': typeof JournalRoute
+  '/poteries': typeof PoteriesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
+  '/poterie/$id': typeof PoterieIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calendrier': typeof CalendrierRoute
   '/collection': typeof CollectionRoute
+  '/journal': typeof JournalRoute
+  '/poteries': typeof PoteriesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
+  '/poterie/$id': typeof PoterieIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calendrier': typeof CalendrierRoute
   '/collection': typeof CollectionRoute
+  '/journal': typeof JournalRoute
+  '/poteries': typeof PoteriesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
+  '/poterie/$id': typeof PoterieIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/collection' | '/bonsai/$id' | '/bonsai/nouveau'
+  fullPaths:
+    | '/'
+    | '/calendrier'
+    | '/collection'
+    | '/journal'
+    | '/poteries'
+    | '/bonsai/$id'
+    | '/bonsai/nouveau'
+    | '/poterie/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/collection' | '/bonsai/$id' | '/bonsai/nouveau'
-  id: '__root__' | '/' | '/collection' | '/bonsai/$id' | '/bonsai/nouveau'
+  to:
+    | '/'
+    | '/calendrier'
+    | '/collection'
+    | '/journal'
+    | '/poteries'
+    | '/bonsai/$id'
+    | '/bonsai/nouveau'
+    | '/poterie/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/calendrier'
+    | '/collection'
+    | '/journal'
+    | '/poteries'
+    | '/bonsai/$id'
+    | '/bonsai/nouveau'
+    | '/poterie/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalendrierRoute: typeof CalendrierRoute
   CollectionRoute: typeof CollectionRoute
+  JournalRoute: typeof JournalRoute
+  PoteriesRoute: typeof PoteriesRoute
   BonsaiIdRoute: typeof BonsaiIdRoute
   BonsaiNouveauRoute: typeof BonsaiNouveauRoute
+  PoterieIdRoute: typeof PoterieIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/poteries': {
+      id: '/poteries'
+      path: '/poteries'
+      fullPath: '/poteries'
+      preLoaderRoute: typeof PoteriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journal': {
+      id: '/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collection': {
       id: '/collection'
       path: '/collection'
@@ -78,11 +157,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calendrier': {
+      id: '/calendrier'
+      path: '/calendrier'
+      fullPath: '/calendrier'
+      preLoaderRoute: typeof CalendrierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/poterie/$id': {
+      id: '/poterie/$id'
+      path: '/poterie/$id'
+      fullPath: '/poterie/$id'
+      preLoaderRoute: typeof PoterieIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bonsai/nouveau': {
@@ -104,9 +197,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalendrierRoute: CalendrierRoute,
   CollectionRoute: CollectionRoute,
+  JournalRoute: JournalRoute,
+  PoteriesRoute: PoteriesRoute,
   BonsaiIdRoute: BonsaiIdRoute,
   BonsaiNouveauRoute: BonsaiNouveauRoute,
+  PoterieIdRoute: PoterieIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
