@@ -83,6 +83,15 @@ function CollectionPage() {
             </option>
           ))}
         </select>
+        <select
+          value={statutFilter}
+          onChange={(e) => setStatutFilter(e.target.value as "actifs" | "sortis" | "tous")}
+          className="h-11 rounded-full border border-input bg-card px-4 text-sm"
+        >
+          <option value="actifs">Dans la collection</option>
+          <option value="sortis">Sortis de la collection</option>
+          <option value="tous">Tous</option>
+        </select>
       </div>
 
       {filtered.length === 0 ? (
