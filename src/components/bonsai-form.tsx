@@ -165,6 +165,24 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
           <Textarea {...form.register("notes")} rows={4} placeholder="Histoire, observations, projets de mise en forme…" />
         </Field>
 
+        <Controller
+          control={form.control}
+          name="dansCollection"
+          render={({ field }) => (
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
+              <div>
+                <p className="text-sm font-medium">Dans la collection</p>
+                <p className="text-xs text-muted-foreground">
+                  {field.value
+                    ? "Cet arbre fait partie de votre collection active."
+                    : "Cet arbre est sorti de la collection (vendu, donné, perdu…)."}
+                </p>
+              </div>
+              <Switch checked={field.value} onCheckedChange={field.onChange} />
+            </div>
+          )}
+        />
+
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => navigate({ to: "/collection" })}>
             Annuler
