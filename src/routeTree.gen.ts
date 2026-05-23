@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BonsaiNouveauRouteImport } from './routes/bonsai.nouveau'
+import { Route as BonsaiIdRouteImport } from './routes/bonsai.$id'
 
 const CollectionRoute = CollectionRouteImport.update({
   id: '/collection',
@@ -28,34 +29,43 @@ const BonsaiNouveauRoute = BonsaiNouveauRouteImport.update({
   path: '/bonsai/nouveau',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BonsaiIdRoute = BonsaiIdRouteImport.update({
+  id: '/bonsai/$id',
+  path: '/bonsai/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
+  '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
+  '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
+  '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/collection' | '/bonsai/nouveau'
+  fullPaths: '/' | '/collection' | '/bonsai/$id' | '/bonsai/nouveau'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/collection' | '/bonsai/nouveau'
-  id: '__root__' | '/' | '/collection' | '/bonsai/nouveau'
+  to: '/' | '/collection' | '/bonsai/$id' | '/bonsai/nouveau'
+  id: '__root__' | '/' | '/collection' | '/bonsai/$id' | '/bonsai/nouveau'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CollectionRoute: typeof CollectionRoute
+  BonsaiIdRoute: typeof BonsaiIdRoute
   BonsaiNouveauRoute: typeof BonsaiNouveauRoute
 }
 
@@ -82,14 +92,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BonsaiNouveauRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bonsai/$id': {
+      id: '/bonsai/$id'
+      path: '/bonsai/$id'
+      fullPath: '/bonsai/$id'
+      preLoaderRoute: typeof BonsaiIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CollectionRoute: CollectionRoute,
+  BonsaiIdRoute: BonsaiIdRoute,
   BonsaiNouveauRoute: BonsaiNouveauRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
