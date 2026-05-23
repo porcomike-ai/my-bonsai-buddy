@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BonsaiNouveauRouteImport } from './routes/bonsai.nouveau'
 
 const CollectionRoute = CollectionRouteImport.update({
   id: '/collection',
@@ -22,31 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BonsaiNouveauRoute = BonsaiNouveauRouteImport.update({
+  id: '/bonsai/nouveau',
+  path: '/bonsai/nouveau',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
+  '/bonsai/nouveau': typeof BonsaiNouveauRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
+  '/bonsai/nouveau': typeof BonsaiNouveauRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
+  '/bonsai/nouveau': typeof BonsaiNouveauRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/collection'
+  fullPaths: '/' | '/collection' | '/bonsai/nouveau'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/collection'
-  id: '__root__' | '/' | '/collection'
+  to: '/' | '/collection' | '/bonsai/nouveau'
+  id: '__root__' | '/' | '/collection' | '/bonsai/nouveau'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CollectionRoute: typeof CollectionRoute
+  BonsaiNouveauRoute: typeof BonsaiNouveauRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bonsai/nouveau': {
+      id: '/bonsai/nouveau'
+      path: '/bonsai/nouveau'
+      fullPath: '/bonsai/nouveau'
+      preLoaderRoute: typeof BonsaiNouveauRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CollectionRoute: CollectionRoute,
+  BonsaiNouveauRoute: BonsaiNouveauRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
