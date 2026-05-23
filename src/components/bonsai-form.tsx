@@ -51,6 +51,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       origine: initial?.origine ?? "",
       poterieId: initial?.poterieId ?? "",
       notes: initial?.notes ?? "",
+      dansCollection: initial?.dansCollection ?? true,
     },
   });
 
