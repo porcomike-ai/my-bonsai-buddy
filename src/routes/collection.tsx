@@ -123,8 +123,13 @@ function CollectionPage() {
                 params={{ id: b.id }}
                 className="group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg"
               >
-                <div className="aspect-[4/5] w-full overflow-hidden">
-                  <BonsaiPhoto photoId={b.photoPrincipale} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                <div className="relative aspect-[4/5] w-full overflow-hidden">
+                  <BonsaiPhoto photoId={b.photoPrincipale} className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${(b.dansCollection ?? true) ? "" : "grayscale"}`} />
+                  {!(b.dansCollection ?? true) && (
+                    <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
+                      Sorti
+                    </span>
+                  )}
                 </div>
                 <div className="space-y-1 p-4">
                   <div className="flex items-baseline justify-between gap-2">
