@@ -88,6 +88,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       poterieId: values.poterieId || undefined,
       notes: values.notes?.trim() || undefined,
       photoPrincipale: photoId,
+      dansCollection: values.dansCollection,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
 
