@@ -96,6 +96,19 @@ function BonsaiDetail() {
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
+          <Button
+            className="mt-2 w-full"
+            onClick={async () => {
+              try {
+                const r = await shareBonsaiPdf(id, b.nom);
+                toast.success(r === "shared" ? "Fiche partagée" : "Fiche téléchargée");
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            }}
+          >
+            <Share2 className="mr-1.5 h-4 w-4" /> Partager la fiche
+          </Button>
         </div>
 
         <div>
