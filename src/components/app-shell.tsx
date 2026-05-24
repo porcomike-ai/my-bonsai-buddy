@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container } from "lucide-react";
+import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -8,6 +8,7 @@ const NAV = [
   { to: "/poteries", label: "Poteries", icon: Container },
   { to: "/calendrier", label: "Calendrier", icon: Calendar },
   { to: "/journal", label: "Journal", icon: BookOpen },
+  { to: "/parametres", label: "Paramètres", icon: Settings },
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {

@@ -18,8 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft, Pencil, Trash2, ImagePlus, Plus, X, Calendar as CalendarIcon, Check } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, ImagePlus, Plus, X, Calendar as CalendarIcon, Check, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { shareBonsaiPdf } from "@/lib/share-pdf";
 
 export const Route = createFileRoute("/bonsai/$id")({
   head: ({ params }) => ({
@@ -95,6 +96,19 @@ function BonsaiDetail() {
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
+          <Button
+            className="mt-2 w-full"
+            onClick={async () => {
+              try {
+                const r = await shareBonsaiPdf(id, b.nom);
+                toast.success(r === "shared" ? "Fiche partagée" : "Fiche téléchargée");
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            }}
+          >
+            <Share2 className="mr-1.5 h-4 w-4" /> Partager la fiche
+          </Button>
         </div>
 
         <div>
