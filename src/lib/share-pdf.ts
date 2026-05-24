@@ -22,14 +22,21 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-export async function generateBonsaiPdf(bonsaiId: string): Promise<Blob> {
+export type PdfPhotosOption = "principale" | "toutes";
+
+export async function generateBonsaiPdf(
+  bonsaiId: string,
+  options: { photos?: PdfPhotosOption } = {},
+): Promise<Blob> {
+  const photosOpt = options.photos ?? "principale";
   const b = await getBonsai(bonsaiId);
   if (!b) throw new Error("Bonsaï introuvable");
-  const [photo, poterie, journal, rappels] = await Promise.all([
+  const [photo, poterie, journal, rappels, allPhotos] = await Promise.all([
     b.photoPrincipale ? getPhoto(b.photoPrincipale) : Promise.resolve(undefined),
     b.poterieId ? getPoterie(b.poterieId) : Promise.resolve(undefined),
     listJournal(bonsaiId),
     listRappels(bonsaiId),
+    photosOpt === "toutes" ? listPhotos(bonsaiId) : Promise.resolve([]),
   ]);
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
