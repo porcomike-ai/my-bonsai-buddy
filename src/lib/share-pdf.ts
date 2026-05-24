@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getBonsai, getPhoto, getPoterie, listJournal, listRappels } from "./db";
+import { getBonsai, getPhoto, getPoterie, listJournal, listPhotos, listRappels } from "./db";
 import { soinLabel, styleLabel } from "./bonsai-meta";
 
 async function blobToDataUrl(blob: Blob): Promise<string> {
@@ -22,14 +22,21 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-export async function generateBonsaiPdf(bonsaiId: string): Promise<Blob> {
+export type PdfPhotosOption = "principale" | "toutes";
+
+export async function generateBonsaiPdf(
+  bonsaiId: string,
+  options: { photos?: PdfPhotosOption } = {},
+): Promise<Blob> {
+  const photosOpt = options.photos ?? "principale";
   const b = await getBonsai(bonsaiId);
   if (!b) throw new Error("Bonsaï introuvable");
-  const [photo, poterie, journal, rappels] = await Promise.all([
+  const [photo, poterie, journal, rappels, allPhotos] = await Promise.all([
     b.photoPrincipale ? getPhoto(b.photoPrincipale) : Promise.resolve(undefined),
     b.poterieId ? getPoterie(b.poterieId) : Promise.resolve(undefined),
     listJournal(bonsaiId),
     listRappels(bonsaiId),
+    photosOpt === "toutes" ? listPhotos(bonsaiId) : Promise.resolve([]),
   ]);
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -149,10 +156,66 @@ export async function generateBonsaiPdf(bonsaiId: string): Promise<Blob> {
     }
   }
 
-  // Pied de page
+  // Pied de page de la première page
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
   doc.text("Bonsaï Studio — carnet de collection", W / 2, 290, { align: "center" });
+
+  // Pages galerie (option « toutes les photos »)
+  if (photosOpt === "toutes" && allPhotos.length > 0) {
+    const H = 297;
+    const sorted = [...allPhotos].sort((a, b) => b.date.localeCompare(a.date));
+    const perPage = 4;
+    const cols = 2;
+    const gap = 6;
+    const availW = W - margin * 2;
+    const cellW = (availW - gap) / cols;
+    const cellH = 110;
+
+    for (let i = 0; i < sorted.length; i += perPage) {
+      doc.addPage();
+      // En-tête galerie
+      doc.setFillColor(135, 168, 120);
+      doc.rect(0, 0, W, 22, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(`Galerie — ${b.nom}`, margin, 14);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(
+        `${Math.floor(i / perPage) + 1} / ${Math.ceil(sorted.length / perPage)}`,
+        W - margin, 14, { align: "right" },
+      );
+      doc.setTextColor(40, 40, 40);
+
+      const slice = sorted.slice(i, i + perPage);
+      for (let k = 0; k < slice.length; k++) {
+        const p = slice[k];
+        const col = k % cols;
+        const row = Math.floor(k / cols);
+        const x = margin + col * (cellW + gap);
+        const yy = 30 + row * (cellH + gap);
+        try {
+          const dataUrl = await blobToDataUrl(p.blob);
+          const img = await loadImage(dataUrl);
+          const imgMaxH = cellH - 10;
+          const ratio = Math.min(cellW / img.width, imgMaxH / img.height);
+          const w = img.width * ratio, h = img.height * ratio;
+          const ix = x + (cellW - w) / 2;
+          doc.addImage(dataUrl, "JPEG", ix, yy, w, h, undefined, "FAST");
+          doc.setFontSize(9);
+          doc.setTextColor(110, 110, 110);
+          const caption = `${format(parseISO(p.date), "d MMM yyyy", { locale: fr })}${p.legende ? " — " + p.legende : ""}`;
+          doc.text(doc.splitTextToSize(caption, cellW), x, yy + h + 5);
+        } catch { /* ignore */ }
+      }
+
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Bonsaï Studio — carnet de collection", W / 2, H - 7, { align: "center" });
+    }
+  }
 
   return doc.output("blob");
 }
@@ -161,8 +224,12 @@ function safeFileName(s: string): string {
   return s.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/^-+|-+$/g, "") || "bonsai";
 }
 
-export async function shareBonsaiPdf(bonsaiId: string, bonsaiName: string): Promise<"shared" | "downloaded"> {
-  const blob = await generateBonsaiPdf(bonsaiId);
+export async function shareBonsaiPdf(
+  bonsaiId: string,
+  bonsaiName: string,
+  options: { photos?: PdfPhotosOption } = {},
+): Promise<"shared" | "downloaded"> {
+  const blob = await generateBonsaiPdf(bonsaiId, options);
   const fileName = `bonsai-${safeFileName(bonsaiName)}.pdf`;
   const file = new File([blob], fileName, { type: "application/pdf" });
 
