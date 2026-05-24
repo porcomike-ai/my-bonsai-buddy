@@ -86,6 +86,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Suivez vos bonsaïs : soins, évolution, poteries.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Bonsaï Studio — Carnet de collection" },
+      { name: "description", content: "Bonsai Buddy is a mobile application for managing your bonsai tree collection." },
+      { property: "og:description", content: "Bonsai Buddy is a mobile application for managing your bonsai tree collection." },
+      { name: "twitter:description", content: "Bonsai Buddy is a mobile application for managing your bonsai tree collection." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e14f580a-9455-463a-91f9-2eba80379bcb/id-preview-889464d9--ed2754e3-1d01-4e23-a32e-b1ebfa380b6b.lovable.app-1779595649277.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e14f580a-9455-463a-91f9-2eba80379bcb/id-preview-889464d9--ed2754e3-1d01-4e23-a32e-b1ebfa380b6b.lovable.app-1779595649277.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
