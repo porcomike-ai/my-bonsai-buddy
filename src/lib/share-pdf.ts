@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getBonsai, getPhoto, getPoterie, listJournal, listRappels } from "./db";
+import { getBonsai, getPhoto, getPoterie, listJournal, listPhotos, listRappels } from "./db";
 import { soinLabel, styleLabel } from "./bonsai-meta";
 
 async function blobToDataUrl(blob: Blob): Promise<string> {
