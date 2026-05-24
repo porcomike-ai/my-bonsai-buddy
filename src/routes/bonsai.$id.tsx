@@ -18,8 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft, Pencil, Trash2, ImagePlus, Plus, X, Calendar as CalendarIcon, Check } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, ImagePlus, Plus, X, Calendar as CalendarIcon, Check, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { shareBonsaiPdf } from "@/lib/share-pdf";
 
 export const Route = createFileRoute("/bonsai/$id")({
   head: ({ params }) => ({
