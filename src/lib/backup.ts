@@ -1,4 +1,4 @@
-import { getDB, type Bonsai, type Photo, type Poterie, type JournalEntry, type Rappel } from "./db";
+import { getDB, type Bonsai, type Photo, type Poterie, type JournalEntry, type Rappel, type Evenement } from "./db";
 
 export interface BackupPayload {
   version: 1;
@@ -8,6 +8,7 @@ export interface BackupPayload {
   photos: Array<Omit<Photo, "blob"> & { blobBase64: string; blobType: string }>;
   journal: JournalEntry[];
   rappels: Rappel[];
+  evenements?: Evenement[];
 }
 
 async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
