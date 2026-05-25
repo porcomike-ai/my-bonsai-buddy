@@ -229,20 +229,48 @@ function GalerieTab({
     await deletePhoto(pid);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
+  const updateLegende = async (p: any, legende: string) => {
+    await savePhoto({ ...p, legende: legende || undefined });
+    qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
+  };
   const sorted = [...photos].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <div>
-      <label className="mb-5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-6 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground">
-        <ImagePlus className="h-4 w-4" /> Ajouter une photo à la galerie
-        <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onAdd(e.target.files[0])} />
-      </label>
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-5 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground">
+          <Camera className="h-4 w-4" /> Appareil photo
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && onAdd(e.target.files[0])}
+          />
+        </label>
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-5 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground">
+          <FolderOpen className="h-4 w-4" /> Galerie
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && onAdd(e.target.files[0])}
+          />
+        </label>
+      </div>
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucune photo pour l'instant. Documentez l'évolution de votre arbre.</p>
       ) : (
         <ol className="space-y-6 border-l border-border pl-6">
           {sorted.map((p) => (
-            <PhotoTimeline key={p.id} p={p} isMain={p.id === mainId} onSetMain={() => onSetMain(p.id)} onDelete={() => remove(p.id)} />
+            <PhotoTimeline
+              key={p.id}
+              p={p}
+              isMain={p.id === mainId}
+              onSetMain={() => onSetMain(p.id)}
+              onDelete={() => remove(p.id)}
+              onLegende={(t) => updateLegende(p, t)}
+            />
           ))}
         </ol>
       )}
@@ -250,8 +278,15 @@ function GalerieTab({
   );
 }
 
-function PhotoTimeline({ p, isMain, onSetMain, onDelete }: { p: any; isMain: boolean; onSetMain: () => void; onDelete: () => void }) {
+function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende }: { p: any; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void> }) {
   const url = useBlobUrl(p.blob);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(p.legende ?? "");
+  const save = async () => {
+    await onLegende(draft.trim());
+    setEditing(false);
+    toast.success("Commentaire enregistré");
+  };
   return (
     <li className="relative">
       <span className="absolute -left-[31px] top-2 h-3 w-3 rounded-full bg-accent ring-4 ring-background" />
@@ -260,15 +295,40 @@ function PhotoTimeline({ p, isMain, onSetMain, onDelete }: { p: any; isMain: boo
       </p>
       <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card">
         {url && <img src={url} alt={p.legende ?? ""} className="w-full max-w-md object-cover" />}
-        <div className="flex items-center justify-between p-3">
-          {isMain ? (
-            <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">Photo principale</span>
+        <div className="space-y-2 p-3">
+          {editing ? (
+            <div className="space-y-2">
+              <Textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                rows={2}
+                placeholder="Votre commentaire sur cette photo…"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => { setDraft(p.legende ?? ""); setEditing(false); }}>Annuler</Button>
+                <Button size="sm" onClick={save}>Enregistrer</Button>
+              </div>
+            </div>
+          ) : p.legende ? (
+            <button onClick={() => { setDraft(p.legende ?? ""); setEditing(true); }} className="block w-full whitespace-pre-wrap rounded-md bg-secondary/40 px-3 py-2 text-left text-sm leading-relaxed text-foreground/90 hover:bg-secondary/60">
+              {p.legende}
+            </button>
           ) : (
-            <Button variant="ghost" size="sm" onClick={onSetMain}>Définir comme principale</Button>
+            <button onClick={() => { setDraft(""); setEditing(true); }} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+              <MessageSquarePlus className="h-3.5 w-3.5" /> Ajouter un commentaire
+            </button>
           )}
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-destructive hover:text-destructive">
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center justify-between">
+            {isMain ? (
+              <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">Photo principale</span>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={onSetMain}>Définir comme principale</Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={onDelete} className="text-destructive hover:text-destructive">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </li>
