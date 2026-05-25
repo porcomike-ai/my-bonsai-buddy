@@ -71,13 +71,14 @@ export async function buildBackup(): Promise<BackupPayload> {
 export async function restoreBackup(payload: BackupPayload): Promise<void> {
   if (payload.version !== 1) throw new Error("Version de sauvegarde non prise en charge");
   const db = await getDB();
-  const tx = db.transaction(["bonsais", "poteries", "photos", "journal", "rappels"], "readwrite");
+  const tx = db.transaction(["bonsais", "poteries", "photos", "journal", "rappels", "evenements"], "readwrite");
   await Promise.all([
     tx.objectStore("bonsais").clear(),
     tx.objectStore("poteries").clear(),
     tx.objectStore("photos").clear(),
     tx.objectStore("journal").clear(),
     tx.objectStore("rappels").clear(),
+    tx.objectStore("evenements").clear(),
   ]);
   for (const b of payload.bonsais) await tx.objectStore("bonsais").put(b);
   for (const p of payload.poteries) {
@@ -93,5 +94,6 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   }
   for (const j of payload.journal) await tx.objectStore("journal").put(j);
   for (const r of payload.rappels) await tx.objectStore("rappels").put(r);
+  for (const e of payload.evenements ?? []) await tx.objectStore("evenements").put(e);
   await tx.done;
 }
