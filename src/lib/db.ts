@@ -16,14 +16,14 @@ export interface Bonsai {
   nom: string;
   espece: string;
   style: BonsaiStyle;
-  ageEstime?: number; // années
-  dateAcquisition?: string; // ISO date
+  ageEstime?: number;
+  dateAcquisition?: string;
   origine?: string;
   hauteurCm?: number;
-  photoPrincipale?: string; // photo id
+  photoPrincipale?: string;
   poterieId?: string;
   notes?: string;
-  dansCollection?: boolean; // true = encore dans la collection, false = sorti (vendu, donné, perdu…)
+  dansCollection?: boolean;
   createdAt: string;
 }
 
@@ -31,7 +31,7 @@ export interface Photo {
   id: string;
   bonsaiId: string;
   blob: Blob;
-  date: string; // ISO
+  date: string;
   legende?: string;
 }
 
@@ -48,7 +48,7 @@ export interface JournalEntry {
   id: string;
   bonsaiId: string;
   type: SoinType;
-  date: string; // ISO
+  date: string;
   notes?: string;
   rappelId?: string;
 }
@@ -57,8 +57,8 @@ export interface Rappel {
   id: string;
   bonsaiId: string;
   type: SoinType;
-  prochaineDate: string; // ISO date
-  intervalleJours?: number; // si récurrent
+  prochaineDate: string;
+  intervalleJours?: number;
   notes?: string;
   actif: boolean;
 }
@@ -80,12 +80,24 @@ export interface Poterie {
   createdAt: string;
 }
 
+export interface Evenement {
+  id: string;
+  titre: string;
+  description?: string;
+  dateHeure: string; // ISO datetime
+  rappelMinutes?: number; // minutes avant pour notifier
+  notifiedAt?: string; // ISO date when notification was sent (anti-dup)
+  bonsaiId?: string;
+  createdAt: string;
+}
+
 interface BonsaiDB extends DBSchema {
   bonsais: { key: string; value: Bonsai };
   photos: { key: string; value: Photo; indexes: { "by-bonsai": string } };
   journal: { key: string; value: JournalEntry; indexes: { "by-bonsai": string; "by-date": string } };
   rappels: { key: string; value: Rappel; indexes: { "by-bonsai": string; "by-date": string } };
   poteries: { key: string; value: Poterie };
+  evenements: { key: string; value: Evenement; indexes: { "by-date": string } };
 }
 
 let dbPromise: Promise<IDBPDatabase<BonsaiDB>> | null = null;
@@ -95,18 +107,24 @@ export function getDB() {
     throw new Error("IndexedDB n'est disponible que côté client");
   }
   if (!dbPromise) {
-    dbPromise = openDB<BonsaiDB>("bonsai-studio", 1, {
-      upgrade(db) {
-        db.createObjectStore("bonsais", { keyPath: "id" });
-        const photos = db.createObjectStore("photos", { keyPath: "id" });
-        photos.createIndex("by-bonsai", "bonsaiId");
-        const journal = db.createObjectStore("journal", { keyPath: "id" });
-        journal.createIndex("by-bonsai", "bonsaiId");
-        journal.createIndex("by-date", "date");
-        const rappels = db.createObjectStore("rappels", { keyPath: "id" });
-        rappels.createIndex("by-bonsai", "bonsaiId");
-        rappels.createIndex("by-date", "prochaineDate");
-        db.createObjectStore("poteries", { keyPath: "id" });
+    dbPromise = openDB<BonsaiDB>("bonsai-studio", 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore("bonsais", { keyPath: "id" });
+          const photos = db.createObjectStore("photos", { keyPath: "id" });
+          photos.createIndex("by-bonsai", "bonsaiId");
+          const journal = db.createObjectStore("journal", { keyPath: "id" });
+          journal.createIndex("by-bonsai", "bonsaiId");
+          journal.createIndex("by-date", "date");
+          const rappels = db.createObjectStore("rappels", { keyPath: "id" });
+          rappels.createIndex("by-bonsai", "bonsaiId");
+          rappels.createIndex("by-date", "prochaineDate");
+          db.createObjectStore("poteries", { keyPath: "id" });
+        }
+        if (oldVersion < 2) {
+          const ev = db.createObjectStore("evenements", { keyPath: "id" });
+          ev.createIndex("by-date", "dateHeure");
+        }
       },
     });
   }
@@ -214,4 +232,19 @@ export async function savePoterie(p: Poterie) {
 export async function deletePoterie(id: string) {
   const db = await getDB();
   await db.delete("poteries", id);
+}
+
+// --- Évènements ---
+export async function listEvenements(): Promise<Evenement[]> {
+  const db = await getDB();
+  const all = await db.getAll("evenements");
+  return all.sort((a, b) => a.dateHeure.localeCompare(b.dateHeure));
+}
+export async function saveEvenement(e: Evenement) {
+  const db = await getDB();
+  await db.put("evenements", e);
+}
+export async function deleteEvenement(id: string) {
+  const db = await getDB();
+  await db.delete("evenements", id);
 }

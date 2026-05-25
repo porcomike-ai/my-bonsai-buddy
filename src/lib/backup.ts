@@ -1,4 +1,4 @@
-import { getDB, type Bonsai, type Photo, type Poterie, type JournalEntry, type Rappel } from "./db";
+import { getDB, type Bonsai, type Photo, type Poterie, type JournalEntry, type Rappel, type Evenement } from "./db";
 
 export interface BackupPayload {
   version: 1;
@@ -8,6 +8,7 @@ export interface BackupPayload {
   photos: Array<Omit<Photo, "blob"> & { blobBase64: string; blobType: string }>;
   journal: JournalEntry[];
   rappels: Rappel[];
+  evenements?: Evenement[];
 }
 
 async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
@@ -29,12 +30,13 @@ function base64ToBlob(data: string, type: string): Blob {
 
 export async function buildBackup(): Promise<BackupPayload> {
   const db = await getDB();
-  const [bonsais, poteries, photos, journal, rappels] = await Promise.all([
+  const [bonsais, poteries, photos, journal, rappels, evenements] = await Promise.all([
     db.getAll("bonsais"),
     db.getAll("poteries"),
     db.getAll("photos"),
     db.getAll("journal"),
     db.getAll("rappels"),
+    db.getAll("evenements").catch(() => [] as Evenement[]),
   ]);
 
   const photosEnc = await Promise.all(
@@ -62,19 +64,21 @@ export async function buildBackup(): Promise<BackupPayload> {
     photos: photosEnc,
     journal,
     rappels,
+    evenements,
   };
 }
 
 export async function restoreBackup(payload: BackupPayload): Promise<void> {
   if (payload.version !== 1) throw new Error("Version de sauvegarde non prise en charge");
   const db = await getDB();
-  const tx = db.transaction(["bonsais", "poteries", "photos", "journal", "rappels"], "readwrite");
+  const tx = db.transaction(["bonsais", "poteries", "photos", "journal", "rappels", "evenements"], "readwrite");
   await Promise.all([
     tx.objectStore("bonsais").clear(),
     tx.objectStore("poteries").clear(),
     tx.objectStore("photos").clear(),
     tx.objectStore("journal").clear(),
     tx.objectStore("rappels").clear(),
+    tx.objectStore("evenements").clear(),
   ]);
   for (const b of payload.bonsais) await tx.objectStore("bonsais").put(b);
   for (const p of payload.poteries) {
@@ -90,5 +94,6 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   }
   for (const j of payload.journal) await tx.objectStore("journal").put(j);
   for (const r of payload.rappels) await tx.objectStore("rappels").put(r);
+  for (const e of payload.evenements ?? []) await tx.objectStore("evenements").put(e);
   await tx.done;
 }

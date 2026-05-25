@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { startNotificationScheduler } from "@/lib/notifications";
 
 const NAV = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard },
@@ -13,6 +15,7 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
+  useEffect(() => { startNotificationScheduler(); }, []);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl">
