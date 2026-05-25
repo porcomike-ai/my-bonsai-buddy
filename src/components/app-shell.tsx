@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { startNotificationScheduler } from "@/lib/notifications";
 
 const NAV = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard },
