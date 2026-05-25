@@ -30,12 +30,13 @@ function base64ToBlob(data: string, type: string): Blob {
 
 export async function buildBackup(): Promise<BackupPayload> {
   const db = await getDB();
-  const [bonsais, poteries, photos, journal, rappels] = await Promise.all([
+  const [bonsais, poteries, photos, journal, rappels, evenements] = await Promise.all([
     db.getAll("bonsais"),
     db.getAll("poteries"),
     db.getAll("photos"),
     db.getAll("journal"),
     db.getAll("rappels"),
+    db.getAll("evenements").catch(() => [] as Evenement[]),
   ]);
 
   const photosEnc = await Promise.all(
@@ -63,6 +64,7 @@ export async function buildBackup(): Promise<BackupPayload> {
     photos: photosEnc,
     journal,
     rappels,
+    evenements,
   };
 }
 
