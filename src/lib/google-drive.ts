@@ -208,7 +208,7 @@ export async function uploadBackup(payload: unknown): Promise<void> {
     headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
     body,
   });
-  if (!res.ok) throw new Error(`Envoi de la sauvegarde échoué (${res.status})`);
+  if (!res.ok) throw new Error(await readError(res, "Envoi de la sauvegarde échoué"));
   setLastBackup(new Date().toISOString());
 }
 
