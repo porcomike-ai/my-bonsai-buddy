@@ -108,6 +108,7 @@ export async function disconnect(): Promise<void> {
     await new Promise<void>((r) => window.google!.accounts.oauth2.revoke(tok.access_token, () => r()));
   }
   clearToken();
+  localStorage.removeItem(LS_FOLDER_ID);
 }
 
 async function readError(res: Response, fallback: string): Promise<string> {
