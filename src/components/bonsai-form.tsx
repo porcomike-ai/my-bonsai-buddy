@@ -204,6 +204,12 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
           <Field label="Origine / pépinière">
             <Input {...form.register("origine")} placeholder="Pépinière Saulieu" />
           </Field>
+          <Field label="Prix d'achat (€)">
+            <Input type="number" min={0} step="0.01" {...form.register("prixAchat")} placeholder="120" />
+          </Field>
+          <Field label="Valeur estimée (€)">
+            <Input type="number" min={0} step="0.01" {...form.register("valeurEstimee")} placeholder="350" />
+          </Field>
         </div>
 
         <Field label="Notes">
