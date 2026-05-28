@@ -9,7 +9,7 @@ import {
   saveBonsai, savePhoto, uid, listPoteries, type Bonsai, type BonsaiStyle,
 } from "@/lib/db";
 import { fileToBlob } from "@/lib/blob-url";
-import { STYLES } from "@/lib/bonsai-meta";
+import { STYLES, ESPECES } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
