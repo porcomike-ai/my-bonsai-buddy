@@ -8,6 +8,7 @@ const BACKUP_NAME = "bonsai-studio-backup.json";
 const LS_CLIENT_ID = "bonsai.gdrive.clientId";
 const LS_TOKEN = "bonsai.gdrive.token";
 const LS_LAST_BACKUP = "bonsai.gdrive.lastBackup";
+const LS_FOLDER_ID = "bonsai.gdrive.folderId";
 
 interface TokenClient {
   requestAccessToken: (overrides?: { prompt?: string }) => void;
