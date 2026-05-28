@@ -42,6 +42,11 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
+  const [especeLang, setEspeceLang] = useState<"latin" | "fr">(() => {
+    if (typeof window === "undefined") return "latin";
+    return (localStorage.getItem("bonsai.espece.lang") as "latin" | "fr") ?? "latin";
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -50,6 +55,8 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       style: initial?.style ?? "moyogi",
       ageEstime: initial?.ageEstime != null ? String(initial.ageEstime) : "",
       hauteurCm: initial?.hauteurCm != null ? String(initial.hauteurCm) : "",
+      prixAchat: initial?.prixAchat != null ? String(initial.prixAchat) : "",
+      valeurEstimee: initial?.valeurEstimee != null ? String(initial.valeurEstimee) : "",
       dateAcquisition: initial?.dateAcquisition?.slice(0, 10) ?? "",
       origine: initial?.origine ?? "",
       poterieId: initial?.poterieId ?? "",
@@ -57,6 +64,16 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       dansCollection: initial?.dansCollection ?? true,
     },
   });
+
+  const toggleEspeceLang = () => {
+    const next = especeLang === "latin" ? "fr" : "latin";
+    setEspeceLang(next);
+    if (typeof window !== "undefined") localStorage.setItem("bonsai.espece.lang", next);
+    // Si la valeur actuelle correspond à une espèce connue, on bascule l'affichage
+    const current = form.getValues("espece").trim();
+    const match = ESPECES.find((e) => e.latin === current || e.fr === current);
+    if (match) form.setValue("espece", next === "latin" ? match.latin : match.fr);
+  };
 
   const onFile = (f: File) => {
     setFile(f);
