@@ -98,10 +98,11 @@ function ParametresPage() {
         </div>
 
         <ol className="mt-5 space-y-2 text-sm text-muted-foreground">
-          <li><strong className="text-foreground">1.</strong> Ouvrez <a className="text-accent hover:underline" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer">Google Cloud Console → Credentials <ExternalLink className="inline h-3 w-3" /></a></li>
-          <li><strong className="text-foreground">2.</strong> Créez un projet, activez l'API <em>Google Drive API</em>, configurez l'écran OAuth (mode Externe, ajoutez votre email comme testeur).</li>
-          <li><strong className="text-foreground">3.</strong> Créez un identifiant OAuth de type <em>Application Web</em>. Dans <em>Origines JavaScript autorisées</em>, ajoutez : <code className="rounded bg-secondary px-1.5 py-0.5 text-xs">{typeof window !== "undefined" ? window.location.origin : ""}</code></li>
-          <li><strong className="text-foreground">4.</strong> Copiez le <em>Client ID</em> et collez-le ci-dessous.</li>
+          <li><strong className="text-foreground">1.</strong> Ouvrez <a className="text-accent hover:underline" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer">Google Cloud Console → Credentials <ExternalLink className="inline h-3 w-3" /></a> et créez un projet.</li>
+          <li><strong className="text-foreground">2.</strong> <strong className="text-foreground">Activez l'API Google Drive</strong> : ouvrez <a className="text-accent hover:underline" href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noreferrer">API Library → Google Drive API <ExternalLink className="inline h-3 w-3" /></a> et cliquez sur <em>Activer</em>. <span className="text-foreground">(Étape indispensable — sans cela, une erreur 403 apparaît.)</span></li>
+          <li><strong className="text-foreground">3.</strong> Configurez l'écran OAuth (mode Externe, ajoutez votre email comme testeur).</li>
+          <li><strong className="text-foreground">4.</strong> Créez un identifiant OAuth de type <em>Application Web</em>. Dans <em>Origines JavaScript autorisées</em>, ajoutez : <code className="rounded bg-secondary px-1.5 py-0.5 text-xs">{typeof window !== "undefined" ? window.location.origin : ""}</code></li>
+          <li><strong className="text-foreground">5.</strong> Copiez le <em>Client ID</em> et collez-le ci-dessous.</li>
         </ol>
 
         <div className="mt-5">

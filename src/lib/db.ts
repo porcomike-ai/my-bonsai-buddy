@@ -20,6 +20,8 @@ export interface Bonsai {
   dateAcquisition?: string;
   origine?: string;
   hauteurCm?: number;
+  prixAchat?: number;
+  valeurEstimee?: number;
   photoPrincipale?: string;
   poterieId?: string;
   notes?: string;

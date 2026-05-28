@@ -9,7 +9,7 @@ import {
   saveBonsai, savePhoto, uid, listPoteries, type Bonsai, type BonsaiStyle,
 } from "@/lib/db";
 import { fileToBlob } from "@/lib/blob-url";
-import { STYLES } from "@/lib/bonsai-meta";
+import { STYLES, ESPECES } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ const schema = z.object({
   ]),
   ageEstime: z.string().optional(),
   hauteurCm: z.string().optional(),
+  prixAchat: z.string().optional(),
+  valeurEstimee: z.string().optional(),
   dateAcquisition: z.string().optional(),
   origine: z.string().optional(),
   poterieId: z.string().optional(),
@@ -40,6 +42,11 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
+  const [especeLang, setEspeceLang] = useState<"latin" | "fr">(() => {
+    if (typeof window === "undefined") return "latin";
+    return (localStorage.getItem("bonsai.espece.lang") as "latin" | "fr") ?? "latin";
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -48,6 +55,8 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       style: initial?.style ?? "moyogi",
       ageEstime: initial?.ageEstime != null ? String(initial.ageEstime) : "",
       hauteurCm: initial?.hauteurCm != null ? String(initial.hauteurCm) : "",
+      prixAchat: initial?.prixAchat != null ? String(initial.prixAchat) : "",
+      valeurEstimee: initial?.valeurEstimee != null ? String(initial.valeurEstimee) : "",
       dateAcquisition: initial?.dateAcquisition?.slice(0, 10) ?? "",
       origine: initial?.origine ?? "",
       poterieId: initial?.poterieId ?? "",
@@ -55,6 +64,16 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       dansCollection: initial?.dansCollection ?? true,
     },
   });
+
+  const toggleEspeceLang = () => {
+    const next = especeLang === "latin" ? "fr" : "latin";
+    setEspeceLang(next);
+    if (typeof window !== "undefined") localStorage.setItem("bonsai.espece.lang", next);
+    // Si la valeur actuelle correspond à une espèce connue, on bascule l'affichage
+    const current = form.getValues("espece").trim();
+    const match = ESPECES.find((e) => e.latin === current || e.fr === current);
+    if (match) form.setValue("espece", next === "latin" ? match.latin : match.fr);
+  };
 
   const onFile = (f: File) => {
     setFile(f);
@@ -84,6 +103,8 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       style: values.style as BonsaiStyle,
       ageEstime: values.ageEstime ? Number(values.ageEstime) : undefined,
       hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : undefined,
+      prixAchat: values.prixAchat ? Number(values.prixAchat) : undefined,
+      valeurEstimee: values.valeurEstimee ? Number(values.valeurEstimee) : undefined,
       dateAcquisition: values.dateAcquisition || undefined,
       origine: values.origine?.trim() || undefined,
       poterieId: values.poterieId || undefined,
@@ -127,8 +148,32 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
           <Field label="Nom" error={form.formState.errors.nom?.message}>
             <Input {...form.register("nom")} placeholder="Vieux pin du jardin" />
           </Field>
-          <Field label="Espèce" error={form.formState.errors.espece?.message}>
-            <Input {...form.register("espece")} placeholder="Pinus parviflora" />
+          <Field
+            label="Espèce"
+            error={form.formState.errors.espece?.message}
+            action={
+              <button
+                type="button"
+                onClick={toggleEspeceLang}
+                className="text-xs text-accent hover:underline"
+                title="Basculer entre nom scientifique et nom français"
+              >
+                {especeLang === "latin" ? "Afficher en français" : "Afficher en latin"}
+              </button>
+            }
+          >
+            <Input
+              {...form.register("espece")}
+              list="especes-list"
+              placeholder={especeLang === "latin" ? "Pinus parviflora" : "Pin blanc du Japon"}
+            />
+            <datalist id="especes-list">
+              {ESPECES.map((e) => {
+                const value = especeLang === "latin" ? e.latin : e.fr;
+                const other = especeLang === "latin" ? e.fr : e.latin;
+                return <option key={e.latin} value={value}>{other}</option>;
+              })}
+            </datalist>
           </Field>
           <Field label="Style">
             <select
@@ -158,6 +203,12 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
           </Field>
           <Field label="Origine / pépinière">
             <Input {...form.register("origine")} placeholder="Pépinière Saulieu" />
+          </Field>
+          <Field label="Prix d'achat (€)">
+            <Input type="number" min={0} step="0.01" {...form.register("prixAchat")} placeholder="120" />
+          </Field>
+          <Field label="Valeur estimée (€)">
+            <Input type="number" min={0} step="0.01" {...form.register("valeurEstimee")} placeholder="350" />
           </Field>
         </div>
 
@@ -196,10 +247,13 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, action, children }: { label: string; error?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
-      <Label className="mb-1.5 block text-sm">{label}</Label>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <Label className="block text-sm">{label}</Label>
+        {action}
+      </div>
       {children}
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>

@@ -8,6 +8,7 @@ const BACKUP_NAME = "bonsai-studio-backup.json";
 const LS_CLIENT_ID = "bonsai.gdrive.clientId";
 const LS_TOKEN = "bonsai.gdrive.token";
 const LS_LAST_BACKUP = "bonsai.gdrive.lastBackup";
+const LS_FOLDER_ID = "bonsai.gdrive.folderId";
 
 interface TokenClient {
   requestAccessToken: (overrides?: { prompt?: string }) => void;
@@ -107,6 +108,20 @@ export async function disconnect(): Promise<void> {
     await new Promise<void>((r) => window.google!.accounts.oauth2.revoke(tok.access_token, () => r()));
   }
   clearToken();
+  localStorage.removeItem(LS_FOLDER_ID);
+}
+
+async function readError(res: Response, fallback: string): Promise<string> {
+  try {
+    const data = await res.clone().json() as { error?: { message?: string; status?: string; errors?: { reason?: string }[] } };
+    const msg = data.error?.message;
+    const reason = data.error?.errors?.[0]?.reason;
+    if (reason === "accessNotConfigured" || /Drive API has not been used/i.test(msg ?? "")) {
+      return `Google Drive API non activée dans votre projet Google Cloud. Ouvrez « APIs & Services → Library », recherchez « Google Drive API » et cliquez sur « Activer », puis réessayez (${res.status}).`;
+    }
+    if (msg) return `${fallback} : ${msg} (${res.status})`;
+  } catch { /* ignore */ }
+  return `${fallback} (${res.status})`;
 }
 
 async function authedFetch(url: string, init: RequestInit = {}): Promise<Response> {
@@ -122,22 +137,43 @@ async function authedFetch(url: string, init: RequestInit = {}): Promise<Respons
   return res;
 }
 
+async function verifyFolder(id: string): Promise<boolean> {
+  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=id,trashed`);
+  if (!res.ok) return false;
+  const data = await res.json() as { id?: string; trashed?: boolean };
+  return !!data.id && !data.trashed;
+}
+
 async function ensureFolder(): Promise<string> {
+  // Tentative 1 : utiliser l'ID en cache (évite la recherche qui peut échouer en 403)
+  const cached = localStorage.getItem(LS_FOLDER_ID);
+  if (cached && await verifyFolder(cached)) return cached;
+
+  // Tentative 2 : recherche par nom
   const q = encodeURIComponent(
     `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
   );
   const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
-  if (!res.ok) throw new Error(`Recherche du dossier échouée (${res.status})`);
-  const data = await res.json() as { files: { id: string }[] };
-  if (data.files.length > 0) return data.files[0].id;
+  if (res.ok) {
+    const data = await res.json() as { files: { id: string }[] };
+    if (data.files.length > 0) {
+      localStorage.setItem(LS_FOLDER_ID, data.files[0].id);
+      return data.files[0].id;
+    }
+  } else if (res.status !== 404) {
+    // 403 = API non activée ou permission — surface message clair
+    throw new Error(await readError(res, "Recherche du dossier échouée"));
+  }
 
+  // Tentative 3 : créer le dossier
   const create = await authedFetch("https://www.googleapis.com/drive/v3/files", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: FOLDER_NAME, mimeType: "application/vnd.google-apps.folder" }),
   });
-  if (!create.ok) throw new Error(`Création du dossier échouée (${create.status})`);
+  if (!create.ok) throw new Error(await readError(create, "Création du dossier échouée"));
   const folder = await create.json() as { id: string };
+  localStorage.setItem(LS_FOLDER_ID, folder.id);
   return folder.id;
 }
 
@@ -172,7 +208,7 @@ export async function uploadBackup(payload: unknown): Promise<void> {
     headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
     body,
   });
-  if (!res.ok) throw new Error(`Envoi de la sauvegarde échoué (${res.status})`);
+  if (!res.ok) throw new Error(await readError(res, "Envoi de la sauvegarde échoué"));
   setLastBackup(new Date().toISOString());
 }
 
@@ -181,6 +217,6 @@ export async function downloadBackup<T = unknown>(): Promise<T | null> {
   const fileId = await findBackupFile(folderId);
   if (!fileId) return null;
   const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
-  if (!res.ok) throw new Error(`Téléchargement échoué (${res.status})`);
+  if (!res.ok) throw new Error(await readError(res, "Téléchargement échoué"));
   return (await res.json()) as T;
 }
