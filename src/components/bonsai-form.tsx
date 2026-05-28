@@ -25,6 +25,8 @@ const schema = z.object({
   ]),
   ageEstime: z.string().optional(),
   hauteurCm: z.string().optional(),
+  prixAchat: z.string().optional(),
+  valeurEstimee: z.string().optional(),
   dateAcquisition: z.string().optional(),
   origine: z.string().optional(),
   poterieId: z.string().optional(),
