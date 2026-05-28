@@ -241,10 +241,13 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, action, children }: { label: string; error?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
-      <Label className="mb-1.5 block text-sm">{label}</Label>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <Label className="block text-sm">{label}</Label>
+        {action}
+      </div>
       {children}
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
