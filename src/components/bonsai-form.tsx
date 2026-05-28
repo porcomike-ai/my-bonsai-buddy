@@ -148,8 +148,32 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
           <Field label="Nom" error={form.formState.errors.nom?.message}>
             <Input {...form.register("nom")} placeholder="Vieux pin du jardin" />
           </Field>
-          <Field label="Espèce" error={form.formState.errors.espece?.message}>
-            <Input {...form.register("espece")} placeholder="Pinus parviflora" />
+          <Field
+            label="Espèce"
+            error={form.formState.errors.espece?.message}
+            action={
+              <button
+                type="button"
+                onClick={toggleEspeceLang}
+                className="text-xs text-accent hover:underline"
+                title="Basculer entre nom scientifique et nom français"
+              >
+                {especeLang === "latin" ? "Afficher en français" : "Afficher en latin"}
+              </button>
+            }
+          >
+            <Input
+              {...form.register("espece")}
+              list="especes-list"
+              placeholder={especeLang === "latin" ? "Pinus parviflora" : "Pin blanc du Japon"}
+            />
+            <datalist id="especes-list">
+              {ESPECES.map((e) => {
+                const value = especeLang === "latin" ? e.latin : e.fr;
+                const other = especeLang === "latin" ? e.fr : e.latin;
+                return <option key={e.latin} value={value}>{other}</option>;
+              })}
+            </datalist>
           </Field>
           <Field label="Style">
             <select
