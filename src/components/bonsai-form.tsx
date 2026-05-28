@@ -103,6 +103,8 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       style: values.style as BonsaiStyle,
       ageEstime: values.ageEstime ? Number(values.ageEstime) : undefined,
       hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : undefined,
+      prixAchat: values.prixAchat ? Number(values.prixAchat) : undefined,
+      valeurEstimee: values.valeurEstimee ? Number(values.valeurEstimee) : undefined,
       dateAcquisition: values.dateAcquisition || undefined,
       origine: values.origine?.trim() || undefined,
       poterieId: values.poterieId || undefined,
