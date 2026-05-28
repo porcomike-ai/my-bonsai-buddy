@@ -118,6 +118,8 @@ function BonsaiDetail() {
             {b.hauteurCm != null && <Stat label="Hauteur" value={`${b.hauteurCm} cm`} />}
             {b.dateAcquisition && <Stat label="Acquis le" value={format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })} />}
             {b.origine && <Stat label="Origine" value={b.origine} />}
+            {b.prixAchat != null && <Stat label="Prix d'achat" value={`${b.prixAchat.toLocaleString("fr-FR")} €`} />}
+            {b.valeurEstimee != null && <Stat label="Valeur estimée" value={`${b.valeurEstimee.toLocaleString("fr-FR")} €`} />}
             {poterie && (
               <Stat
                 label="Poterie"
