@@ -217,6 +217,6 @@ export async function downloadBackup<T = unknown>(): Promise<T | null> {
   const fileId = await findBackupFile(folderId);
   if (!fileId) return null;
   const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
-  if (!res.ok) throw new Error(`Téléchargement échoué (${res.status})`);
+  if (!res.ok) throw new Error(await readError(res, "Téléchargement échoué"));
   return (await res.json()) as T;
 }
