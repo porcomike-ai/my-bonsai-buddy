@@ -28,7 +28,64 @@ function base64ToBlob(data: string, type: string): Blob {
   return new Blob([buf], { type });
 }
 
-export async function buildBackup(): Promise<BackupPayload> {
+/**
+ * Recompresse une image (Blob) en JPEG : max `maxSide` px sur le grand côté,
+ * qualité `quality` (0-1). Renvoie le blob d'origine si la version recompressée
+ * n'est pas plus petite, ou en cas d'erreur (ex. fichier non image).
+ */
+export async function recompressImage(
+  blob: Blob,
+  maxSide = 1280,
+  quality = 0.7,
+): Promise<Blob> {
+  if (typeof document === "undefined") return blob;
+  if (!blob.type.startsWith("image/")) return blob;
+  try {
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("decode"));
+        i.src = url;
+      });
+      let w = img.width;
+      let h = img.height;
+      if (w > maxSide || h > maxSide) {
+        const r = Math.min(maxSide / w, maxSide / h);
+        w = Math.round(w * r);
+        h = Math.round(h * r);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return blob;
+      ctx.drawImage(img, 0, 0, w, h);
+      const out = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", quality),
+      );
+      if (!out) return blob;
+      return out.size < blob.size ? out : blob;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  } catch {
+    return blob;
+  }
+}
+
+export interface BuildBackupOptions {
+  /** Recompresse les photos pour réduire la taille (par défaut : true). */
+  recompress?: boolean;
+  /** Taille max sur le grand côté pour les photos recompressées. */
+  maxSide?: number;
+  /** Qualité JPEG (0-1). */
+  quality?: number;
+}
+
+export async function buildBackup(opts: BuildBackupOptions = {}): Promise<BackupPayload> {
+  const { recompress = true, maxSide = 1280, quality = 0.7 } = opts;
   const db = await getDB();
   const [bonsais, poteries, photos, journal, rappels, evenements] = await Promise.all([
     db.getAll("bonsais"),
@@ -39,9 +96,12 @@ export async function buildBackup(): Promise<BackupPayload> {
     db.getAll("evenements").catch(() => [] as Evenement[]),
   ]);
 
+  const prep = async (b: Blob) => (recompress ? await recompressImage(b, maxSide, quality) : b);
+
   const photosEnc = await Promise.all(
     photos.map(async (p) => {
-      const { data, type } = await blobToBase64(p.blob);
+      const optimized = await prep(p.blob);
+      const { data, type } = await blobToBase64(optimized);
       const { blob, ...rest } = p;
       return { ...rest, blobBase64: data, blobType: type };
     }),
@@ -51,7 +111,8 @@ export async function buildBackup(): Promise<BackupPayload> {
     poteries.map(async (p) => {
       const { photoBlob, ...rest } = p;
       if (!photoBlob) return rest;
-      const { data, type } = await blobToBase64(photoBlob);
+      const optimized = await prep(photoBlob);
+      const { data, type } = await blobToBase64(optimized);
       return { ...rest, photoBlobBase64: data, photoBlobType: type };
     }),
   );
@@ -96,4 +157,40 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   for (const r of payload.rappels) await tx.objectStore("rappels").put(r);
   for (const e of payload.evenements ?? []) await tx.objectStore("evenements").put(e);
   await tx.done;
+}
+
+/**
+ * Optimise les photos déjà stockées localement (réduit la taille, ré-encode en JPEG).
+ * Renvoie le nombre d'images modifiées et le total d'octets économisés.
+ */
+export async function optimizeStoredImages(
+  maxSide = 1280,
+  quality = 0.7,
+): Promise<{ count: number; saved: number }> {
+  const db = await getDB();
+  const photos = await db.getAll("photos");
+  const poteries = await db.getAll("poteries");
+  let count = 0;
+  let saved = 0;
+
+  for (const p of photos) {
+    const before = p.blob.size;
+    const after = await recompressImage(p.blob, maxSide, quality);
+    if (after.size < before) {
+      saved += before - after.size;
+      count++;
+      await db.put("photos", { ...p, blob: after });
+    }
+  }
+  for (const p of poteries) {
+    if (!p.photoBlob) continue;
+    const before = p.photoBlob.size;
+    const after = await recompressImage(p.photoBlob, maxSide, quality);
+    if (after.size < before) {
+      saved += before - after.size;
+      count++;
+      await db.put("poteries", { ...p, photoBlob: after });
+    }
+  }
+  return { count, saved };
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
@@ -9,7 +9,7 @@ import {
   saveBonsai, savePhoto, uid, listPoteries, type Bonsai, type BonsaiStyle,
 } from "@/lib/db";
 import { fileToBlob } from "@/lib/blob-url";
-import { STYLES, ESPECES } from "@/lib/bonsai-meta";
+import { STYLES, getAllEspeces, addCustomEspece } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -65,13 +65,14 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
     },
   });
 
+  const especesList = useMemo(() => getAllEspeces(), []);
+
   const toggleEspeceLang = () => {
     const next = especeLang === "latin" ? "fr" : "latin";
     setEspeceLang(next);
     if (typeof window !== "undefined") localStorage.setItem("bonsai.espece.lang", next);
-    // Si la valeur actuelle correspond à une espèce connue, on bascule l'affichage
     const current = form.getValues("espece").trim();
-    const match = ESPECES.find((e) => e.latin === current || e.fr === current);
+    const match = especesList.find((e) => e.latin === current || e.fr === current);
     if (match) form.setValue("espece", next === "latin" ? match.latin : match.fr);
   };
 
@@ -83,6 +84,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   const submit = form.handleSubmit(async (values) => {
     const id = initial?.id ?? uid();
     let photoId = initial?.photoPrincipale;
+    addCustomEspece(values.espece);
 
     if (file) {
       const blob = await fileToBlob(file);
@@ -168,10 +170,10 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               placeholder={especeLang === "latin" ? "Pinus parviflora" : "Pin blanc du Japon"}
             />
             <datalist id="especes-list">
-              {ESPECES.map((e) => {
+              {especesList.map((e) => {
                 const value = especeLang === "latin" ? e.latin : e.fr;
                 const other = especeLang === "latin" ? e.fr : e.latin;
-                return <option key={e.latin} value={value}>{other}</option>;
+                return <option key={`${e.latin}|${e.fr}`} value={value}>{other}</option>;
               })}
             </datalist>
           </Field>
