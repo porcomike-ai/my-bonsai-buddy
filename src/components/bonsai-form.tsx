@@ -169,10 +169,10 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               placeholder={especeLang === "latin" ? "Pinus parviflora" : "Pin blanc du Japon"}
             />
             <datalist id="especes-list">
-              {ESPECES.map((e) => {
+              {especesList.map((e) => {
                 const value = especeLang === "latin" ? e.latin : e.fr;
                 const other = especeLang === "latin" ? e.fr : e.latin;
-                return <option key={e.latin} value={value}>{other}</option>;
+                return <option key={`${e.latin}|${e.fr}`} value={value}>{other}</option>;
               })}
             </datalist>
           </Field>
