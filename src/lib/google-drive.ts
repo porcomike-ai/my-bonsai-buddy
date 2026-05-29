@@ -4,7 +4,8 @@
 
 const SCOPE = "https://www.googleapis.com/auth/drive.file";
 const FOLDER_NAME = "Bonsaï Studio";
-const BACKUP_NAME = "bonsai-studio-backup.json";
+const BACKUP_NAME = "bonsai-studio-backup.json.gz";
+const LEGACY_BACKUP_NAME = "bonsai-studio-backup.json";
 const LS_CLIENT_ID = "bonsai.gdrive.clientId";
 const LS_TOKEN = "bonsai.gdrive.token";
 const LS_LAST_BACKUP = "bonsai.gdrive.lastBackup";
