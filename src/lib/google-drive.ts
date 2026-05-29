@@ -178,46 +178,98 @@ async function ensureFolder(): Promise<string> {
   return folder.id;
 }
 
-async function findBackupFile(folderId: string): Promise<string | null> {
-  const q = encodeURIComponent(`name='${BACKUP_NAME}' and '${folderId}' in parents and trashed=false`);
-  const res = await authedFetch(
-    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)&spaces=drive`,
-  );
-  if (!res.ok) return null;
-  const data = await res.json() as { files: { id: string }[] };
-  return data.files[0]?.id ?? null;
+async function findBackupFile(folderId: string): Promise<{ id: string; name: string } | null> {
+  const names = [BACKUP_NAME, LEGACY_BACKUP_NAME];
+  for (const name of names) {
+    const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
+    const res = await authedFetch(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)&spaces=drive`,
+    );
+    if (!res.ok) continue;
+    const data = await res.json() as { files: { id: string; name: string }[] };
+    if (data.files[0]) return { id: data.files[0].id, name: data.files[0].name };
+  }
+  return null;
+}
+
+async function gzipString(json: string): Promise<Blob> {
+  const enc = new TextEncoder().encode(json);
+  // CompressionStream est largement supporté (Chrome/Edge/Firefox/Safari récents).
+  if (typeof CompressionStream !== "undefined") {
+    const stream = new Response(new Blob([enc])).body!.pipeThrough(new CompressionStream("gzip"));
+    return await new Response(stream).blob();
+  }
+  // Fallback : pas de compression, on téléverse en JSON brut.
+  return new Blob([enc], { type: "application/json" });
+}
+
+async function maybeGunzip(buf: ArrayBuffer): Promise<string> {
+  const bytes = new Uint8Array(buf);
+  const isGzip = bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+  if (isGzip && typeof DecompressionStream !== "undefined") {
+    const stream = new Response(new Blob([bytes])).body!.pipeThrough(new DecompressionStream("gzip"));
+    return await new Response(stream).text();
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 export async function uploadBackup(payload: unknown): Promise<void> {
   const folderId = await ensureFolder();
-  const existingId = await findBackupFile(folderId);
+  const existing = await findBackupFile(folderId);
   const json = JSON.stringify(payload);
+  const gz = await gzipString(json);
+  const contentType = gz.type === "application/json" ? "application/json" : "application/gzip";
 
+  // Construit un body multipart binaire (Blob) pour préserver les octets gzip.
   const boundary = "-------bonsai" + Math.random().toString(36).slice(2);
-  const metadata = existingId
+  const metadata = existing
     ? { name: BACKUP_NAME }
     : { name: BACKUP_NAME, parents: [folderId] };
-  const body =
+  const head =
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
-    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${boundary}--`;
+    `--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`;
+  const tail = `\r\n--${boundary}--`;
+  const body = new Blob([head, gz, tail], { type: `multipart/related; boundary=${boundary}` });
 
-  const url = existingId
-    ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`
+  const url = existing
+    ? `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=multipart`
     : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
   const res = await authedFetch(url, {
-    method: existingId ? "PATCH" : "POST",
+    method: existing ? "PATCH" : "POST",
     headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
     body,
   });
   if (!res.ok) throw new Error(await readError(res, "Envoi de la sauvegarde échoué"));
+
+  // Si on a écrit un nouveau .json.gz mais que l'ancien .json traîne encore, on le supprime.
+  if (existing && existing.name === LEGACY_BACKUP_NAME) {
+    // L'upload a écrasé le legacy ; on renomme déjà via le metadata. Rien à faire.
+  } else if (!existing) {
+    // Supprime un éventuel ancien fichier JSON non-gzippé pour libérer de l'espace.
+    const legacyQ = encodeURIComponent(
+      `name='${LEGACY_BACKUP_NAME}' and '${folderId}' in parents and trashed=false`,
+    );
+    const legacyRes = await authedFetch(
+      `https://www.googleapis.com/drive/v3/files?q=${legacyQ}&fields=files(id)&spaces=drive`,
+    );
+    if (legacyRes.ok) {
+      const data = await legacyRes.json() as { files: { id: string }[] };
+      if (data.files[0]) {
+        await authedFetch(`https://www.googleapis.com/drive/v3/files/${data.files[0].id}`, { method: "DELETE" });
+      }
+    }
+  }
+
   setLastBackup(new Date().toISOString());
 }
 
 export async function downloadBackup<T = unknown>(): Promise<T | null> {
   const folderId = await ensureFolder();
-  const fileId = await findBackupFile(folderId);
-  if (!fileId) return null;
-  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  const file = await findBackupFile(folderId);
+  if (!file) return null;
+  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`);
   if (!res.ok) throw new Error(await readError(res, "Téléchargement échoué"));
-  return (await res.json()) as T;
+  const buf = await res.arrayBuffer();
+  const text = await maybeGunzip(buf);
+  return JSON.parse(text) as T;
 }
