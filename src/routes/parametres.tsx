@@ -171,6 +171,34 @@ function ParametresPage() {
           L'application n'a accès qu'aux fichiers qu'elle crée elle-même (scope <code>drive.file</code>) — elle ne peut pas lire le reste de votre Drive.
         </p>
       </section>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <Wand2 className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Réduire la taille de la sauvegarde</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Les sauvegardes envoyées sur Drive sont déjà <strong>compressées en gzip</strong> et les photos sont <strong>recompressées automatiquement</strong> (max 1280 px, JPEG 70 %) pendant l'export — sans toucher à vos fichiers locaux.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Pour libérer aussi de l'espace sur votre téléphone, vous pouvez recompresser les photos directement dans la base locale.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <Button variant="outline" onClick={doOptimize} disabled={busy !== null}>
+            <Wand2 className="mr-2 h-4 w-4" />
+            {busy === "optim" ? "Optimisation…" : "Optimiser les photos locales"}
+          </Button>
+        </div>
+        <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+          <li>Compression gzip de la sauvegarde → généralement <strong>−60 à −80 %</strong> sur les métadonnées et le JSON.</li>
+          <li>Redimensionnement des photos à 1280 px et qualité JPEG 70 % → souvent <strong>−70 à −90 %</strong> sur le poids des images.</li>
+          <li>Évitez de stocker plusieurs photos quasi identiques par arbre — gardez les meilleures.</li>
+        </ul>
+      </section>
     </AppShell>
   );
 }
