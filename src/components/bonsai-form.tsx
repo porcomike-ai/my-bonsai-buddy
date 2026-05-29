@@ -65,13 +65,14 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
     },
   });
 
+  const especesList = useMemo(() => getAllEspeces(), []);
+
   const toggleEspeceLang = () => {
     const next = especeLang === "latin" ? "fr" : "latin";
     setEspeceLang(next);
     if (typeof window !== "undefined") localStorage.setItem("bonsai.espece.lang", next);
-    // Si la valeur actuelle correspond à une espèce connue, on bascule l'affichage
     const current = form.getValues("espece").trim();
-    const match = ESPECES.find((e) => e.latin === current || e.fr === current);
+    const match = especesList.find((e) => e.latin === current || e.fr === current);
     if (match) form.setValue("espece", next === "latin" ? match.latin : match.fr);
   };
 
