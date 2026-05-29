@@ -84,6 +84,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   const submit = form.handleSubmit(async (values) => {
     const id = initial?.id ?? uid();
     let photoId = initial?.photoPrincipale;
+    addCustomEspece(values.espece);
 
     if (file) {
       const blob = await fileToBlob(file);
