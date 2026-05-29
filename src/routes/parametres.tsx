@@ -79,6 +79,19 @@ function ParametresPage() {
     } finally { setBusy(null); }
   };
 
+  const doOptimize = async () => {
+    if (!confirm("Recompresser toutes les photos en local (max 1280 px, JPEG qualité 70 %) ? Les fichiers d'origine ne pourront pas être restaurés.")) return;
+    setBusy("optim");
+    try {
+      const { count, saved } = await optimizeStoredImages();
+      await qc.invalidateQueries();
+      const mb = (saved / 1024 / 1024).toFixed(2);
+      toast.success(count > 0 ? `${count} photo(s) optimisée(s) — ${mb} Mo économisés` : "Aucune photo n'a pu être réduite davantage");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally { setBusy(null); }
+  };
+
   return (
     <AppShell>
       <h1 className="font-display text-4xl font-semibold">Paramètres</h1>
