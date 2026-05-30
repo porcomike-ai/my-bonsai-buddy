@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings } from "lucide-react";
+import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings, BarChart3 } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { startNotificationScheduler } from "@/lib/notifications";
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/poteries", label: "Poteries", icon: Container },
   { to: "/calendrier", label: "Calendrier", icon: Calendar },
   { to: "/journal", label: "Journal", icon: BookOpen },
+  { to: "/statistiques", label: "Statistiques", icon: BarChart3 },
   { to: "/parametres", label: "Paramètres", icon: Settings },
 ] as const;
 

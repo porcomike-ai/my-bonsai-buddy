@@ -11,11 +11,14 @@ export type BonsaiStyle =
   | "ishitsuki"
   | "autre";
 
+export type BonsaiEtape = "culture" | "pre-bonsai" | "bonsai";
+
 export interface Bonsai {
   id: string;
   nom: string;
   espece: string;
   style: BonsaiStyle;
+  etape?: BonsaiEtape;
   ageEstime?: number;
   dateAcquisition?: string;
   origine?: string;

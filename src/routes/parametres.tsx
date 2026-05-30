@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   getClientId, setClientId, connect, disconnect, isConnected,
-  uploadBackup, downloadBackup, getLastBackup,
+  syncBackup, restoreFromDrive, getLastBackup,
 } from "@/lib/google-drive";
-import { buildBackup, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
+import { buildSnapshot, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
 import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -56,10 +56,12 @@ function ParametresPage() {
   const doBackup = async () => {
     setBusy("save");
     try {
-      const payload = await buildBackup();
-      await uploadBackup(payload);
+      const snap = await buildSnapshot();
+      const stats = await syncBackup(snap);
       setLast(getLastBackup());
-      toast.success("Sauvegarde envoyée sur Google Drive");
+      toast.success(
+        `Sauvegarde envoyée — ${stats.uploaded} photo(s) envoyée(s), ${stats.skipped} inchangée(s)${stats.deleted ? `, ${stats.deleted} supprimée(s)` : ""}.`,
+      );
     } catch (e) {
       toast.error((e as Error).message);
     } finally { setBusy(null); }
@@ -69,11 +71,18 @@ function ParametresPage() {
     if (!confirm("Restaurer remplacera toutes les données locales par celles de la sauvegarde. Continuer ?")) return;
     setBusy("load");
     try {
-      const payload = await downloadBackup<BackupPayload>();
-      if (!payload) { toast.error("Aucune sauvegarde trouvée"); return; }
-      await restoreBackup(payload);
-      await qc.invalidateQueries();
-      toast.success(`Restauration : ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s)`);
+      const r = await restoreFromDrive();
+      if (!r) { toast.error("Aucune sauvegarde trouvée"); return; }
+      if ("legacy" in r) {
+        await restoreBackup(r.payload as BackupPayload);
+        await qc.invalidateQueries();
+        toast.success("Sauvegarde (ancien format) restaurée");
+      } else {
+        await qc.invalidateQueries();
+        toast.success(
+          `Restauration : ${r.manifest.bonsais.length} arbre(s), ${r.manifest.photos.length} photo(s)`,
+        );
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally { setBusy(null); }
@@ -194,8 +203,10 @@ function ParametresPage() {
           </Button>
         </div>
         <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-          <li>Compression gzip de la sauvegarde → généralement <strong>−60 à −80 %</strong> sur les métadonnées et le JSON.</li>
-          <li>Redimensionnement des photos à 1280 px et qualité JPEG 70 % → souvent <strong>−70 à −90 %</strong> sur le poids des images.</li>
+          <li>Sauvegardes <strong>incrémentales</strong> : seules les photos nouvelles ou modifiées sont ré-envoyées (empreinte SHA-256).</li>
+          <li>Chaque photo est stockée en <strong>binaire séparé</strong> sur Drive — pas d'encodage base64 (~ −33 % par rapport au format précédent).</li>
+          <li>Manifest JSON gzippé → <strong>−60 à −80 %</strong> sur les métadonnées.</li>
+          <li>Redimensionnement à 1280 px, qualité JPEG 70 % → <strong>−70 à −90 %</strong> sur le poids des images.</li>
           <li>Évitez de stocker plusieurs photos quasi identiques par arbre — gardez les meilleures.</li>
         </ul>
       </section>

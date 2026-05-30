@@ -1,11 +1,24 @@
 // Synchronisation Google Drive (per-user OAuth via Google Identity Services).
-// Utilise le scope `drive.file` : l'application ne voit QUE les fichiers
-// qu'elle a créés (dossier "Bonsaï Studio" et la sauvegarde).
+// Scope `drive.file` : l'app ne voit que les fichiers qu'elle a créés.
+//
+// Format v2 :
+//   - chaque photo est stockée en BINAIRE séparé (pas d'encodage base64)
+//   - un manifest JSON gzippé (`bonsai-studio-manifest.json.gz`) référence
+//     toutes les photos par leur ID Drive + empreinte SHA-256
+//   - sauvegardes incrémentales : on ne ré-uploade que les photos modifiées,
+//     on supprime les photos retirées en local, et on patche le manifest.
+
+import type {
+  LocalSnapshot,
+  DriveManifest,
+  ManifestPhotoEntry,
+  ManifestPoteriePhoto,
+} from "./backup";
 
 const SCOPE = "https://www.googleapis.com/auth/drive.file";
 const FOLDER_NAME = "Bonsaï Studio";
-const BACKUP_NAME = "bonsai-studio-backup.json.gz";
-const LEGACY_BACKUP_NAME = "bonsai-studio-backup.json";
+const MANIFEST_NAME = "bonsai-studio-manifest.json.gz";
+const LEGACY_BACKUP_NAMES = ["bonsai-studio-backup.json.gz", "bonsai-studio-backup.json"];
 const LS_CLIENT_ID = "bonsai.gdrive.clientId";
 const LS_TOKEN = "bonsai.gdrive.token";
 const LS_LAST_BACKUP = "bonsai.gdrive.lastBackup";
@@ -15,7 +28,6 @@ interface TokenClient {
   requestAccessToken: (overrides?: { prompt?: string }) => void;
   callback: (resp: { access_token?: string; error?: string; expires_in?: number }) => void;
 }
-
 declare global {
   interface Window {
     google?: {
@@ -146,14 +158,9 @@ async function verifyFolder(id: string): Promise<boolean> {
 }
 
 async function ensureFolder(): Promise<string> {
-  // Tentative 1 : utiliser l'ID en cache (évite la recherche qui peut échouer en 403)
   const cached = localStorage.getItem(LS_FOLDER_ID);
   if (cached && await verifyFolder(cached)) return cached;
-
-  // Tentative 2 : recherche par nom
-  const q = encodeURIComponent(
-    `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-  );
+  const q = encodeURIComponent(`name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
   const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
   if (res.ok) {
     const data = await res.json() as { files: { id: string }[] };
@@ -162,11 +169,8 @@ async function ensureFolder(): Promise<string> {
       return data.files[0].id;
     }
   } else if (res.status !== 404) {
-    // 403 = API non activée ou permission — surface message clair
     throw new Error(await readError(res, "Recherche du dossier échouée"));
   }
-
-  // Tentative 3 : créer le dossier
   const create = await authedFetch("https://www.googleapis.com/drive/v3/files", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -178,31 +182,22 @@ async function ensureFolder(): Promise<string> {
   return folder.id;
 }
 
-async function findBackupFile(folderId: string): Promise<{ id: string; name: string } | null> {
-  const names = [BACKUP_NAME, LEGACY_BACKUP_NAME];
-  for (const name of names) {
-    const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
-    const res = await authedFetch(
-      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)&spaces=drive`,
-    );
-    if (!res.ok) continue;
-    const data = await res.json() as { files: { id: string; name: string }[] };
-    if (data.files[0]) return { id: data.files[0].id, name: data.files[0].name };
-  }
-  return null;
+async function findInFolder(folderId: string, name: string): Promise<{ id: string } | null> {
+  const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
+  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+  if (!res.ok) return null;
+  const data = await res.json() as { files: { id: string }[] };
+  return data.files[0] ?? null;
 }
 
 async function gzipString(json: string): Promise<Blob> {
   const enc = new TextEncoder().encode(json);
-  // CompressionStream est largement supporté (Chrome/Edge/Firefox/Safari récents).
   if (typeof CompressionStream !== "undefined") {
     const stream = new Response(new Blob([enc])).body!.pipeThrough(new CompressionStream("gzip"));
     return await new Response(stream).blob();
   }
-  // Fallback : pas de compression, on téléverse en JSON brut.
   return new Blob([enc], { type: "application/json" });
 }
-
 async function maybeGunzip(buf: ArrayBuffer): Promise<string> {
   const bytes = new Uint8Array(buf);
   const isGzip = bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
@@ -213,63 +208,216 @@ async function maybeGunzip(buf: ArrayBuffer): Promise<string> {
   return new TextDecoder().decode(bytes);
 }
 
-export async function uploadBackup(payload: unknown): Promise<void> {
-  const folderId = await ensureFolder();
-  const existing = await findBackupFile(folderId);
-  const json = JSON.stringify(payload);
-  const gz = await gzipString(json);
-  const contentType = gz.type === "application/json" ? "application/json" : "application/gzip";
+// ============================================================================
+//  Upload binaire simple (Drive multipart : metadata + media)
+// ============================================================================
 
-  // Construit un body multipart binaire (Blob) pour préserver les octets gzip.
+async function uploadBinary(
+  folderId: string,
+  name: string,
+  blob: Blob,
+  existingId?: string,
+): Promise<string> {
   const boundary = "-------bonsai" + Math.random().toString(36).slice(2);
-  const metadata = existing
-    ? { name: BACKUP_NAME }
-    : { name: BACKUP_NAME, parents: [folderId] };
+  const metadata = existingId ? { name } : { name, parents: [folderId] };
   const head =
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
-    `--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`;
+    `--${boundary}\r\nContent-Type: ${blob.type || "application/octet-stream"}\r\n\r\n`;
   const tail = `\r\n--${boundary}--`;
-  const body = new Blob([head, gz, tail], { type: `multipart/related; boundary=${boundary}` });
-
-  const url = existing
-    ? `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=multipart`
-    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+  const body = new Blob([head, blob, tail], { type: `multipart/related; boundary=${boundary}` });
+  const url = existingId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart&fields=id`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`;
   const res = await authedFetch(url, {
-    method: existing ? "PATCH" : "POST",
+    method: existingId ? "PATCH" : "POST",
     headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
     body,
   });
-  if (!res.ok) throw new Error(await readError(res, "Envoi de la sauvegarde échoué"));
-
-  // Si on a écrit un nouveau .json.gz mais que l'ancien .json traîne encore, on le supprime.
-  if (existing && existing.name === LEGACY_BACKUP_NAME) {
-    // L'upload a écrasé le legacy ; on renomme déjà via le metadata. Rien à faire.
-  } else if (!existing) {
-    // Supprime un éventuel ancien fichier JSON non-gzippé pour libérer de l'espace.
-    const legacyQ = encodeURIComponent(
-      `name='${LEGACY_BACKUP_NAME}' and '${folderId}' in parents and trashed=false`,
-    );
-    const legacyRes = await authedFetch(
-      `https://www.googleapis.com/drive/v3/files?q=${legacyQ}&fields=files(id)&spaces=drive`,
-    );
-    if (legacyRes.ok) {
-      const data = await legacyRes.json() as { files: { id: string }[] };
-      if (data.files[0]) {
-        await authedFetch(`https://www.googleapis.com/drive/v3/files/${data.files[0].id}`, { method: "DELETE" });
-      }
+  if (!res.ok) {
+    if (existingId && res.status === 404) {
+      // L'ID en cache est mort — on retombe sur un POST.
+      return uploadBinary(folderId, name, blob);
     }
+    throw new Error(await readError(res, "Envoi d'un fichier échoué"));
+  }
+  const data = await res.json() as { id: string };
+  return data.id;
+}
+
+async function downloadBinary(fileId: string): Promise<Blob> {
+  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  if (!res.ok) throw new Error(await readError(res, "Téléchargement d'une photo échoué"));
+  return await res.blob();
+}
+
+async function deleteDriveFile(fileId: string): Promise<void> {
+  await authedFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: "DELETE" });
+}
+
+async function fetchManifest(folderId: string): Promise<DriveManifest | null> {
+  const file = await findInFolder(folderId, MANIFEST_NAME);
+  if (!file) return null;
+  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`);
+  if (!res.ok) return null;
+  const text = await maybeGunzip(await res.arrayBuffer());
+  try {
+    return JSON.parse(text) as DriveManifest;
+  } catch {
+    return null;
+  }
+}
+
+async function uploadManifest(folderId: string, manifest: DriveManifest): Promise<void> {
+  const existing = await findInFolder(folderId, MANIFEST_NAME);
+  const gz = await gzipString(JSON.stringify(manifest));
+  const blob = new Blob([gz], { type: gz.type === "application/json" ? "application/json" : "application/gzip" });
+  await uploadBinary(folderId, MANIFEST_NAME, blob, existing?.id);
+}
+
+// ============================================================================
+//  Synchronisation incrémentale
+// ============================================================================
+
+export interface SyncStats {
+  uploaded: number;
+  skipped: number;
+  deleted: number;
+  bytesUploaded: number;
+}
+
+export async function syncBackup(
+  snapshot: LocalSnapshot,
+  onProgress?: (msg: string, current: number, total: number) => void,
+): Promise<SyncStats> {
+  const folderId = await ensureFolder();
+  const prev = await fetchManifest(folderId);
+
+  const prevPhotos = new Map<string, ManifestPhotoEntry>();
+  prev?.photos?.forEach((p) => prevPhotos.set(p.id, p));
+  const prevPoterie = new Map<string, ManifestPoteriePhoto>();
+  prev?.poteriePhotos?.forEach((p) => prevPoterie.set(p.poterieId, p));
+
+  const stats: SyncStats = { uploaded: 0, skipped: 0, deleted: 0, bytesUploaded: 0 };
+  const photoEntries: ManifestPhotoEntry[] = [];
+  const poterieEntries: ManifestPoteriePhoto[] = [];
+
+  const total = snapshot.photos.length + snapshot.poteriePhotos.length;
+  let done = 0;
+
+  for (const ph of snapshot.photos) {
+    const prevEntry = prevPhotos.get(ph.id);
+    let driveFileId: string;
+    if (prevEntry && prevEntry.hash === ph.hash) {
+      driveFileId = prevEntry.driveFileId;
+      stats.skipped++;
+    } else {
+      onProgress?.(`Envoi photo ${ph.id.slice(0, 6)}…`, done, total);
+      driveFileId = await uploadBinary(
+        folderId,
+        `photo-${ph.id}.jpg`,
+        ph.blob,
+        prevEntry?.driveFileId,
+      );
+      stats.uploaded++;
+      stats.bytesUploaded += ph.blob.size;
+    }
+    photoEntries.push({
+      id: ph.id,
+      bonsaiId: ph.bonsaiId,
+      date: ph.date,
+      legende: ph.legende,
+      hash: ph.hash,
+      mime: ph.blob.type || "image/jpeg",
+      size: ph.blob.size,
+      driveFileId,
+    });
+    prevPhotos.delete(ph.id);
+    onProgress?.("", ++done, total);
+  }
+
+  for (const pp of snapshot.poteriePhotos) {
+    const prevEntry = prevPoterie.get(pp.poterieId);
+    let driveFileId: string;
+    if (prevEntry && prevEntry.hash === pp.hash) {
+      driveFileId = prevEntry.driveFileId;
+      stats.skipped++;
+    } else {
+      onProgress?.(`Envoi photo poterie ${pp.poterieId.slice(0, 6)}…`, done, total);
+      driveFileId = await uploadBinary(
+        folderId,
+        `poterie-${pp.poterieId}.jpg`,
+        pp.blob,
+        prevEntry?.driveFileId,
+      );
+      stats.uploaded++;
+      stats.bytesUploaded += pp.blob.size;
+    }
+    poterieEntries.push({
+      poterieId: pp.poterieId,
+      hash: pp.hash,
+      mime: pp.blob.type || "image/jpeg",
+      size: pp.blob.size,
+      driveFileId,
+    });
+    prevPoterie.delete(pp.poterieId);
+    onProgress?.("", ++done, total);
+  }
+
+  // Supprime les fichiers Drive devenus orphelins
+  for (const orphan of prevPhotos.values()) {
+    try { await deleteDriveFile(orphan.driveFileId); stats.deleted++; } catch { /* ignore */ }
+  }
+  for (const orphan of prevPoterie.values()) {
+    try { await deleteDriveFile(orphan.driveFileId); stats.deleted++; } catch { /* ignore */ }
+  }
+
+  const manifest: DriveManifest = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    bonsais: snapshot.bonsais,
+    poteries: snapshot.poteries,
+    journal: snapshot.journal,
+    rappels: snapshot.rappels,
+    evenements: snapshot.evenements,
+    photos: photoEntries,
+    poteriePhotos: poterieEntries,
+  };
+  onProgress?.("Envoi du manifest…", done, total);
+  await uploadManifest(folderId, manifest);
+
+  // Nettoyage : supprime d'éventuelles anciennes sauvegardes v1 monolithiques.
+  for (const legacy of LEGACY_BACKUP_NAMES) {
+    const f = await findInFolder(folderId, legacy);
+    if (f) { try { await deleteDriveFile(f.id); } catch { /* ignore */ } }
   }
 
   setLastBackup(new Date().toISOString());
+  return stats;
 }
 
-export async function downloadBackup<T = unknown>(): Promise<T | null> {
+export interface RestoreResult {
+  manifest: DriveManifest;
+  photosDownloaded: number;
+}
+
+export async function restoreFromDrive(
+  onProgress?: (current: number, total: number) => void,
+): Promise<RestoreResult | { legacy: true; payload: unknown } | null> {
   const folderId = await ensureFolder();
-  const file = await findBackupFile(folderId);
-  if (!file) return null;
-  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`);
-  if (!res.ok) throw new Error(await readError(res, "Téléchargement échoué"));
-  const buf = await res.arrayBuffer();
-  const text = await maybeGunzip(buf);
-  return JSON.parse(text) as T;
+  const manifest = await fetchManifest(folderId);
+  if (manifest) {
+    const { applyManifest } = await import("./backup");
+    await applyManifest(manifest, downloadBinary, onProgress);
+    return { manifest, photosDownloaded: manifest.photos.length + manifest.poteriePhotos.length };
+  }
+  // Fallback : ancienne sauvegarde v1 monolithique
+  for (const legacy of LEGACY_BACKUP_NAMES) {
+    const file = await findInFolder(folderId, legacy);
+    if (!file) continue;
+    const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`);
+    if (!res.ok) continue;
+    const text = await maybeGunzip(await res.arrayBuffer());
+    return { legacy: true, payload: JSON.parse(text) };
+  }
+  return null;
 }

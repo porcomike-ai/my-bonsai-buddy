@@ -6,10 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
-  saveBonsai, savePhoto, uid, listPoteries, type Bonsai, type BonsaiStyle,
+  saveBonsai, savePhoto, uid, listPoteries, type Bonsai, type BonsaiStyle, type BonsaiEtape,
 } from "@/lib/db";
 import { fileToBlob } from "@/lib/blob-url";
-import { STYLES, getAllEspeces, addCustomEspece } from "@/lib/bonsai-meta";
+import { STYLES, ETAPES, getAllEspeces, addCustomEspece } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ const schema = z.object({
   style: z.enum([
     "chokkan", "moyogi", "shakan", "kengai", "han-kengai", "bunjin", "yose-ue", "ishitsuki", "autre",
   ]),
+  etape: z.enum(["culture", "pre-bonsai", "bonsai"]),
   ageEstime: z.string().optional(),
   hauteurCm: z.string().optional(),
   prixAchat: z.string().optional(),
@@ -53,6 +54,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       nom: initial?.nom ?? "",
       espece: initial?.espece ?? "",
       style: initial?.style ?? "moyogi",
+      etape: initial?.etape ?? "culture",
       ageEstime: initial?.ageEstime != null ? String(initial.ageEstime) : "",
       hauteurCm: initial?.hauteurCm != null ? String(initial.hauteurCm) : "",
       prixAchat: initial?.prixAchat != null ? String(initial.prixAchat) : "",
@@ -103,6 +105,7 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
       nom: values.nom.trim(),
       espece: values.espece.trim(),
       style: values.style as BonsaiStyle,
+      etape: values.etape as BonsaiEtape,
       ageEstime: values.ageEstime ? Number(values.ageEstime) : undefined,
       hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : undefined,
       prixAchat: values.prixAchat ? Number(values.prixAchat) : undefined,
@@ -183,6 +186,14 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
               {STYLES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </Field>
+          <Field label="Étape">
+            <select
+              {...form.register("etape")}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              {ETAPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </Field>
           <Field label="Poterie associée">

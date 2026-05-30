@@ -10,7 +10,7 @@ import { fileToBlob, useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { BonsaiForm } from "@/components/bonsai-form";
-import { SOINS, soinEmoji, soinLabel, styleLabel } from "@/lib/bonsai-meta";
+import { SOINS, soinEmoji, soinLabel, styleLabel, etapeLabel } from "@/lib/bonsai-meta";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,6 +114,7 @@ function BonsaiDetail() {
           <p className="mt-1 text-lg italic text-muted-foreground">{b.espece}</p>
 
           <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <Stat label="Étape" value={etapeLabel(b.etape)} />
             {b.ageEstime != null && <Stat label="Âge" value={`${b.ageEstime} ans`} />}
             {b.hauteurCm != null && <Stat label="Hauteur" value={`${b.hauteurCm} cm`} />}
             {b.dateAcquisition && <Stat label="Acquis le" value={format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })} />}

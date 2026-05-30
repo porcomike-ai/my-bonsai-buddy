@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatistiquesRouteImport } from './routes/statistiques'
 import { Route as PoteriesRouteImport } from './routes/poteries'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -19,6 +20,11 @@ import { Route as PoterieIdRouteImport } from './routes/poterie.$id'
 import { Route as BonsaiNouveauRouteImport } from './routes/bonsai.nouveau'
 import { Route as BonsaiIdRouteImport } from './routes/bonsai.$id'
 
+const StatistiquesRoute = StatistiquesRouteImport.update({
+  id: '/statistiques',
+  path: '/statistiques',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PoteriesRoute = PoteriesRouteImport.update({
   id: '/poteries',
   path: '/poteries',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
+  '/statistiques': typeof StatistiquesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
   '/poterie/$id': typeof PoterieIdRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
+  '/statistiques': typeof StatistiquesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
   '/poterie/$id': typeof PoterieIdRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
+  '/statistiques': typeof StatistiquesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
   '/poterie/$id': typeof PoterieIdRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/parametres'
     | '/poteries'
+    | '/statistiques'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
     | '/poterie/$id'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/parametres'
     | '/poteries'
+    | '/statistiques'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
     | '/poterie/$id'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/parametres'
     | '/poteries'
+    | '/statistiques'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
     | '/poterie/$id'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRoute
   ParametresRoute: typeof ParametresRoute
   PoteriesRoute: typeof PoteriesRoute
+  StatistiquesRoute: typeof StatistiquesRoute
   BonsaiIdRoute: typeof BonsaiIdRoute
   BonsaiNouveauRoute: typeof BonsaiNouveauRoute
   PoterieIdRoute: typeof PoterieIdRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/statistiques': {
+      id: '/statistiques'
+      path: '/statistiques'
+      fullPath: '/statistiques'
+      preLoaderRoute: typeof StatistiquesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/poteries': {
       id: '/poteries'
       path: '/poteries'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRoute,
   ParametresRoute: ParametresRoute,
   PoteriesRoute: PoteriesRoute,
+  StatistiquesRoute: StatistiquesRoute,
   BonsaiIdRoute: BonsaiIdRoute,
   BonsaiNouveauRoute: BonsaiNouveauRoute,
   PoterieIdRoute: PoterieIdRoute,
