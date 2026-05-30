@@ -1,4 +1,4 @@
-import type { BonsaiStyle, SoinType } from "./db";
+import type { BonsaiStyle, SoinType, BonsaiEtape } from "./db";
 
 export const STYLES: { value: BonsaiStyle; label: string }[] = [
   { value: "chokkan", label: "Chokkan — droit formel" },
@@ -11,6 +11,17 @@ export const STYLES: { value: BonsaiStyle; label: string }[] = [
   { value: "ishitsuki", label: "Ishitsuki — sur roche" },
   { value: "autre", label: "Autre" },
 ];
+
+export const ETAPES: { value: BonsaiEtape; label: string; short: string }[] = [
+  { value: "culture", label: "En culture", short: "Culture" },
+  { value: "pre-bonsai", label: "Pré-bonsaï", short: "Pré-bonsaï" },
+  { value: "bonsai", label: "Bonsaï", short: "Bonsaï" },
+];
+
+export function etapeLabel(e?: BonsaiEtape) {
+  if (!e) return "Non renseigné";
+  return ETAPES.find((x) => x.value === e)?.label ?? e;
+}
 
 export const SOINS: { value: SoinType; label: string; emoji: string }[] = [
   { value: "arrosage", label: "Arrosage", emoji: "💧" },
