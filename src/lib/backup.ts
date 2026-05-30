@@ -1,4 +1,24 @@
-import { getDB, type Bonsai, type Photo, type Poterie, type JournalEntry, type Rappel, type Evenement } from "./db";
+import {
+  getDB,
+  type Bonsai,
+  type Photo,
+  type Poterie,
+  type JournalEntry,
+  type Rappel,
+  type Evenement,
+} from "./db";
+
+// ============================================================================
+//  Formats de sauvegarde
+// ============================================================================
+//
+//  v1 (legacy) : un seul JSON gzippé contenant TOUTES les photos en base64.
+//      → +33 % de surcoût (encodage), tout est ré-uploadé à chaque sauvegarde.
+//
+//  v2 (actuel) : un manifest JSON gzippé + chaque photo stockée en BINAIRE
+//      séparé sur Drive. Les sauvegardes ultérieures comparent les empreintes
+//      SHA-256 et ne ré-uploadent que les photos modifiées ou nouvelles.
+// ============================================================================
 
 export interface BackupPayload {
   version: 1;
@@ -9,6 +29,75 @@ export interface BackupPayload {
   journal: JournalEntry[];
   rappels: Rappel[];
   evenements?: Evenement[];
+}
+
+// --- v2 ---
+
+export interface ManifestPhotoEntry {
+  id: string;
+  bonsaiId: string;
+  date: string;
+  legende?: string;
+  hash: string;
+  mime: string;
+  size: number;
+  driveFileId: string;
+}
+
+export interface ManifestPoteriePhoto {
+  poterieId: string;
+  hash: string;
+  mime: string;
+  size: number;
+  driveFileId: string;
+}
+
+export interface DriveManifest {
+  version: 2;
+  exportedAt: string;
+  bonsais: Bonsai[];
+  poteries: Array<Omit<Poterie, "photoBlob">>;
+  journal: JournalEntry[];
+  rappels: Rappel[];
+  evenements: Evenement[];
+  photos: ManifestPhotoEntry[];
+  poteriePhotos: ManifestPoteriePhoto[];
+}
+
+export interface LocalPhoto {
+  id: string;
+  bonsaiId: string;
+  date: string;
+  legende?: string;
+  blob: Blob;
+  hash: string;
+}
+export interface LocalPoteriePhoto {
+  poterieId: string;
+  blob: Blob;
+  hash: string;
+}
+
+export interface LocalSnapshot {
+  bonsais: Bonsai[];
+  poteries: Array<Omit<Poterie, "photoBlob">>;
+  journal: JournalEntry[];
+  rappels: Rappel[];
+  evenements: Evenement[];
+  photos: LocalPhoto[];
+  poteriePhotos: LocalPoteriePhoto[];
+}
+
+// ============================================================================
+//  Utilitaires
+// ============================================================================
+
+async function sha256Hex(blob: Blob): Promise<string> {
+  const buf = await blob.arrayBuffer();
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
@@ -75,16 +164,17 @@ export async function recompressImage(
   }
 }
 
-export interface BuildBackupOptions {
-  /** Recompresse les photos pour réduire la taille (par défaut : true). */
+// ============================================================================
+//  Construction d'un snapshot local (v2)
+// ============================================================================
+
+export interface BuildSnapshotOptions {
   recompress?: boolean;
-  /** Taille max sur le grand côté pour les photos recompressées. */
   maxSide?: number;
-  /** Qualité JPEG (0-1). */
   quality?: number;
 }
 
-export async function buildBackup(opts: BuildBackupOptions = {}): Promise<BackupPayload> {
+export async function buildSnapshot(opts: BuildSnapshotOptions = {}): Promise<LocalSnapshot> {
   const { recompress = true, maxSide = 1280, quality = 0.7 } = opts;
   const db = await getDB();
   const [bonsais, poteries, photos, journal, rappels, evenements] = await Promise.all([
@@ -98,15 +188,112 @@ export async function buildBackup(opts: BuildBackupOptions = {}): Promise<Backup
 
   const prep = async (b: Blob) => (recompress ? await recompressImage(b, maxSide, quality) : b);
 
+  const photosLocal: LocalPhoto[] = await Promise.all(
+    photos.map(async (p) => {
+      const blob = await prep(p.blob);
+      const hash = await sha256Hex(blob);
+      return { id: p.id, bonsaiId: p.bonsaiId, date: p.date, legende: p.legende, blob, hash };
+    }),
+  );
+
+  const poteriesMeta: Array<Omit<Poterie, "photoBlob">> = poteries.map((p) => {
+    const { photoBlob: _drop, ...rest } = p;
+    return rest;
+  });
+
+  const poteriePhotos: LocalPoteriePhoto[] = [];
+  for (const p of poteries) {
+    if (!p.photoBlob) continue;
+    const blob = await prep(p.photoBlob);
+    const hash = await sha256Hex(blob);
+    poteriePhotos.push({ poterieId: p.id, blob, hash });
+  }
+
+  return { bonsais, poteries: poteriesMeta, journal, rappels, evenements, photos: photosLocal, poteriePhotos };
+}
+
+// ============================================================================
+//  Application d'un manifest (v2) — restauration via callback de téléchargement
+// ============================================================================
+
+export async function applyManifest(
+  manifest: DriveManifest,
+  fetchBinary: (driveFileId: string) => Promise<Blob>,
+  onProgress?: (done: number, total: number) => void,
+): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(
+    ["bonsais", "poteries", "photos", "journal", "rappels", "evenements"],
+    "readwrite",
+  );
+  await Promise.all([
+    tx.objectStore("bonsais").clear(),
+    tx.objectStore("poteries").clear(),
+    tx.objectStore("photos").clear(),
+    tx.objectStore("journal").clear(),
+    tx.objectStore("rappels").clear(),
+    tx.objectStore("evenements").clear(),
+  ]);
+  for (const b of manifest.bonsais) await tx.objectStore("bonsais").put(b);
+  for (const p of manifest.poteries) await tx.objectStore("poteries").put(p as Poterie);
+  for (const j of manifest.journal) await tx.objectStore("journal").put(j);
+  for (const r of manifest.rappels) await tx.objectStore("rappels").put(r);
+  for (const e of manifest.evenements ?? []) await tx.objectStore("evenements").put(e);
+  await tx.done;
+
+  const total = manifest.photos.length + manifest.poteriePhotos.length;
+  let done = 0;
+
+  for (const ph of manifest.photos) {
+    const blob = await fetchBinary(ph.driveFileId);
+    await db.put("photos", {
+      id: ph.id,
+      bonsaiId: ph.bonsaiId,
+      date: ph.date,
+      legende: ph.legende,
+      blob: blob.type ? blob : new Blob([blob], { type: ph.mime }),
+    });
+    onProgress?.(++done, total);
+  }
+
+  for (const pp of manifest.poteriePhotos) {
+    const blob = await fetchBinary(pp.driveFileId);
+    const existing = await db.get("poteries", pp.poterieId);
+    if (existing) {
+      await db.put("poteries", {
+        ...existing,
+        photoBlob: blob.type ? blob : new Blob([blob], { type: pp.mime }),
+      });
+    }
+    onProgress?.(++done, total);
+  }
+}
+
+// ============================================================================
+//  Legacy v1 — utilisé uniquement pour restaurer d'anciennes sauvegardes
+// ============================================================================
+
+export async function buildBackup(opts: BuildSnapshotOptions = {}): Promise<BackupPayload> {
+  // Conservé pour compat — non utilisé par le flux Drive depuis v2.
+  const { recompress = true, maxSide = 1280, quality = 0.7 } = opts;
+  const db = await getDB();
+  const [bonsais, poteries, photos, journal, rappels, evenements] = await Promise.all([
+    db.getAll("bonsais"),
+    db.getAll("poteries"),
+    db.getAll("photos"),
+    db.getAll("journal"),
+    db.getAll("rappels"),
+    db.getAll("evenements").catch(() => [] as Evenement[]),
+  ]);
+  const prep = async (b: Blob) => (recompress ? await recompressImage(b, maxSide, quality) : b);
   const photosEnc = await Promise.all(
     photos.map(async (p) => {
       const optimized = await prep(p.blob);
       const { data, type } = await blobToBase64(optimized);
-      const { blob, ...rest } = p;
+      const { blob: _b, ...rest } = p;
       return { ...rest, blobBase64: data, blobType: type };
     }),
   );
-
   const poteriesEnc = await Promise.all(
     poteries.map(async (p) => {
       const { photoBlob, ...rest } = p;
@@ -116,7 +303,6 @@ export async function buildBackup(opts: BuildBackupOptions = {}): Promise<Backup
       return { ...rest, photoBlobBase64: data, photoBlobType: type };
     }),
   );
-
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -143,14 +329,14 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   ]);
   for (const b of payload.bonsais) await tx.objectStore("bonsais").put(b);
   for (const p of payload.poteries) {
-    const { photoBlobBase64, photoBlobType, ...rest } = p as any;
+    const { photoBlobBase64, photoBlobType, ...rest } = p as { photoBlobBase64?: string; photoBlobType?: string } & Omit<Poterie, "photoBlob">;
     const obj: Poterie = photoBlobBase64
       ? { ...rest, photoBlob: base64ToBlob(photoBlobBase64, photoBlobType || "image/jpeg") }
       : rest;
     await tx.objectStore("poteries").put(obj);
   }
   for (const p of payload.photos) {
-    const { blobBase64, blobType, ...rest } = p as any;
+    const { blobBase64, blobType, ...rest } = p as { blobBase64: string; blobType: string } & Omit<Photo, "blob">;
     await tx.objectStore("photos").put({ ...rest, blob: base64ToBlob(blobBase64, blobType) });
   }
   for (const j of payload.journal) await tx.objectStore("journal").put(j);
@@ -159,10 +345,10 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   await tx.done;
 }
 
-/**
- * Optimise les photos déjà stockées localement (réduit la taille, ré-encode en JPEG).
- * Renvoie le nombre d'images modifiées et le total d'octets économisés.
- */
+// ============================================================================
+//  Optimisation des photos stockées localement
+// ============================================================================
+
 export async function optimizeStoredImages(
   maxSide = 1280,
   quality = 0.7,
@@ -172,7 +358,6 @@ export async function optimizeStoredImages(
   const poteries = await db.getAll("poteries");
   let count = 0;
   let saved = 0;
-
   for (const p of photos) {
     const before = p.blob.size;
     const after = await recompressImage(p.blob, maxSide, quality);
