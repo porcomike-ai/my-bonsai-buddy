@@ -139,23 +139,47 @@ export async function disconnect(): Promise<void> {
 
 async function readError(res: Response, fallback: string): Promise<string> {
   try {
-    const data = await res.clone().json() as { error?: { message?: string; status?: string; errors?: { reason?: string }[] } };
+    const data = await res.clone().json() as { error?: { message?: string; status?: string; errors?: { reason?: string; domain?: string }[] } };
     const msg = data.error?.message;
     const reason = data.error?.errors?.[0]?.reason;
     if (reason === "accessNotConfigured" || /Drive API has not been used/i.test(msg ?? "")) {
       return `Google Drive API non activée dans votre projet Google Cloud. Ouvrez « APIs & Services → Library », recherchez « Google Drive API » et cliquez sur « Activer », puis réessayez (${res.status}).`;
+    }
+    if (reason === "storageQuotaExceeded" || /quota/i.test(msg ?? "")) {
+      return `Espace Google Drive insuffisant — libérez de la place ou videz la corbeille puis réessayez (${res.status}).`;
+    }
+    if (res.status === 429 || reason === "rateLimitExceeded" || reason === "userRateLimitExceeded") {
+      return `Limite de débit Google Drive atteinte — patientez quelques secondes puis réessayez (${res.status}).`;
     }
     if (msg) return `${fallback} : ${msg} (${res.status})`;
   } catch { /* ignore */ }
   return `${fallback} (${res.status})`;
 }
 
+// Retry sur erreurs réseau / 5xx / 429 avec back-off exponentiel.
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status < 500 && res.status !== 429) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+    }
+    if (i < attempts - 1) {
+      await new Promise((r) => setTimeout(r, 400 * Math.pow(2, i) + Math.random() * 200));
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Échec réseau Google Drive");
+}
+
 async function authedFetch(url: string, init: RequestInit = {}): Promise<Response> {
   const tok = getStoredToken();
-  if (!tok) throw new Error("Non connecté à Google Drive");
+  if (!tok) throw new Error("Non connecté à Google Drive — reconnectez-vous depuis Paramètres");
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${tok.access_token}`);
-  const res = await fetch(url, { ...init, headers });
+  const res = await fetchWithRetry(url, { ...init, headers });
   if (res.status === 401) {
     clearToken();
     throw new Error("Session Google expirée — reconnectez-vous");
