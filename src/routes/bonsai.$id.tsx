@@ -236,7 +236,14 @@ function GalerieTab({
     await savePhoto({ ...p, legende: legende || undefined });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
-  const sorted = [...photos].sort((a, b) => b.date.localeCompare(a.date));
+  const updateDate = async (p: any, date: string) => {
+    await savePhoto({ ...p, date });
+    qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
+  };
+  const [sortDesc, setSortDesc] = useState(true);
+  const sorted = [...photos].sort((a, b) =>
+    sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date),
+  );
 
   return (
     <div>
@@ -264,38 +271,70 @@ function GalerieTab({
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucune photo pour l'instant. Documentez l'évolution de votre arbre.</p>
       ) : (
-        <ol className="space-y-6 border-l border-border pl-6">
-          {sorted.map((p) => (
-            <PhotoTimeline
-              key={p.id}
-              p={p}
-              isMain={p.id === mainId}
-              onSetMain={() => onSetMain(p.id)}
-              onDelete={() => remove(p.id)}
-              onLegende={(t) => updateLegende(p, t)}
-            />
-          ))}
-        </ol>
+        <>
+          <div className="mb-4 flex items-center justify-end">
+            <Button variant="outline" size="sm" onClick={() => setSortDesc((s) => !s)}>
+              Date : {sortDesc ? "plus récentes d'abord" : "plus anciennes d'abord"}
+            </Button>
+          </div>
+          <ol className="space-y-6 border-l border-border pl-6">
+            {sorted.map((p) => (
+              <PhotoTimeline
+                key={p.id}
+                p={p}
+                isMain={p.id === mainId}
+                onSetMain={() => onSetMain(p.id)}
+                onDelete={() => remove(p.id)}
+                onLegende={(t) => updateLegende(p, t)}
+                onDate={(d) => updateDate(p, d)}
+              />
+            ))}
+          </ol>
+        </>
       )}
     </div>
   );
 }
 
-function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende }: { p: any; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void> }) {
+function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { p: any; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void>; onDate: (d: string) => void | Promise<void> }) {
   const url = useBlobUrl(p.blob);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(p.legende ?? "");
+  const [editingDate, setEditingDate] = useState(false);
   const save = async () => {
     await onLegende(draft.trim());
     setEditing(false);
     toast.success("Commentaire enregistré");
   };
+  const saveDate = async (value: string) => {
+    if (!value) return;
+    const iso = new Date(value).toISOString();
+    await onDate(iso);
+    setEditingDate(false);
+    toast.success("Date mise à jour");
+  };
   return (
     <li className="relative">
       <span className="absolute -left-[31px] top-2 h-3 w-3 rounded-full bg-accent ring-4 ring-background" />
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">
-        {format(parseISO(p.date), "d MMMM yyyy", { locale: fr })}
-      </p>
+      {editingDate ? (
+        <div className="flex items-center gap-2">
+          <Input
+            type="date"
+            defaultValue={p.date.slice(0, 10)}
+            className="h-8 w-auto"
+            autoFocus
+            onBlur={(e) => saveDate(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") saveDate((e.target as HTMLInputElement).value); if (e.key === "Escape") setEditingDate(false); }}
+          />
+          <Button variant="ghost" size="sm" onClick={() => setEditingDate(false)}>Annuler</Button>
+        </div>
+      ) : (
+        <button onClick={() => setEditingDate(true)} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground" title="Modifier la date">
+          <CalendarIcon className="h-3 w-3" />
+          {format(parseISO(p.date), "d MMMM yyyy", { locale: fr })}
+        </button>
+      )}
+
       <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card">
         {url && <img src={url} alt={p.legende ?? ""} className="w-full max-w-md object-cover" />}
         <div className="space-y-2 p-3">
