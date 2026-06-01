@@ -336,7 +336,7 @@ function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { 
       )}
 
       <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card">
-        {url && <img src={url} alt={p.legende ?? ""} className="w-full max-w-md object-cover" />}
+        {url && <img src={url} alt={p.legende ?? ""} loading="lazy" decoding="async" className="w-full max-w-md object-cover" />}
         <div className="space-y-2 p-3">
           {editing ? (
             <div className="space-y-2">
