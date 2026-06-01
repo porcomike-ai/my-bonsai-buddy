@@ -232,11 +232,11 @@ function GalerieTab({
     await deletePhoto(pid);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
-  const updateLegende = async (p: any, legende: string) => {
+  const updateLegende = async (p: Photo, legende: string) => {
     await savePhoto({ ...p, legende: legende || undefined });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
-  const updateDate = async (p: any, date: string) => {
+  const updateDate = async (p: Photo, date: string) => {
     await savePhoto({ ...p, date });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
