@@ -25,7 +25,7 @@ function ParametresPage() {
   const [clientId, setClientIdState] = useState("");
   const [connected, setConnected] = useState(false);
   const [last, setLast] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | "save" | "load" | "optim">(null);
+  const [busy, setBusy] = useState<null | "save" | "load" | "optim" | "export" | "import">(null);
 
   useEffect(() => {
     setClientIdState(getClientId());
