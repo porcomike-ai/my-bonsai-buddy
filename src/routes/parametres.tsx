@@ -101,6 +101,57 @@ function ParametresPage() {
     } finally { setBusy(null); }
   };
 
+  const doLocalExport = async () => {
+    setBusy("export");
+    try {
+      const payload = await buildBackup();
+      const json = JSON.stringify(payload);
+      let blob: Blob;
+      if (typeof CompressionStream !== "undefined") {
+        const enc = new TextEncoder().encode(json);
+        const stream = new Response(new Blob([enc])).body!.pipeThrough(new CompressionStream("gzip"));
+        blob = await new Response(stream).blob();
+      } else {
+        blob = new Blob([json], { type: "application/json" });
+      }
+      const ext = blob.type.includes("gzip") || typeof CompressionStream !== "undefined" ? "json.gz" : "json";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Sauvegarde téléchargée");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally { setBusy(null); }
+  };
+
+  const doLocalImport = async (file: File) => {
+    if (!confirm("Importer ce fichier remplacera toutes les données locales. Continuer ?")) return;
+    setBusy("import");
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      const isGzip = bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+      let text: string;
+      if (isGzip && typeof DecompressionStream !== "undefined") {
+        const stream = new Response(new Blob([bytes])).body!.pipeThrough(new DecompressionStream("gzip"));
+        text = await new Response(stream).text();
+      } else {
+        text = new TextDecoder().decode(bytes);
+      }
+      const payload = JSON.parse(text) as BackupPayload;
+      await restoreBackup(payload);
+      await qc.invalidateQueries();
+      toast.success("Sauvegarde restaurée depuis le fichier");
+    } catch (e) {
+      toast.error("Fichier invalide : " + (e as Error).message);
+    } finally { setBusy(null); }
+  };
+
   return (
     <AppShell>
       <h1 className="font-display text-4xl font-semibold">Paramètres</h1>
