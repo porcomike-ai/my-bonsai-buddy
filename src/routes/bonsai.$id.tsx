@@ -296,7 +296,7 @@ function GalerieTab({
   );
 }
 
-function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { p: any; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void>; onDate: (d: string) => void | Promise<void> }) {
+function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { p: Photo; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void>; onDate: (d: string) => void | Promise<void> }) {
   const url = useBlobUrl(p.blob);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(p.legende ?? "");
