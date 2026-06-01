@@ -261,6 +261,43 @@ function ParametresPage() {
           <li>Évitez de stocker plusieurs photos quasi identiques par arbre — gardez les meilleures.</li>
         </ul>
       </section>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <HardDriveDownload className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Sauvegarde locale (filet de sécurité)</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Téléchargez un fichier <code>.json.gz</code> contenant toute votre collection (photos comprises). Utile si Google Drive est indisponible, ou pour transférer manuellement vers un autre appareil.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Button variant="outline" onClick={doLocalExport} disabled={busy !== null} className="h-auto py-4">
+            <HardDriveDownload className="mr-2 h-4 w-4" />
+            <div className="text-left">
+              <div className="font-medium">{busy === "export" ? "Préparation…" : "Télécharger la sauvegarde"}</div>
+              <div className="text-xs font-normal text-muted-foreground">Fichier compressé sur votre appareil</div>
+            </div>
+          </Button>
+          <label className={`flex h-auto cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-4 text-sm font-medium transition hover:bg-accent hover:text-accent-foreground ${busy !== null ? "pointer-events-none opacity-50" : ""}`}>
+            <HardDriveUpload className="h-4 w-4" />
+            <div className="text-left">
+              <div className="font-medium">{busy === "import" ? "Import…" : "Importer un fichier"}</div>
+              <div className="text-xs font-normal text-muted-foreground">.json ou .json.gz</div>
+            </div>
+            <input
+              type="file"
+              accept=".json,.gz,application/json,application/gzip"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) { doLocalImport(f); e.target.value = ""; } }}
+            />
+          </label>
+        </div>
+      </section>
+
     </AppShell>
   );
 }
