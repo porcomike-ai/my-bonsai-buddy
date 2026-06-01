@@ -73,15 +73,28 @@ export function setClientId(id: string): void {
 interface StoredToken { access_token: string; expires_at: number }
 function getStoredToken(): StoredToken | null {
   try {
-    const raw = localStorage.getItem(LS_TOKEN);
-    if (!raw) return null;
+    // Use sessionStorage instead of localStorage to limit OAuth token exposure:
+    // tokens are scoped to the current tab and cleared when it closes, reducing
+    // the window of risk from XSS or malicious browser extensions.
+    const raw = sessionStorage.getItem(LS_TOKEN);
+    if (!raw) {
+      // Migrate away from any token previously persisted in localStorage.
+      try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+      return null;
+    }
     const t = JSON.parse(raw) as StoredToken;
     if (t.expires_at - 30_000 < Date.now()) return null;
     return t;
   } catch { return null; }
 }
-function storeToken(t: StoredToken): void { localStorage.setItem(LS_TOKEN, JSON.stringify(t)); }
-function clearToken(): void { localStorage.removeItem(LS_TOKEN); }
+function storeToken(t: StoredToken): void {
+  sessionStorage.setItem(LS_TOKEN, JSON.stringify(t));
+  try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+}
+function clearToken(): void {
+  sessionStorage.removeItem(LS_TOKEN);
+  try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+}
 
 export function isConnected(): boolean { return getStoredToken() !== null; }
 
