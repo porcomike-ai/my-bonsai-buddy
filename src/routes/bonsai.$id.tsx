@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   getBonsai, deleteBonsai, listPhotos, listJournal, listRappels, getPoterie,
   savePhoto, deletePhoto, saveJournal, deleteJournal, saveRappel, deleteRappel,
-  saveBonsai, uid, type SoinType,
+  saveBonsai, uid, type SoinType, type Photo,
 } from "@/lib/db";
 import { fileToBlob, useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
