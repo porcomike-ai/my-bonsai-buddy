@@ -40,5 +40,5 @@ export function BonsaiPhoto({
       </div>
     );
   }
-  return <img src={url} alt="" className={className} />;
+  return <img src={url} alt="" loading="lazy" decoding="async" className={className} />;
 }
