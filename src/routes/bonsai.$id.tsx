@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   getBonsai, deleteBonsai, listPhotos, listJournal, listRappels, getPoterie,
   savePhoto, deletePhoto, saveJournal, deleteJournal, saveRappel, deleteRappel,
-  saveBonsai, uid, type SoinType,
+  saveBonsai, uid, type SoinType, type Photo,
 } from "@/lib/db";
 import { fileToBlob, useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
@@ -232,11 +232,11 @@ function GalerieTab({
     await deletePhoto(pid);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
-  const updateLegende = async (p: any, legende: string) => {
+  const updateLegende = async (p: Photo, legende: string) => {
     await savePhoto({ ...p, legende: legende || undefined });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
-  const updateDate = async (p: any, date: string) => {
+  const updateDate = async (p: Photo, date: string) => {
     await savePhoto({ ...p, date });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
@@ -296,7 +296,7 @@ function GalerieTab({
   );
 }
 
-function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { p: any; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void>; onDate: (d: string) => void | Promise<void> }) {
+function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { p: Photo; isMain: boolean; onSetMain: () => void; onDelete: () => void; onLegende: (t: string) => void | Promise<void>; onDate: (d: string) => void | Promise<void> }) {
   const url = useBlobUrl(p.blob);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(p.legende ?? "");
@@ -336,7 +336,7 @@ function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { 
       )}
 
       <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card">
-        {url && <img src={url} alt={p.legende ?? ""} className="w-full max-w-md object-cover" />}
+        {url && <img src={url} alt={p.legende ?? ""} loading="lazy" decoding="async" className="w-full max-w-md object-cover" />}
         <div className="space-y-2 p-3">
           {editing ? (
             <div className="space-y-2">

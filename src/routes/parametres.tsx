@@ -10,8 +10,8 @@ import {
   getClientId, setClientId, connect, disconnect, isConnected,
   syncBackup, restoreFromDrive, getLastBackup,
 } from "@/lib/google-drive";
-import { buildSnapshot, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
-import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2 } from "lucide-react";
+import { buildSnapshot, buildBackup, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
+import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -25,7 +25,7 @@ function ParametresPage() {
   const [clientId, setClientIdState] = useState("");
   const [connected, setConnected] = useState(false);
   const [last, setLast] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | "save" | "load" | "optim">(null);
+  const [busy, setBusy] = useState<null | "save" | "load" | "optim" | "export" | "import">(null);
 
   useEffect(() => {
     setClientIdState(getClientId());
@@ -98,6 +98,57 @@ function ParametresPage() {
       toast.success(count > 0 ? `${count} photo(s) optimisée(s) — ${mb} Mo économisés` : "Aucune photo n'a pu être réduite davantage");
     } catch (e) {
       toast.error((e as Error).message);
+    } finally { setBusy(null); }
+  };
+
+  const doLocalExport = async () => {
+    setBusy("export");
+    try {
+      const payload = await buildBackup();
+      const json = JSON.stringify(payload);
+      let blob: Blob;
+      if (typeof CompressionStream !== "undefined") {
+        const enc = new TextEncoder().encode(json);
+        const stream = new Response(new Blob([enc])).body!.pipeThrough(new CompressionStream("gzip"));
+        blob = await new Response(stream).blob();
+      } else {
+        blob = new Blob([json], { type: "application/json" });
+      }
+      const ext = blob.type.includes("gzip") || typeof CompressionStream !== "undefined" ? "json.gz" : "json";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Sauvegarde téléchargée");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally { setBusy(null); }
+  };
+
+  const doLocalImport = async (file: File) => {
+    if (!confirm("Importer ce fichier remplacera toutes les données locales. Continuer ?")) return;
+    setBusy("import");
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      const isGzip = bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+      let text: string;
+      if (isGzip && typeof DecompressionStream !== "undefined") {
+        const stream = new Response(new Blob([bytes])).body!.pipeThrough(new DecompressionStream("gzip"));
+        text = await new Response(stream).text();
+      } else {
+        text = new TextDecoder().decode(bytes);
+      }
+      const payload = JSON.parse(text) as BackupPayload;
+      await restoreBackup(payload);
+      await qc.invalidateQueries();
+      toast.success("Sauvegarde restaurée depuis le fichier");
+    } catch (e) {
+      toast.error("Fichier invalide : " + (e as Error).message);
     } finally { setBusy(null); }
   };
 
@@ -210,6 +261,43 @@ function ParametresPage() {
           <li>Évitez de stocker plusieurs photos quasi identiques par arbre — gardez les meilleures.</li>
         </ul>
       </section>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <HardDriveDownload className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Sauvegarde locale (filet de sécurité)</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Téléchargez un fichier <code>.json.gz</code> contenant toute votre collection (photos comprises). Utile si Google Drive est indisponible, ou pour transférer manuellement vers un autre appareil.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Button variant="outline" onClick={doLocalExport} disabled={busy !== null} className="h-auto py-4">
+            <HardDriveDownload className="mr-2 h-4 w-4" />
+            <div className="text-left">
+              <div className="font-medium">{busy === "export" ? "Préparation…" : "Télécharger la sauvegarde"}</div>
+              <div className="text-xs font-normal text-muted-foreground">Fichier compressé sur votre appareil</div>
+            </div>
+          </Button>
+          <label className={`flex h-auto cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-4 text-sm font-medium transition hover:bg-accent hover:text-accent-foreground ${busy !== null ? "pointer-events-none opacity-50" : ""}`}>
+            <HardDriveUpload className="h-4 w-4" />
+            <div className="text-left">
+              <div className="font-medium">{busy === "import" ? "Import…" : "Importer un fichier"}</div>
+              <div className="text-xs font-normal text-muted-foreground">.json ou .json.gz</div>
+            </div>
+            <input
+              type="file"
+              accept=".json,.gz,application/json,application/gzip"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) { doLocalImport(f); e.target.value = ""; } }}
+            />
+          </label>
+        </div>
+      </section>
+
     </AppShell>
   );
 }

@@ -93,7 +93,7 @@ function PoterieImage({ blob }: { blob?: Blob }) {
   const url = useBlobUrl(blob);
   return (
     <div className="aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-secondary via-muted to-peach/30">
-      {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : (
+      {url ? <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : (
         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
           <Container className="h-10 w-10 opacity-40" />
         </div>
@@ -162,7 +162,7 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   return (
     <form onSubmit={submit} className="mb-8 grid gap-6 rounded-3xl border border-border bg-card p-6 lg:grid-cols-[240px_1fr]">
       <label className="group relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-background transition hover:border-accent/60">
-        {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : initial?.photoBlob ? (
+        {preview ? <img src={preview} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : initial?.photoBlob ? (
           <ExistingImage blob={initial.photoBlob} />
         ) : (
           <div className="text-center text-muted-foreground"><ImagePlus className="mx-auto h-7 w-7" /><p className="mt-2 text-xs">Photo</p></div>
@@ -204,5 +204,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ExistingImage({ blob }: { blob: Blob }) {
   const url = useBlobUrl(blob);
-  return url ? <img src={url} alt="" className="h-full w-full object-cover" /> : null;
+  return url ? <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : null;
 }
