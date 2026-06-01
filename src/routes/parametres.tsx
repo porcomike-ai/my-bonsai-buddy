@@ -10,8 +10,8 @@ import {
   getClientId, setClientId, connect, disconnect, isConnected,
   syncBackup, restoreFromDrive, getLastBackup,
 } from "@/lib/google-drive";
-import { buildSnapshot, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
-import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2 } from "lucide-react";
+import { buildSnapshot, buildBackup, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
+import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
