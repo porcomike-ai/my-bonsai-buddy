@@ -12,11 +12,14 @@ export const Route = createFileRoute("/journal")({
   head: () => ({
     meta: [
       { title: "Journal d'entretien — Bonsaï Studio" },
-      { name: "description", content: "Historique de tous les soins apportés à votre collection." },
+      { name: "description", content: "Historique chronologique de tous les soins apportés à votre collection de bonsaïs, filtrable par arbre et par type." },
+      { property: "og:title", content: "Journal d'entretien — Bonsaï Studio" },
+      { property: "og:description", content: "Historique des soins apportés à vos bonsaïs." },
     ],
   }),
   component: JournalPage,
 });
+
 
 function JournalPage() {
   const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: () => listJournal() });

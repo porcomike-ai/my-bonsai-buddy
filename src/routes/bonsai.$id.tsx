@@ -24,11 +24,17 @@ import { shareBonsaiPdf } from "@/lib/share-pdf";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/bonsai/$id")({
-  head: ({ params }) => ({
-    meta: [{ title: `Bonsaï — Bonsaï Studio` }, { name: "description", content: `Fiche détaillée du bonsaï ${params.id}` }],
+  head: () => ({
+    meta: [
+      { title: "Fiche bonsaï — Bonsaï Studio" },
+      { name: "description", content: "Fiche détaillée d'un bonsaï : informations, galerie évolutive, journal d'entretien et rappels de soins." },
+      { property: "og:title", content: "Fiche bonsaï — Bonsaï Studio" },
+      { property: "og:description", content: "Fiche détaillée d'un bonsaï : galerie, journal et rappels." },
+    ],
   }),
   component: BonsaiDetail,
 });
+
 
 function BonsaiDetail() {
   const { id } = Route.useParams();
@@ -93,9 +99,10 @@ function BonsaiDetail() {
             <Button variant="outline" className="flex-1" onClick={() => setEditing(true)}>
               <Pencil className="mr-1.5 h-4 w-4" /> Modifier
             </Button>
-            <Button variant="outline" className="text-destructive hover:text-destructive" onClick={remove}>
+            <Button variant="outline" aria-label="Supprimer ce bonsaï" className="text-destructive hover:text-destructive" onClick={remove}>
               <Trash2 className="h-4 w-4" />
             </Button>
+
           </div>
           <SharePdfButton id={id} bonsai={b} photosCount={photos.length} />
 
@@ -367,9 +374,10 @@ function PhotoTimeline({ p, isMain, onSetMain, onDelete, onLegende, onDate }: { 
             ) : (
               <Button variant="ghost" size="sm" onClick={onSetMain}>Définir comme principale</Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onDelete} className="text-destructive hover:text-destructive">
+            <Button variant="ghost" size="sm" aria-label="Supprimer cette photo" onClick={onDelete} className="text-destructive hover:text-destructive">
               <X className="h-4 w-4" />
             </Button>
+
           </div>
         </div>
       </div>

@@ -25,11 +25,14 @@ export const Route = createFileRoute("/calendrier")({
   head: () => ({
     meta: [
       { title: "Calendrier des soins — Bonsaï Studio" },
-      { name: "description", content: "Calendrier mensuel des rappels d'entretien et évènements pour vos bonsaïs." },
+      { name: "description", content: "Calendrier mensuel des rappels d'entretien et évènements pour vos bonsaïs, avec notifications avant l'échéance." },
+      { property: "og:title", content: "Calendrier des soins — Bonsaï Studio" },
+      { property: "og:description", content: "Rappels d'entretien et évènements pour vos bonsaïs." },
     ],
   }),
   component: CalendrierPage,
 });
+
 
 function CalendrierPage() {
   const qc = useQueryClient();
@@ -79,9 +82,10 @@ function CalendrierPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setMonth(subMonths(month, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" aria-label="Mois précédent" onClick={() => setMonth(subMonths(month, 1))}><ChevronLeft className="h-4 w-4" /></Button>
           <Button variant="outline" onClick={() => setMonth(new Date())}>Aujourd'hui</Button>
-          <Button variant="outline" size="icon" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" aria-label="Mois suivant" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight className="h-4 w-4" /></Button>
+
         </div>
       </header>
 
@@ -324,9 +328,10 @@ function EvenementsSection({ evenements, bonsais }: { evenements: Evenement[]; b
                     </p>
                   )}
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => remove(e.id)} className="text-muted-foreground hover:text-destructive">
+                <Button variant="ghost" size="icon" aria-label={`Supprimer l'évènement ${e.titre}`} onClick={() => remove(e.id)} className="text-muted-foreground hover:text-destructive">
                   <X className="h-4 w-4" />
                 </Button>
+
               </li>
             );
           })}

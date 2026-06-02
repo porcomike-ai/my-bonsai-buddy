@@ -15,11 +15,14 @@ export const Route = createFileRoute("/poteries")({
   head: () => ({
     meta: [
       { title: "Poteries — Bonsaï Studio" },
-      { name: "description", content: "Catalogue de vos poteries pour bonsaïs." },
+      { name: "description", content: "Catalogue de vos poteries pour bonsaïs : formes, matières, dimensions et arbres associés." },
+      { property: "og:title", content: "Poteries — Bonsaï Studio" },
+      { property: "og:description", content: "Catalogue de vos contenants pour bonsaïs et arbres associés." },
     ],
   }),
   component: PoteriesPage,
 });
+
 
 function PoteriesPage() {
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
@@ -62,7 +65,7 @@ function PoteriesPage() {
                 >
                   <PoterieImage blob={p.photoBlob} />
                   <div className="space-y-1.5 p-4">
-                    <h3 className="truncate font-display text-lg font-semibold">{p.nom}</h3>
+                    <h2 className="truncate font-display text-lg font-semibold">{p.nom}</h2>
                     <p className="text-xs text-muted-foreground">
                       {[p.forme, p.couleur, p.matiere].filter(Boolean).join(" · ") || "—"}
                     </p>

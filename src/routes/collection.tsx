@@ -12,11 +12,14 @@ export const Route = createFileRoute("/collection")({
   head: () => ({
     meta: [
       { title: "Mes bonsaïs — Bonsaï Studio" },
-      { name: "description", content: "Toute votre collection de bonsaïs en un coup d'œil." },
+      { name: "description", content: "Toute votre collection de bonsaïs en un coup d'œil : filtres par style, recherche et statut de chaque arbre." },
+      { property: "og:title", content: "Mes bonsaïs — Bonsaï Studio" },
+      { property: "og:description", content: "Parcourez votre collection de bonsaïs avec filtres par style et statut." },
     ],
   }),
   component: CollectionPage,
 });
+
 
 function CollectionPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
@@ -133,7 +136,7 @@ function CollectionPage() {
                 </div>
                 <div className="space-y-1 p-4">
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="truncate font-display text-lg font-semibold">{b.nom}</h3>
+                    <h2 className="truncate font-display text-lg font-semibold">{b.nom}</h2>
                     {b.ageEstime != null && (
                       <span className="shrink-0 text-xs text-muted-foreground">{b.ageEstime} ans</span>
                     )}

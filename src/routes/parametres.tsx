@@ -16,9 +16,17 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/parametres")({
-  head: () => ({ meta: [{ title: "Paramètres — Bonsaï Studio" }] }),
+  head: () => ({
+    meta: [
+      { title: "Paramètres — Bonsaï Studio" },
+      { name: "description", content: "Paramètres et sauvegarde : connexion à Google Drive, export local compressé et optimisation des photos." },
+      { property: "og:title", content: "Paramètres — Bonsaï Studio" },
+      { property: "og:description", content: "Sauvegardes Google Drive et options de l'application." },
+    ],
+  }),
   component: ParametresPage,
 });
+
 
 function ParametresPage() {
   const qc = useQueryClient();

@@ -10,9 +10,17 @@ import { ArrowLeft, Container, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/poterie/$id")({
-  head: () => ({ meta: [{ title: "Poterie — Bonsaï Studio" }] }),
+  head: () => ({
+    meta: [
+      { title: "Poterie — Bonsaï Studio" },
+      { name: "description", content: "Fiche détaillée d'une poterie pour bonsaï : forme, matière, dimensions, artisan et arbre planté." },
+      { property: "og:title", content: "Poterie — Bonsaï Studio" },
+      { property: "og:description", content: "Fiche détaillée d'une poterie pour bonsaï." },
+    ],
+  }),
   component: PoterieDetail,
 });
+
 
 function PoterieDetail() {
   const { id } = Route.useParams();

@@ -12,11 +12,14 @@ export const Route = createFileRoute("/statistiques")({
   head: () => ({
     meta: [
       { title: "Statistiques — Bonsaï Studio" },
-      { name: "description", content: "Vue d'ensemble chiffrée de votre collection de bonsaïs." },
+      { name: "description", content: "Vue chiffrée de votre collection de bonsaïs : valeur estimée, répartition par style et étape, fréquence des soins." },
+      { property: "og:title", content: "Statistiques — Bonsaï Studio" },
+      { property: "og:description", content: "Vue chiffrée de votre collection de bonsaïs." },
     ],
   }),
   component: StatistiquesPage,
 });
+
 
 async function loadAllPhotos() {
   const db = await getDB();
