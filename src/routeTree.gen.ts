@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatistiquesRouteImport } from './routes/statistiques'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PoteriesRouteImport } from './routes/poteries'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -23,6 +24,11 @@ import { Route as BonsaiIdRouteImport } from './routes/bonsai.$id'
 const StatistiquesRoute = StatistiquesRouteImport.update({
   id: '/statistiques',
   path: '/statistiques',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PoteriesRoute = PoteriesRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistiques': typeof StatistiquesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistiques': typeof StatistiquesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistiques': typeof StatistiquesRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/parametres'
     | '/poteries'
+    | '/sitemap.xml'
     | '/statistiques'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/parametres'
     | '/poteries'
+    | '/sitemap.xml'
     | '/statistiques'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/parametres'
     | '/poteries'
+    | '/sitemap.xml'
     | '/statistiques'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRoute
   ParametresRoute: typeof ParametresRoute
   PoteriesRoute: typeof PoteriesRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatistiquesRoute: typeof StatistiquesRoute
   BonsaiIdRoute: typeof BonsaiIdRoute
   BonsaiNouveauRoute: typeof BonsaiNouveauRoute
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/statistiques'
       fullPath: '/statistiques'
       preLoaderRoute: typeof StatistiquesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/poteries': {
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRoute,
   ParametresRoute: ParametresRoute,
   PoteriesRoute: PoteriesRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatistiquesRoute: StatistiquesRoute,
   BonsaiIdRoute: BonsaiIdRoute,
   BonsaiNouveauRoute: BonsaiNouveauRoute,

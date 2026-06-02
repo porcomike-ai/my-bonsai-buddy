@@ -12,11 +12,14 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Tableau de bord — Bonsaï Studio" },
-      { name: "description", content: "Vue d'ensemble de votre collection de bonsaïs et des prochains soins." },
+      { name: "description", content: "Vue d'ensemble de votre collection de bonsaïs : prochains soins, rappels en retard et derniers arbres ajoutés." },
+      { property: "og:title", content: "Tableau de bord — Bonsaï Studio" },
+      { property: "og:description", content: "Vue d'ensemble de votre collection de bonsaïs et des prochains soins." },
     ],
   }),
   component: Dashboard,
 });
+
 
 function Dashboard() {
   const bonsais = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });

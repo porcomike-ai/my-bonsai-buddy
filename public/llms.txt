@@ -1,0 +1,16 @@
+# Bonsaï Studio
+
+> Carnet personnel pour gérer une collection de bonsaïs : fiches détaillées, galerie évolutive, journal d'entretien, rappels de soins et catalogue de poteries.
+
+Bonsaï Studio est une application web installable qui fonctionne hors-ligne. Les données restent sur l'appareil (IndexedDB), avec sauvegarde optionnelle et chiffrée sur le Google Drive de l'utilisateur (scope `drive.file`).
+
+## Pages
+
+- [Tableau de bord](/): Vue d'ensemble : prochains soins, rappels en retard, derniers arbres ajoutés.
+- [Mes bonsaïs](/collection): Galerie filtrable de la collection (style, statut, recherche).
+- [Calendrier](/calendrier): Calendrier mensuel des rappels d'entretien et des évènements.
+- [Journal](/journal): Historique chronologique de tous les soins apportés.
+- [Poteries](/poteries): Catalogue des contenants (forme, matière, dimensions, artisan).
+- [Statistiques](/statistiques): Valeur estimée, répartition par style et étape, fréquence des soins.
+- [Nouveau bonsaï](/bonsai/nouveau): Formulaire d'ajout d'un arbre.
+- [Paramètres](/parametres): Sauvegarde Google Drive, export local, optimisation des photos.

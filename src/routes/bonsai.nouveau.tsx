@@ -5,10 +5,16 @@ import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/bonsai/nouveau")({
   head: () => ({
-    meta: [{ title: "Nouveau bonsaï — Bonsaï Studio" }],
+    meta: [
+      { title: "Nouveau bonsaï — Bonsaï Studio" },
+      { name: "description", content: "Ajoutez un nouveau bonsaï à votre carnet de collection : espèce, style, étape, dimensions et première photo." },
+      { property: "og:title", content: "Nouveau bonsaï — Bonsaï Studio" },
+      { property: "og:description", content: "Ajoutez un nouvel arbre à votre carnet de collection." },
+    ],
   }),
   component: NewBonsaiPage,
 });
+
 
 function NewBonsaiPage() {
   return (
