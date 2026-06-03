@@ -1,3 +1,4 @@
+import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -196,7 +197,7 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactElement }) {
+function Field({ label, children }: { label: string; children: React.ReactElement<{ id?: string }> }) {
   const id = React.useId();
   return (
     <div>
