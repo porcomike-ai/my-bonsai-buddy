@@ -196,11 +196,12 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactElement }) {
+  const id = React.useId();
   return (
     <div>
-      <Label className="mb-1.5 block text-sm">{label}</Label>
-      {children}
+      <Label htmlFor={id} className="mb-1.5 block text-sm">{label}</Label>
+      {React.cloneElement(children, { id })}
     </div>
   );
 }

@@ -108,7 +108,7 @@ function CalendrierPage() {
                 key={k}
                 className={cn(
                   "min-h-[110px] border-b border-r border-border p-2 text-left",
-                  !inMonth && "bg-secondary/20 text-muted-foreground/60",
+                  !inMonth && "bg-secondary/20 text-muted-foreground",
                 )}
               >
                 <div className={cn("mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium", today && "bg-accent text-accent-foreground")}>
@@ -246,16 +246,17 @@ function EvenementsSection({ evenements, bonsais }: { evenements: Evenement[]; b
         <div className="mb-5 space-y-3 rounded-2xl border border-border bg-card p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label className="mb-1.5 block text-sm">Titre</Label>
-              <Input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Atelier de taille, exposition…" />
+              <Label htmlFor="evt-titre" className="mb-1.5 block text-sm">Titre</Label>
+              <Input id="evt-titre" value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Atelier de taille, exposition…" />
             </div>
             <div>
-              <Label className="mb-1.5 block text-sm">Date et heure</Label>
-              <Input type="datetime-local" value={dateHeure} onChange={(e) => setDateHeure(e.target.value)} />
+              <Label htmlFor="evt-date" className="mb-1.5 block text-sm">Date et heure</Label>
+              <Input id="evt-date" type="datetime-local" value={dateHeure} onChange={(e) => setDateHeure(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1.5 block text-sm">Rappel avant (minutes)</Label>
+              <Label htmlFor="evt-rappel" className="mb-1.5 block text-sm">Rappel avant (minutes)</Label>
               <select
+                id="evt-rappel"
                 value={rappelMinutes}
                 onChange={(e) => setRappelMinutes(e.target.value)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -270,8 +271,9 @@ function EvenementsSection({ evenements, bonsais }: { evenements: Evenement[]; b
               </select>
             </div>
             <div className="sm:col-span-2">
-              <Label className="mb-1.5 block text-sm">Bonsaï associé (facultatif)</Label>
+              <Label htmlFor="evt-bonsai" className="mb-1.5 block text-sm">Bonsaï associé (facultatif)</Label>
               <select
+                id="evt-bonsai"
                 value={bonsaiId}
                 onChange={(e) => setBonsaiId(e.target.value)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -281,8 +283,8 @@ function EvenementsSection({ evenements, bonsais }: { evenements: Evenement[]; b
               </select>
             </div>
             <div className="sm:col-span-2">
-              <Label className="mb-1.5 block text-sm">Description (facultatif)</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+              <Label htmlFor="evt-desc" className="mb-1.5 block text-sm">Description (facultatif)</Label>
+              <Textarea id="evt-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
             </div>
           </div>
           <div className="flex justify-end gap-2">
