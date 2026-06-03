@@ -10,14 +10,28 @@ import { ArrowLeft, Container, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/poterie/$id")({
-  head: () => ({
-    meta: [
-      { title: "Poterie — Bonsaï Studio" },
-      { name: "description", content: "Fiche détaillée d'une poterie pour bonsaï : forme, matière, dimensions, artisan et arbre planté." },
-      { property: "og:title", content: "Poterie — Bonsaï Studio" },
-      { property: "og:description", content: "Fiche détaillée d'une poterie pour bonsaï." },
-    ],
-  }),
+  ssr: false,
+  loader: async ({ params }) => {
+    const p = await getPoterie(params.id);
+    return p ? { nom: p.nom, forme: p.forme, matiere: p.matiere, artisan: p.artisan } : null;
+  },
+  head: ({ loaderData, params }) => {
+    const nom = loaderData?.nom ?? "Poterie";
+    const bits = [loaderData?.forme, loaderData?.matiere, loaderData?.artisan].filter(Boolean).join(", ");
+    const baseDesc = `${nom}${bits ? ` — ${bits}` : ""} — fiche détaillée de poterie pour bonsaï.`;
+    const desc = baseDesc.length > 160 ? baseDesc.slice(0, 157) + "…" : baseDesc;
+    const title = `${nom} — Bonsaï Studio`;
+    return {
+      meta: [
+        { title: title.length > 60 ? `${nom.slice(0, 50)} — Poterie` : title },
+        { name: "description", content: desc },
+        { name: "robots", content: "noindex,follow" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: `/poterie/${params.id}` },
+      ],
+    };
+  },
   component: PoterieDetail,
 });
 

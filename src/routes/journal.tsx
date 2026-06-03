@@ -57,11 +57,11 @@ function JournalPage() {
       </header>
 
       <div className="mb-6 flex flex-wrap gap-3">
-        <select value={bFilter} onChange={(e) => setBFilter(e.target.value)} className="h-11 rounded-full border border-input bg-card px-4 text-sm">
+        <select value={bFilter} onChange={(e) => setBFilter(e.target.value)} aria-label="Filtrer par bonsaï" className="h-11 rounded-full border border-input bg-card px-4 text-sm">
           <option value="">Tous les bonsaïs</option>
           {bonsais.map((b) => <option key={b.id} value={b.id}>{b.nom}</option>)}
         </select>
-        <select value={tFilter} onChange={(e) => setTFilter(e.target.value)} className="h-11 rounded-full border border-input bg-card px-4 text-sm">
+        <select value={tFilter} onChange={(e) => setTFilter(e.target.value)} aria-label="Filtrer par type de soin" className="h-11 rounded-full border border-input bg-card px-4 text-sm">
           <option value="">Tous les soins</option>
           {SOINS.map((s) => <option key={s.value} value={s.value}>{s.emoji} {s.label}</option>)}
         </select>
