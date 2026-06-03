@@ -1,3 +1,4 @@
+import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/poteries")({
       { name: "description", content: "Catalogue de vos poteries pour bonsaïs : formes, matières, dimensions et arbres associés." },
       { property: "og:title", content: "Poteries — Bonsaï Studio" },
       { property: "og:description", content: "Catalogue de vos contenants pour bonsaïs et arbres associés." },
+      { property: "og:url", content: "/poteries" },
     ],
   }),
   component: PoteriesPage,
@@ -196,11 +198,12 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactElement<{ id?: string }> }) {
+  const id = React.useId();
   return (
     <div>
-      <Label className="mb-1.5 block text-sm">{label}</Label>
-      {children}
+      <Label htmlFor={id} className="mb-1.5 block text-sm">{label}</Label>
+      {React.cloneElement(children, { id })}
     </div>
   );
 }

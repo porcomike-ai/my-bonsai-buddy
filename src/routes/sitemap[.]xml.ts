@@ -13,6 +13,9 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
+        // Note: /bonsai/$id, /poterie/$id, /bonsai/nouveau et /parametres ne sont pas
+        // listés : ce sont des pages privées (données locales IndexedDB par utilisateur)
+        // marquées noindex — elles n'ont aucune valeur d'indexation publique.
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/collection", changefreq: "weekly", priority: "0.8" },
@@ -20,8 +23,6 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/journal", changefreq: "weekly", priority: "0.6" },
           { path: "/poteries", changefreq: "weekly", priority: "0.7" },
           { path: "/statistiques", changefreq: "monthly", priority: "0.5" },
-          { path: "/bonsai/nouveau", changefreq: "yearly", priority: "0.4" },
-          { path: "/parametres", changefreq: "yearly", priority: "0.3" },
         ];
 
         const urls = entries.map((e) =>

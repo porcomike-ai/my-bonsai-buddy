@@ -15,6 +15,7 @@ export const Route = createFileRoute("/statistiques")({
       { name: "description", content: "Vue chiffrée de votre collection de bonsaïs : valeur estimée, répartition par style et étape, fréquence des soins." },
       { property: "og:title", content: "Statistiques — Bonsaï Studio" },
       { property: "og:description", content: "Vue chiffrée de votre collection de bonsaïs." },
+      { property: "og:url", content: "/statistiques" },
     ],
   }),
   component: StatistiquesPage,

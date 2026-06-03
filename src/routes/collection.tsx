@@ -15,6 +15,7 @@ export const Route = createFileRoute("/collection")({
       { name: "description", content: "Toute votre collection de bonsaïs en un coup d'œil : filtres par style, recherche et statut de chaque arbre." },
       { property: "og:title", content: "Mes bonsaïs — Bonsaï Studio" },
       { property: "og:description", content: "Parcourez votre collection de bonsaïs avec filtres par style et statut." },
+      { property: "og:url", content: "/collection" },
     ],
   }),
   component: CollectionPage,
@@ -71,12 +72,14 @@ function CollectionPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Rechercher par nom, espèce, origine…"
+            aria-label="Rechercher dans la collection"
             className="h-11 rounded-full bg-card pl-10"
           />
         </div>
         <select
           value={styleFilter}
           onChange={(e) => setStyleFilter(e.target.value)}
+          aria-label="Filtrer par style de bonsaï"
           className="h-11 rounded-full border border-input bg-card px-4 text-sm"
         >
           <option value="">Tous les styles</option>
@@ -89,6 +92,7 @@ function CollectionPage() {
         <select
           value={statutFilter}
           onChange={(e) => setStatutFilter(e.target.value as "actifs" | "sortis" | "tous")}
+          aria-label="Filtrer par statut dans la collection"
           className="h-11 rounded-full border border-input bg-card px-4 text-sm"
         >
           <option value="actifs">Dans la collection</option>

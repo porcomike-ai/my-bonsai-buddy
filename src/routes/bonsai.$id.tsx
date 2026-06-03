@@ -24,14 +24,29 @@ import { shareBonsaiPdf } from "@/lib/share-pdf";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/bonsai/$id")({
-  head: () => ({
-    meta: [
-      { title: "Fiche bonsaï — Bonsaï Studio" },
-      { name: "description", content: "Fiche détaillée d'un bonsaï : informations, galerie évolutive, journal d'entretien et rappels de soins." },
-      { property: "og:title", content: "Fiche bonsaï — Bonsaï Studio" },
-      { property: "og:description", content: "Fiche détaillée d'un bonsaï : galerie, journal et rappels." },
-    ],
-  }),
+  ssr: false,
+  loader: async ({ params }) => {
+    const b = await getBonsai(params.id);
+    return b ? { nom: b.nom, espece: b.espece } : null;
+  },
+  head: ({ loaderData, params }) => {
+    const nom = loaderData?.nom ?? "Bonsaï";
+    const espece = loaderData?.espece;
+    const baseDesc = `${nom}${espece ? ` (${espece})` : ""} — galerie évolutive, journal d'entretien et rappels de soins.`;
+    const desc = baseDesc.length > 160 ? baseDesc.slice(0, 157) + "…" : baseDesc;
+    const title = `${nom} — Bonsaï Studio`;
+    return {
+      meta: [
+        { title: title.length > 60 ? `${nom.slice(0, 50)} — Bonsaï` : title },
+        { name: "description", content: desc },
+        { name: "robots", content: "noindex,follow" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: `/bonsai/${params.id}` },
+        { property: "og:type", content: "article" },
+      ],
+    };
+  },
   component: BonsaiDetail,
 });
 

@@ -10,6 +10,8 @@ export const Route = createFileRoute("/bonsai/nouveau")({
       { name: "description", content: "Ajoutez un nouveau bonsaï à votre carnet de collection : espèce, style, étape, dimensions et première photo." },
       { property: "og:title", content: "Nouveau bonsaï — Bonsaï Studio" },
       { property: "og:description", content: "Ajoutez un nouvel arbre à votre carnet de collection." },
+      { property: "og:url", content: "/bonsai/nouveau" },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: NewBonsaiPage,
