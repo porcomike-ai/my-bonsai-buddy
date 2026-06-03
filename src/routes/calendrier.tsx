@@ -28,6 +28,7 @@ export const Route = createFileRoute("/calendrier")({
       { name: "description", content: "Calendrier mensuel des rappels d'entretien et évènements pour vos bonsaïs, avec notifications avant l'échéance." },
       { property: "og:title", content: "Calendrier des soins — Bonsaï Studio" },
       { property: "og:description", content: "Rappels d'entretien et évènements pour vos bonsaïs." },
+      { property: "og:url", content: "/calendrier" },
     ],
   }),
   component: CalendrierPage,

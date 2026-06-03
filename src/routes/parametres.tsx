@@ -22,6 +22,7 @@ export const Route = createFileRoute("/parametres")({
       { name: "description", content: "Paramètres et sauvegarde : connexion à Google Drive, export local compressé et optimisation des photos." },
       { property: "og:title", content: "Paramètres — Bonsaï Studio" },
       { property: "og:description", content: "Sauvegardes Google Drive et options de l'application." },
+      { property: "og:url", content: "/parametres" },
     ],
   }),
   component: ParametresPage,

@@ -15,6 +15,7 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Vue d'ensemble de votre collection de bonsaïs : prochains soins, rappels en retard et derniers arbres ajoutés." },
       { property: "og:title", content: "Tableau de bord — Bonsaï Studio" },
       { property: "og:description", content: "Vue d'ensemble de votre collection de bonsaïs et des prochains soins." },
+      { property: "og:url", content: "/" },
     ],
   }),
   component: Dashboard,

@@ -15,6 +15,7 @@ export const Route = createFileRoute("/journal")({
       { name: "description", content: "Historique chronologique de tous les soins apportés à votre collection de bonsaïs, filtrable par arbre et par type." },
       { property: "og:title", content: "Journal d'entretien — Bonsaï Studio" },
       { property: "og:description", content: "Historique des soins apportés à vos bonsaïs." },
+      { property: "og:url", content: "/journal" },
     ],
   }),
   component: JournalPage,

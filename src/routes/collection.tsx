@@ -15,6 +15,7 @@ export const Route = createFileRoute("/collection")({
       { name: "description", content: "Toute votre collection de bonsaïs en un coup d'œil : filtres par style, recherche et statut de chaque arbre." },
       { property: "og:title", content: "Mes bonsaïs — Bonsaï Studio" },
       { property: "og:description", content: "Parcourez votre collection de bonsaïs avec filtres par style et statut." },
+      { property: "og:url", content: "/collection" },
     ],
   }),
   component: CollectionPage,

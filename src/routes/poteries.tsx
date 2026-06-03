@@ -19,6 +19,7 @@ export const Route = createFileRoute("/poteries")({
       { name: "description", content: "Catalogue de vos poteries pour bonsaïs : formes, matières, dimensions et arbres associés." },
       { property: "og:title", content: "Poteries — Bonsaï Studio" },
       { property: "og:description", content: "Catalogue de vos contenants pour bonsaïs et arbres associés." },
+      { property: "og:url", content: "/poteries" },
     ],
   }),
   component: PoteriesPage,
