@@ -29,6 +29,7 @@ export interface Bonsai {
   poterieId?: string;
   notes?: string;
   dansCollection?: boolean;
+  favori?: boolean;
   createdAt: string;
 }
 

@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft, Pencil, Trash2, ImagePlus, Plus, X, Calendar as CalendarIcon, Check, Share2, Image as ImageIcon, Images, Camera, FolderOpen, MessageSquarePlus } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, ImagePlus, Plus, X, Calendar as CalendarIcon, Check, Share2, Image as ImageIcon, Images, Camera, FolderOpen, MessageSquarePlus, Star } from "lucide-react";
 import { toast } from "sonner";
 import { shareBonsaiPdf } from "@/lib/share-pdf";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -127,6 +127,20 @@ function BonsaiDetail() {
           <p className="text-xs uppercase tracking-[0.22em] text-accent">{styleLabel(b.style)}</p>
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-5xl font-semibold leading-tight">{b.nom}</h1>
+            <button
+              type="button"
+              onClick={async () => {
+                await saveBonsai({ ...b, favori: !b.favori });
+                await qc.invalidateQueries();
+                toast.success(b.favori ? "Retiré des favoris" : "Ajouté aux favoris");
+              }}
+              aria-label={b.favori ? "Retirer des favoris" : "Ajouter aux favoris"}
+              aria-pressed={!!b.favori}
+              title={b.favori ? "Retirer des favoris" : "Ajouter aux favoris"}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-border transition hover:bg-secondary ${b.favori ? "text-amber-500" : "text-muted-foreground"}`}
+            >
+              <Star className={`h-5 w-5 ${b.favori ? "fill-current" : ""}`} />
+            </button>
             {!(b.dansCollection ?? true) && (
               <span className="rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Sorti de la collection

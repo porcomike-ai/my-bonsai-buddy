@@ -11,9 +11,10 @@ import {
   syncBackup, restoreFromDrive, getLastBackup,
 } from "@/lib/google-drive";
 import { buildSnapshot, buildBackup, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
-import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload } from "lucide-react";
+import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload, Info } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version";
 
 export const Route = createFileRoute("/parametres")({
   head: () => ({
@@ -304,6 +305,22 @@ function ParametresPage() {
               onChange={(e) => { const f = e.target.files?.[0]; if (f) { doLocalImport(f); e.target.value = ""; } }}
             />
           </label>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <Info className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">À propos</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bonsaï Studio — version <strong className="text-foreground">{APP_VERSION}</strong>
+              {" · "}
+              publiée le {format(parseISO(APP_VERSION_DATE), "d MMMM yyyy", { locale: fr })}
+            </p>
+          </div>
         </div>
       </section>
 
