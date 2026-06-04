@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { STYLES, styleLabel } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Sprout } from "lucide-react";
+import { Plus, Search, Sprout, Star } from "lucide-react";
 
 export const Route = createFileRoute("/collection")({
   head: () => ({
@@ -26,14 +26,15 @@ function CollectionPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const [q, setQ] = useState("");
   const [styleFilter, setStyleFilter] = useState<string>("");
-  const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous">("actifs");
+  const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous" | "favoris">("actifs");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return bonsais.filter((b) => {
+    const list = bonsais.filter((b) => {
       const dans = b.dansCollection ?? true;
       if (statutFilter === "actifs" && !dans) return false;
       if (statutFilter === "sortis" && dans) return false;
+      if (statutFilter === "favoris" && !b.favori) return false;
       if (styleFilter && b.style !== styleFilter) return false;
       if (!needle) return true;
       return (
@@ -42,6 +43,8 @@ function CollectionPage() {
         (b.origine ?? "").toLowerCase().includes(needle)
       );
     });
+    // Favoris d'abord
+    return list.sort((a, b) => Number(!!b.favori) - Number(!!a.favori));
   }, [bonsais, q, styleFilter, statutFilter]);
 
   const actifsCount = bonsais.filter((b) => (b.dansCollection ?? true)).length;
@@ -91,11 +94,12 @@ function CollectionPage() {
         </select>
         <select
           value={statutFilter}
-          onChange={(e) => setStatutFilter(e.target.value as "actifs" | "sortis" | "tous")}
+          onChange={(e) => setStatutFilter(e.target.value as "actifs" | "sortis" | "tous" | "favoris")}
           aria-label="Filtrer par statut dans la collection"
           className="h-11 rounded-full border border-input bg-card px-4 text-sm"
         >
           <option value="actifs">Dans la collection</option>
+          <option value="favoris">Favoris</option>
           <option value="sortis">Sortis de la collection</option>
           <option value="tous">Tous</option>
         </select>
@@ -135,6 +139,11 @@ function CollectionPage() {
                   {!(b.dansCollection ?? true) && (
                     <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
                       Sorti
+                    </span>
+                  )}
+                  {b.favori && (
+                    <span className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-background/90 text-amber-500 backdrop-blur" aria-label="Favori" title="Favori">
+                      <Star className="h-4 w-4 fill-current" />
                     </span>
                   )}
                 </div>
