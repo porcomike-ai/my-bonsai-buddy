@@ -145,8 +145,13 @@ export async function silentConnect(): Promise<boolean> {
   if (isConnected()) return true;
   if (!wasAutoConnectEnabled() || !getClientId()) return false;
   try {
-    await requestToken("");
-    return true;
+    // Timeout de sécurité au cas où GIS ne rappellerait jamais (ex. cookies
+    // tiers bloqués, fenêtre silencieuse fermée par le navigateur).
+    await Promise.race([
+      requestToken(""),
+      new Promise<void>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
+    ]);
+    return isConnected();
   } catch {
     return false;
   }
