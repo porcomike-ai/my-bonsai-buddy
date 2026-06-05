@@ -65,6 +65,7 @@ function ParametresPage() {
       await connect();
       setConnected(true);
       toast.success("Connecté à Google Drive");
+      refreshSize();
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -72,6 +73,7 @@ function ParametresPage() {
   const doDisconnect = async () => {
     await disconnect();
     setConnected(false);
+    setSize(null);
     toast.success("Déconnecté");
   };
 
@@ -84,6 +86,7 @@ function ParametresPage() {
       toast.success(
         `Sauvegarde envoyée — ${stats.uploaded} photo(s) envoyée(s), ${stats.skipped} inchangée(s)${stats.deleted ? `, ${stats.deleted} supprimée(s)` : ""}.`,
       );
+      refreshSize();
     } catch (e) {
       toast.error((e as Error).message);
     } finally { setBusy(null); }
