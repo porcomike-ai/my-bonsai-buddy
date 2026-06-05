@@ -71,32 +71,35 @@ export function setClientId(id: string): void {
 }
 
 interface StoredToken { access_token: string; expires_at: number }
+
+// Persistance du jeton en localStorage pour permettre la reconnexion
+// silencieuse au redémarrage de l'app. Le scope `drive.file` limite l'accès
+// aux seuls fichiers créés par l'app, ce qui borne le risque en cas de XSS.
+const LS_AUTO = "bonsai.gdrive.autoConnect";
+
 function getStoredToken(): StoredToken | null {
   try {
-    // Use sessionStorage instead of localStorage to limit OAuth token exposure:
-    // tokens are scoped to the current tab and cleared when it closes, reducing
-    // the window of risk from XSS or malicious browser extensions.
-    const raw = sessionStorage.getItem(LS_TOKEN);
-    if (!raw) {
-      // Migrate away from any token previously persisted in localStorage.
-      try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
-      return null;
-    }
+    const raw = localStorage.getItem(LS_TOKEN) || sessionStorage.getItem(LS_TOKEN);
+    if (!raw) return null;
     const t = JSON.parse(raw) as StoredToken;
     if (t.expires_at - 30_000 < Date.now()) return null;
     return t;
   } catch { return null; }
 }
 function storeToken(t: StoredToken): void {
-  sessionStorage.setItem(LS_TOKEN, JSON.stringify(t));
-  try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+  localStorage.setItem(LS_TOKEN, JSON.stringify(t));
+  try { sessionStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
 }
 function clearToken(): void {
-  sessionStorage.removeItem(LS_TOKEN);
   try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+  try { sessionStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
 }
 
 export function isConnected(): boolean { return getStoredToken() !== null; }
+export function wasAutoConnectEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(LS_AUTO) === "1";
+}
 
 export function getLastBackup(): string | null {
   if (typeof window === "undefined") return null;
@@ -104,11 +107,10 @@ export function getLastBackup(): string | null {
 }
 function setLastBackup(iso: string): void { localStorage.setItem(LS_LAST_BACKUP, iso); }
 
-export async function connect(): Promise<void> {
+function requestToken(prompt: "" | "consent"): Promise<void> {
   const clientId = getClientId();
-  if (!clientId) throw new Error("Client ID Google non configuré");
-  await loadGis();
-  return new Promise<void>((resolve, reject) => {
+  if (!clientId) return Promise.reject(new Error("Client ID Google non configuré"));
+  return loadGis().then(() => new Promise<void>((resolve, reject) => {
     const client = window.google!.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPE,
@@ -124,8 +126,35 @@ export async function connect(): Promise<void> {
         resolve();
       },
     });
-    client.requestAccessToken({ prompt: "consent" });
-  });
+    client.requestAccessToken({ prompt });
+  }));
+}
+
+export async function connect(): Promise<void> {
+  await requestToken("consent");
+  localStorage.setItem(LS_AUTO, "1");
+}
+
+/**
+ * Tentative de reconnexion silencieuse au démarrage : utilise `prompt: ""`
+ * pour réutiliser le consentement déjà accordé sans afficher de pop-up.
+ * Résout `true` si un jeton valide a été obtenu, `false` sinon.
+ */
+export async function silentConnect(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (isConnected()) return true;
+  if (!wasAutoConnectEnabled() || !getClientId()) return false;
+  try {
+    // Timeout de sécurité au cas où GIS ne rappellerait jamais (ex. cookies
+    // tiers bloqués, fenêtre silencieuse fermée par le navigateur).
+    await Promise.race([
+      requestToken(""),
+      new Promise<void>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
+    ]);
+    return isConnected();
+  } catch {
+    return false;
+  }
 }
 
 export async function disconnect(): Promise<void> {
@@ -135,6 +164,7 @@ export async function disconnect(): Promise<void> {
   }
   clearToken();
   localStorage.removeItem(LS_FOLDER_ID);
+  localStorage.removeItem(LS_AUTO);
 }
 
 async function readError(res: Response, fallback: string): Promise<string> {
@@ -504,3 +534,43 @@ export async function getBackupSize(): Promise<BackupSize | null> {
   return { totalBytes, fileCount, photoCount, manifestBytes };
 }
 
+
+// ============================================================================
+//  Auto-sync au démarrage : si Drive est plus récent → on tire
+// ============================================================================
+
+export interface AutoSyncResult {
+  status: "skipped" | "no-remote" | "up-to-date" | "pulled";
+  reason?: string;
+  remoteDate?: string;
+  localDate?: string | null;
+}
+
+/**
+ * Au démarrage de l'app :
+ *  1. tente une reconnexion silencieuse,
+ *  2. lit l'`exportedAt` du manifest distant,
+ *  3. si plus récent que la dernière sauvegarde locale → restaure depuis Drive.
+ */
+export async function autoSyncFromDrive(
+  onProgress?: (current: number, total: number) => void,
+): Promise<AutoSyncResult> {
+  const ok = await silentConnect();
+  if (!ok) return { status: "skipped", reason: "Non connecté" };
+  let folderId: string;
+  try { folderId = await ensureFolder(); }
+  catch { return { status: "skipped", reason: "Dossier Drive inaccessible" }; }
+  const manifest = await fetchManifest(folderId);
+  if (!manifest) return { status: "no-remote" };
+  const remoteDate = manifest.exportedAt;
+  const localDate = getLastBackup();
+  if (localDate && Date.parse(remoteDate) <= Date.parse(localDate)) {
+    return { status: "up-to-date", remoteDate, localDate };
+  }
+  const { applyManifest } = await import("./backup");
+  await applyManifest(manifest, downloadBinary, onProgress);
+  // Aligne la date locale avec celle du manifest restauré pour éviter
+  // une boucle de re-téléchargement à chaque démarrage.
+  localStorage.setItem(LS_LAST_BACKUP, remoteDate);
+  return { status: "pulled", remoteDate, localDate };
+}
