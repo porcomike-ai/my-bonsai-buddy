@@ -9,6 +9,20 @@ export type BonsaiStyle =
   | "bunjin"
   | "yose-ue"
   | "ishitsuki"
+  | "sokan"
+  | "sankan"
+  | "kabudachi"
+  | "ikadabuki"
+  | "netsuranari"
+  | "sekijoju"
+  | "neagari"
+  | "fukinagashi"
+  | "hokidachi"
+  | "sharimiki"
+  | "sabamiki"
+  | "nejikan"
+  | "takozukuri"
+  | "bankan"
   | "autre";
 
 export type BonsaiEtape = "culture" | "pre-bonsai" | "bonsai";

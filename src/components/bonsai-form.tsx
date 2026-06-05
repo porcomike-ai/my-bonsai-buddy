@@ -21,7 +21,9 @@ const schema = z.object({
   nom: z.string().min(1, "Donnez un nom à votre bonsaï"),
   espece: z.string().min(1, "Indiquez l'espèce"),
   style: z.enum([
-    "chokkan", "moyogi", "shakan", "kengai", "han-kengai", "bunjin", "yose-ue", "ishitsuki", "autre",
+    "chokkan", "moyogi", "shakan", "kengai", "han-kengai", "bunjin", "yose-ue", "ishitsuki",
+    "sokan", "sankan", "kabudachi", "ikadabuki", "netsuranari", "sekijoju", "neagari",
+    "fukinagashi", "hokidachi", "sharimiki", "sabamiki", "nejikan", "takozukuri", "bankan", "autre",
   ]),
   etape: z.enum(["culture", "pre-bonsai", "bonsai"]),
   ageEstime: z.string().optional(),

@@ -458,3 +458,49 @@ export async function restoreFromDrive(
   }
   return null;
 }
+
+// ============================================================================
+//  Taille de la sauvegarde sur Drive
+// ============================================================================
+
+export interface BackupSize {
+  totalBytes: number;
+  fileCount: number;
+  photoCount: number;
+  manifestBytes: number;
+}
+
+export async function getBackupSize(): Promise<BackupSize | null> {
+  if (!isConnected()) return null;
+  const folderId = await ensureFolder();
+  let totalBytes = 0;
+  let fileCount = 0;
+  let photoCount = 0;
+  let manifestBytes = 0;
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: "nextPageToken, files(id,name,size,mimeType)",
+      spaces: "drive",
+      pageSize: "1000",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+    const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`);
+    if (!res.ok) throw new Error(await readError(res, "Lecture du dossier Drive échouée"));
+    const data = await res.json() as {
+      nextPageToken?: string;
+      files: { id: string; name: string; size?: string; mimeType?: string }[];
+    };
+    for (const f of data.files) {
+      const size = f.size ? Number(f.size) : 0;
+      totalBytes += size;
+      fileCount++;
+      if (f.name === MANIFEST_NAME) manifestBytes = size;
+      else if (f.name.startsWith("photo-") || f.name.startsWith("poterie-")) photoCount++;
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return { totalBytes, fileCount, photoCount, manifestBytes };
+}
+

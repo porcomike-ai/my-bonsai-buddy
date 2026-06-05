@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   getClientId, setClientId, connect, disconnect, isConnected,
-  syncBackup, restoreFromDrive, getLastBackup,
+  syncBackup, restoreFromDrive, getLastBackup, getBackupSize, type BackupSize,
 } from "@/lib/google-drive";
 import { buildSnapshot, buildBackup, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
-import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload, Info } from "lucide-react";
+import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload, Info, Database } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version";
@@ -36,11 +36,23 @@ function ParametresPage() {
   const [connected, setConnected] = useState(false);
   const [last, setLast] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "save" | "load" | "optim" | "export" | "import">(null);
+  const [size, setSize] = useState<BackupSize | null>(null);
+  const [sizeLoading, setSizeLoading] = useState(false);
+
+  const refreshSize = async () => {
+    if (!isConnected()) { setSize(null); return; }
+    setSizeLoading(true);
+    try { setSize(await getBackupSize()); }
+    catch { /* ignore */ }
+    finally { setSizeLoading(false); }
+  };
 
   useEffect(() => {
     setClientIdState(getClientId());
-    setConnected(isConnected());
+    const conn = isConnected();
+    setConnected(conn);
     setLast(getLastBackup());
+    if (conn) refreshSize();
   }, []);
 
   const saveClientId = () => {
@@ -53,6 +65,7 @@ function ParametresPage() {
       await connect();
       setConnected(true);
       toast.success("Connecté à Google Drive");
+      refreshSize();
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -60,6 +73,7 @@ function ParametresPage() {
   const doDisconnect = async () => {
     await disconnect();
     setConnected(false);
+    setSize(null);
     toast.success("Déconnecté");
   };
 
@@ -72,6 +86,7 @@ function ParametresPage() {
       toast.success(
         `Sauvegarde envoyée — ${stats.uploaded} photo(s) envoyée(s), ${stats.skipped} inchangée(s)${stats.deleted ? `, ${stats.deleted} supprimée(s)` : ""}.`,
       );
+      refreshSize();
     } catch (e) {
       toast.error((e as Error).message);
     } finally { setBusy(null); }
@@ -237,6 +252,38 @@ function ParametresPage() {
           </Button>
         </div>
 
+        {connected && (
+          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 p-4">
+            <Database className="mt-0.5 h-4 w-4 text-accent" />
+            <div className="flex-1 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">Taille sur Google Drive</span>
+                <button
+                  type="button"
+                  onClick={refreshSize}
+                  disabled={sizeLoading}
+                  className="text-xs text-accent hover:underline disabled:opacity-50"
+                >
+                  {sizeLoading ? "Calcul…" : "Actualiser"}
+                </button>
+              </div>
+              {size ? (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <strong className="text-foreground">{formatBytes(size.totalBytes)}</strong>
+                    {" — "}{size.fileCount} fichier(s), dont {size.photoCount} photo(s)
+                    {size.manifestBytes > 0 && <> · manifest {formatBytes(size.manifestBytes)}</>}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {sizeLoading ? "Calcul en cours…" : "Aucune sauvegarde encore — cliquez sur « Sauvegarder maintenant »."}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         <p className="mt-4 text-xs text-muted-foreground">
           L'application n'a accès qu'aux fichiers qu'elle crée elle-même (scope <code>drive.file</code>) — elle ne peut pas lire le reste de votre Drive.
         </p>
@@ -326,4 +373,12 @@ function ParametresPage() {
 
     </AppShell>
   );
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes < 0) return "0 o";
+  const units = ["o", "Ko", "Mo", "Go", "To"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const v = bytes / Math.pow(1024, i);
+  return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
