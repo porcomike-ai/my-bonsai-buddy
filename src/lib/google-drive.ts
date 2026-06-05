@@ -107,11 +107,10 @@ export function getLastBackup(): string | null {
 }
 function setLastBackup(iso: string): void { localStorage.setItem(LS_LAST_BACKUP, iso); }
 
-export async function connect(): Promise<void> {
+function requestToken(prompt: "" | "consent"): Promise<void> {
   const clientId = getClientId();
-  if (!clientId) throw new Error("Client ID Google non configuré");
-  await loadGis();
-  return new Promise<void>((resolve, reject) => {
+  if (!clientId) return Promise.reject(new Error("Client ID Google non configuré"));
+  return loadGis().then(() => new Promise<void>((resolve, reject) => {
     const client = window.google!.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPE,
@@ -127,8 +126,30 @@ export async function connect(): Promise<void> {
         resolve();
       },
     });
-    client.requestAccessToken({ prompt: "consent" });
-  });
+    client.requestAccessToken({ prompt });
+  }));
+}
+
+export async function connect(): Promise<void> {
+  await requestToken("consent");
+  localStorage.setItem(LS_AUTO, "1");
+}
+
+/**
+ * Tentative de reconnexion silencieuse au démarrage : utilise `prompt: ""`
+ * pour réutiliser le consentement déjà accordé sans afficher de pop-up.
+ * Résout `true` si un jeton valide a été obtenu, `false` sinon.
+ */
+export async function silentConnect(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (isConnected()) return true;
+  if (!wasAutoConnectEnabled() || !getClientId()) return false;
+  try {
+    await requestToken("");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function disconnect(): Promise<void> {
@@ -138,6 +159,7 @@ export async function disconnect(): Promise<void> {
   }
   clearToken();
   localStorage.removeItem(LS_FOLDER_ID);
+  localStorage.removeItem(LS_AUTO);
 }
 
 async function readError(res: Response, fallback: string): Promise<string> {
