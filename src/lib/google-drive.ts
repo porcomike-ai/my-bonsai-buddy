@@ -71,32 +71,35 @@ export function setClientId(id: string): void {
 }
 
 interface StoredToken { access_token: string; expires_at: number }
+
+// Persistance du jeton en localStorage pour permettre la reconnexion
+// silencieuse au redémarrage de l'app. Le scope `drive.file` limite l'accès
+// aux seuls fichiers créés par l'app, ce qui borne le risque en cas de XSS.
+const LS_AUTO = "bonsai.gdrive.autoConnect";
+
 function getStoredToken(): StoredToken | null {
   try {
-    // Use sessionStorage instead of localStorage to limit OAuth token exposure:
-    // tokens are scoped to the current tab and cleared when it closes, reducing
-    // the window of risk from XSS or malicious browser extensions.
-    const raw = sessionStorage.getItem(LS_TOKEN);
-    if (!raw) {
-      // Migrate away from any token previously persisted in localStorage.
-      try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
-      return null;
-    }
+    const raw = localStorage.getItem(LS_TOKEN) || sessionStorage.getItem(LS_TOKEN);
+    if (!raw) return null;
     const t = JSON.parse(raw) as StoredToken;
     if (t.expires_at - 30_000 < Date.now()) return null;
     return t;
   } catch { return null; }
 }
 function storeToken(t: StoredToken): void {
-  sessionStorage.setItem(LS_TOKEN, JSON.stringify(t));
-  try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+  localStorage.setItem(LS_TOKEN, JSON.stringify(t));
+  try { sessionStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
 }
 function clearToken(): void {
-  sessionStorage.removeItem(LS_TOKEN);
   try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+  try { sessionStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
 }
 
 export function isConnected(): boolean { return getStoredToken() !== null; }
+export function wasAutoConnectEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(LS_AUTO) === "1";
+}
 
 export function getLastBackup(): string | null {
   if (typeof window === "undefined") return null;
