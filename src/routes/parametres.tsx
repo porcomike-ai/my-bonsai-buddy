@@ -36,11 +36,23 @@ function ParametresPage() {
   const [connected, setConnected] = useState(false);
   const [last, setLast] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "save" | "load" | "optim" | "export" | "import">(null);
+  const [size, setSize] = useState<BackupSize | null>(null);
+  const [sizeLoading, setSizeLoading] = useState(false);
+
+  const refreshSize = async () => {
+    if (!isConnected()) { setSize(null); return; }
+    setSizeLoading(true);
+    try { setSize(await getBackupSize()); }
+    catch { /* ignore */ }
+    finally { setSizeLoading(false); }
+  };
 
   useEffect(() => {
     setClientIdState(getClientId());
-    setConnected(isConnected());
+    const conn = isConnected();
+    setConnected(conn);
     setLast(getLastBackup());
+    if (conn) refreshSize();
   }, []);
 
   const saveClientId = () => {
