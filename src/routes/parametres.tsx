@@ -252,6 +252,38 @@ function ParametresPage() {
           </Button>
         </div>
 
+        {connected && (
+          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 p-4">
+            <Database className="mt-0.5 h-4 w-4 text-accent" />
+            <div className="flex-1 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">Taille sur Google Drive</span>
+                <button
+                  type="button"
+                  onClick={refreshSize}
+                  disabled={sizeLoading}
+                  className="text-xs text-accent hover:underline disabled:opacity-50"
+                >
+                  {sizeLoading ? "Calcul…" : "Actualiser"}
+                </button>
+              </div>
+              {size ? (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <strong className="text-foreground">{formatBytes(size.totalBytes)}</strong>
+                    {" — "}{size.fileCount} fichier(s), dont {size.photoCount} photo(s)
+                    {size.manifestBytes > 0 && <> · manifest {formatBytes(size.manifestBytes)}</>}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {sizeLoading ? "Calcul en cours…" : "Aucune sauvegarde encore — cliquez sur « Sauvegarder maintenant »."}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         <p className="mt-4 text-xs text-muted-foreground">
           L'application n'a accès qu'aux fichiers qu'elle crée elle-même (scope <code>drive.file</code>) — elle ne peut pas lire le reste de votre Drive.
         </p>
