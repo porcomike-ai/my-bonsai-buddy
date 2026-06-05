@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   getClientId, setClientId, connect, disconnect, isConnected,
-  syncBackup, restoreFromDrive, getLastBackup,
+  syncBackup, restoreFromDrive, getLastBackup, getBackupSize, type BackupSize,
 } from "@/lib/google-drive";
 import { buildSnapshot, buildBackup, restoreBackup, optimizeStoredImages, type BackupPayload } from "@/lib/backup";
-import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload, Info } from "lucide-react";
+import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, HardDriveDownload, HardDriveUpload, Info, Database } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version";
