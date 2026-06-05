@@ -529,3 +529,43 @@ export async function getBackupSize(): Promise<BackupSize | null> {
   return { totalBytes, fileCount, photoCount, manifestBytes };
 }
 
+
+// ============================================================================
+//  Auto-sync au démarrage : si Drive est plus récent → on tire
+// ============================================================================
+
+export interface AutoSyncResult {
+  status: "skipped" | "no-remote" | "up-to-date" | "pulled";
+  reason?: string;
+  remoteDate?: string;
+  localDate?: string | null;
+}
+
+/**
+ * Au démarrage de l'app :
+ *  1. tente une reconnexion silencieuse,
+ *  2. lit l'`exportedAt` du manifest distant,
+ *  3. si plus récent que la dernière sauvegarde locale → restaure depuis Drive.
+ */
+export async function autoSyncFromDrive(
+  onProgress?: (current: number, total: number) => void,
+): Promise<AutoSyncResult> {
+  const ok = await silentConnect();
+  if (!ok) return { status: "skipped", reason: "Non connecté" };
+  let folderId: string;
+  try { folderId = await ensureFolder(); }
+  catch { return { status: "skipped", reason: "Dossier Drive inaccessible" }; }
+  const manifest = await fetchManifest(folderId);
+  if (!manifest) return { status: "no-remote" };
+  const remoteDate = manifest.exportedAt;
+  const localDate = getLastBackup();
+  if (localDate && Date.parse(remoteDate) <= Date.parse(localDate)) {
+    return { status: "up-to-date", remoteDate, localDate };
+  }
+  const { applyManifest } = await import("./backup");
+  await applyManifest(manifest, downloadBinary, onProgress);
+  // Aligne la date locale avec celle du manifest restauré pour éviter
+  // une boucle de re-téléchargement à chaque démarrage.
+  localStorage.setItem(LS_LAST_BACKUP, remoteDate);
+  return { status: "pulled", remoteDate, localDate };
+}
