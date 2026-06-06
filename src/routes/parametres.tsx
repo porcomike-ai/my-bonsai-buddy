@@ -15,6 +15,7 @@ import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand2, Ha
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version";
+import { FirebaseAccountCard } from "@/components/firebase-account-card";
 
 export const Route = createFileRoute("/parametres")({
   head: () => ({
@@ -181,6 +182,14 @@ function ParametresPage() {
     <AppShell>
       <h1 className="font-display text-4xl font-semibold">Paramètres</h1>
       <p className="mt-2 text-muted-foreground">Sauvegardez votre collection sur Google Drive pour la retrouver sur un autre appareil.</p>
+
+      <section className="mt-10 space-y-3">
+        <h2 className="font-display text-xl font-semibold">Compte Google (Firebase)</h2>
+        <p className="text-sm text-muted-foreground">
+          La nouvelle synchronisation Cloud Firestore remplacera bientôt Google Drive. Connecte-toi pour préparer la migration.
+        </p>
+        <FirebaseAccountCard />
+      </section>
 
       <section className="mt-10 rounded-3xl border border-border bg-card p-6">
         <div className="flex items-start gap-3">
