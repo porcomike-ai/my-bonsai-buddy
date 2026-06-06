@@ -1,50 +1,101 @@
-# Plan — Application de gestion de collection de bonsaïs
+# Plan : Firebase + Croquis IA d'évolution
 
-Application personnelle (sans compte), données stockées localement dans le navigateur. Style visuel **Terre & sauge** : terracotta (#c4654a), pêche douce (#e8a87c), sauge (#87a878), vert forêt (#4a6741) — typographie éditoriale (serif élégant en titres + sans-serif chaleureux en corps).
+Ce changement est important : remplacement complet de la couche de données (IndexedDB + Google Drive → Firebase) et ajout d'une nouvelle fonctionnalité IA. Je le découpe en deux livraisons.
 
-## Pages (routes séparées)
+## Étape 0 — Création du projet Firebase (à faire par toi avant que je code)
 
-- `/` — **Tableau de bord** : aperçu de la collection (compteurs, prochains soins à venir, derniers ajouts)
-- `/collection` — **Mes bonsaïs** : galerie en grille avec recherche, filtres (espèce, style, âge)
-- `/bonsai/$id` — **Fiche détaillée** : photo principale, infos, onglets Galerie / Journal / Rappels / Poterie associée
-- `/bonsai/nouveau` — Formulaire de création
-- `/poteries` — **Mes poteries** : grille des contenants avec dimensions, origine, style, bonsaï actuellement planté
-- `/poterie/$id` — Fiche poterie + édition
-- `/calendrier` — **Calendrier des soins** : vue mensuelle des rappels (arrosage, taille, rempotage, fertilisation)
-- `/journal` — Historique global des entretiens, filtrable par bonsaï et type d'action
+1. Va sur https://console.firebase.google.com/ → **Add project** → nomme-le (ex. `bonsai-studio`).
+2. Désactive Google Analytics (pas utile ici).
+3. Dans **Build → Authentication → Sign-in method**, active **Google**.
+4. Dans **Build → Firestore Database → Create database**, mode **production**, région `eur3` (europe).
+5. Dans **Build → Storage → Get started**, mode production, même région.
+6. Dans **Project settings → General → Your apps**, clique l'icône `</>` Web, enregistre l'app et copie la config :
+   ```
+   apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId
+   ```
+7. Dans **Authentication → Settings → Authorized domains**, ajoute :
+   - `my-bonsai-buddy.lovable.app`
+   - `id-preview--ed2754e3-1d01-4e23-a32e-b1ebfa380b6b.lovable.app`
 
-## Fonctionnalités principales
+Quand c'est fait, colle-moi la config (ces clés sont publiques, c'est normal — la sécurité passe par les Firestore Security Rules + Auth).
 
-**Fiche bonsaï** : nom, espèce, style (chokkan, moyogi, shakan, kengai, etc.), âge estimé, date d'acquisition, origine, hauteur, photo principale, notes, poterie associée.
+## Livraison 1 — Migration Firebase
 
-**Galerie photo évolutive** : plusieurs photos datées par bonsaï, vue chronologique pour suivre l'évolution (timeline visuelle).
+### Données
+- **Collections Firestore** scopées par utilisateur :
+  - `users/{uid}/bonsais/{bonsaiId}` — champs identiques à `Bonsai` actuel + `poterieId` (référence) + `updatedAt`
+  - `users/{uid}/poteries/{poterieId}`
+  - `users/{uid}/bonsais/{bonsaiId}/photos/{photoId}` (sous-collection, métadonnées)
+  - `users/{uid}/bonsais/{bonsaiId}/journal/{entryId}`
+  - `users/{uid}/bonsais/{bonsaiId}/rappels/{rappelId}`
+  - `users/{uid}/evenements/{evenementId}`
+  - `users/{uid}/bonsais/{bonsaiId}/croquis/{croquisId}` (nouveau — voir Livraison 2)
+- **Storage** pour les images : `users/{uid}/bonsais/{bonsaiId}/photos/{photoId}.jpg` et `.../croquis/{croquisId}.png`
+- **Lien bonsaï ↔ poterie** : champ `poterieId` (déjà présent), résolu côté client par `getDoc(doc(db, '.../poteries/' + id))`.
 
-**Journal d'entretien** : entrées datées avec type (arrosage, taille, rempotage, fertilisation, traitement, autre), notes libres, lien vers le bonsaï.
+### Sécurité (Firestore Rules)
+```
+match /users/{uid}/{document=**} {
+  allow read, write: if request.auth != null && request.auth.uid == uid;
+}
+```
+Mêmes règles pour Storage.
 
-**Rappels et calendrier** : création de rappels récurrents par bonsaï (ex. arrosage tous les 2 jours, rempotage annuel). Affichage sur le tableau de bord (prochains 7 jours) et calendrier mensuel. Cochable pour marquer comme fait → crée une entrée de journal automatique.
+### Auth
+- `signInWithPopup(googleProvider)` au démarrage, bouton dans Paramètres.
+- Persistance `browserLocalPersistence` → reconnexion auto.
+- `onAuthStateChanged` déclenche le chargement des données.
 
-**Gestion des poteries** : catalogue séparé avec photo, dimensions (L×l×H), forme, couleur, matière, artisan/origine, prix, statut (libre/utilisée), lien réciproque avec le bonsaï planté dedans.
+### Migration des données existantes
+- Au premier login Google détecté, je propose un bouton **« Importer mes données locales (IndexedDB) vers Firebase »** dans Paramètres.
+- Push de toutes les entrées IndexedDB + upload des blobs photos vers Storage.
+- Une fois importé, les lectures viennent uniquement de Firestore (avec cache `enableIndexedDbPersistence` pour fonctionner hors-ligne).
 
-## Stockage des données
+### Suppression
+- Suppression de `src/lib/google-drive.ts`, du bloc Drive dans `parametres.tsx`, du module `app-shell.tsx` qui appelle `autoSyncFromDrive`.
+- Remplacement de `src/lib/db.ts` (IndexedDB) par `src/lib/firestore.ts` exposant la même API (`listBonsais`, `saveBonsai`, etc.) → aucun composant à réécrire ailleurs.
 
-Sans login : tout est stocké localement avec **IndexedDB** (via la lib `idb`) pour gérer les photos en blob sans saturer localStorage. Une fonction d'export/import JSON permet à l'utilisateur de sauvegarder sa collection.
+### Packages
+- `firebase` (SDK v10 modulaire)
+
+## Livraison 2 — Croquis IA d'évolution + comparaison
+
+### Génération de croquis
+- Server route `src/routes/api/sketch-evolution.ts` (streaming SSE) qui appelle Lovable AI Gateway avec `google/gemini-3.1-flash-image-preview` en mode **édition d'image** (photo actuelle → croquis stylisé botanique noir & blanc).
+- Paramètres : `bonsaiId`, `horizonAnnees` (1, 3, 5, 10), `objectifMiseEnForme` (texte libre, ex. « renforcer le nebari, ouvrir la cime »).
+- Prompt système : « Esquisse botanique au trait, encre noire sur papier ivoire, projection à N années montrant la croissance du tronc, l'évolution de la ramification et la silhouette future selon le style {style} du bonsaï. »
+- Le résultat (base64 PNG) est uploadé dans Storage + métadonnées dans `croquis/{id}` avec `dateCreation`, `horizonAnnees`, `objectif`, `photoSourceId`.
+
+### Interface croquis
+- Nouveau bouton **« Simuler l'évolution »** sur la fiche bonsaï.
+- Modal avec sélection de l'horizon temporel et du texte d'objectif, prévisualisation streaming (frames partielles floutées qui se précisent).
+- Galerie de croquis sauvegardés par bonsaï avec date et horizon.
+
+### Comparaison
+- Nouvel onglet **« Progression »** sur la fiche bonsaï avec deux modes :
+  1. **Slider avant/après** (composant react-compare-slider) : photo actuelle ↔ croquis sélectionné.
+  2. **Timeline annotée** : alignement chronologique photos + croquis ; bouton « Analyser » qui appelle un serverFn IA (`google/gemini-3-flash-preview`) avec les deux images en input et retourne un texte structuré (`{ratificationGain, troncEpaississement, silhouetteEcart, recommandations[]}`).
+
+### Packages
+- `react-compare-slider`
 
 ## Détails techniques
 
-- **Stack** : TanStack Start (template existant), TanStack Router, React 19, Tailwind v4, shadcn/ui
-- **Stockage** : IndexedDB via `idb`, photos converties en Blob URLs
-- **Formulaires** : react-hook-form + zod
-- **Dates** : date-fns (déjà commun), `date-fns/locale/fr` pour le français
-- **Calendrier** : shadcn Calendar pour le date picker, vue mensuelle custom pour `/calendrier`
-- **Design system** : tokens oklch dans `src/styles.css` (palette Terre & sauge), pas de couleurs en dur dans les composants
-- **i18n** : tout en français (interface, libellés, messages)
-- **Export/import** : bouton dans les réglages, JSON + photos encodées en base64
+- `firebase` SDK initialisé dans `src/integrations/firebase/client.ts`, config lue depuis `import.meta.env.VITE_FIREBASE_*` (clés publiques, ok côté client).
+- Persistance offline Firestore activée → l'app continue de marcher sans réseau, sync auto au retour.
+- Les serverFns/routes IA lisent `process.env.LOVABLE_API_KEY` (déjà provisionné).
+- Pas de Lovable Cloud / Supabase nécessaire — Firebase remplace tout côté backend données.
 
-## Hors périmètre (à confirmer plus tard si besoin)
+## Risques que je veux signaler
 
-- Synchronisation cloud / multi-appareils
-- Notifications push (les rappels sont visuels dans l'app uniquement)
-- Partage de fiches
-- Authentification
+1. **Réinitialisation des données** : les utilisateurs actuels devront cliquer « Importer » pour migrer ; sinon ils repartent à vide. Je peux le faire automatiquement au premier login si tu préfères.
+2. **Coût Firebase** : gratuit sous le quota Spark (1 Go Firestore, 5 Go Storage, 50k lectures/jour). Largement suffisant pour un usage personnel.
+3. **Croquis IA** : chaque génération consomme des crédits Lovable AI. Je mettrai un compteur visible.
 
-Si vous souhaitez plus tard synchroniser entre appareils ou recevoir des notifications, on pourra activer Lovable Cloud.
+## Ordre d'exécution proposé
+
+Une fois ta config Firebase reçue :
+1. Livraison 1 (migration complète + bouton d'import) — je teste avant de te rendre la main.
+2. Livraison 2 (croquis + comparaison) dans un second tour.
+
+Confirme la config Firebase et je démarre. Si tu veux ajuster quelque chose dans le plan (auto-import vs bouton, styles de croquis, etc.), dis-le maintenant.
