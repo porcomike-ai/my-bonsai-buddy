@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { FirebaseAuthProvider } from "@/integrations/firebase/auth";
 
 function NotFoundComponent() {
   return (
@@ -131,8 +132,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster richColors position="top-right" />
+      <FirebaseAuthProvider>
+        <Outlet />
+        <Toaster richColors position="top-right" />
+      </FirebaseAuthProvider>
     </QueryClientProvider>
   );
 }
