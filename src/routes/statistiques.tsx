@@ -5,14 +5,18 @@ import { listBonsais, listPhotos, listJournal, listRappels, listPoteries } from 
 import { getDB } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
 import { ETAPES, STYLES, styleLabel, etapeLabel } from "@/lib/bonsai-meta";
-import { BarChart3, Sprout, Camera, Euro, TrendingUp, Container, Calendar as CalendarIcon } from "lucide-react";
+import { ChartBar as BarChart3, Sprout, Camera, Euro, TrendingUp, Container, Calendar as CalendarIcon } from "lucide-react";
 import { parseISO, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/statistiques")({
   head: () => ({
     meta: [
       { title: "Statistiques — Bonsaï Studio" },
-      { name: "description", content: "Vue chiffrée de votre collection de bonsaïs : valeur estimée, répartition par style et étape, fréquence des soins." },
+      {
+        name: "description",
+        content:
+          "Vue chiffrée de votre collection de bonsaïs : valeur estimée, répartition par style et étape, fréquence des soins.",
+      },
       { property: "og:title", content: "Statistiques — Bonsaï Studio" },
       { property: "og:description", content: "Vue chiffrée de votre collection de bonsaïs." },
       { property: "og:url", content: "/statistiques" },
@@ -20,7 +24,6 @@ export const Route = createFileRoute("/statistiques")({
   }),
   component: StatistiquesPage,
 });
-
 
 async function loadAllPhotos() {
   const db = await getDB();
@@ -36,7 +39,10 @@ function StatistiquesPage() {
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
   const { data: photos = [] } = useQuery({ queryKey: ["photos-all"], queryFn: loadAllPhotos });
   const { data: journal = [] } = useQuery({ queryKey: ["journal-all"], queryFn: loadAllJournal });
-  const { data: rappels = [] } = useQuery({ queryKey: ["rappels-all"], queryFn: () => listRappels() });
+  const { data: rappels = [] } = useQuery({
+    queryKey: ["rappels-all"],
+    queryFn: () => listRappels(),
+  });
 
   const stats = useMemo(() => {
     const actifs = bonsais.filter((b) => b.dansCollection ?? true);
@@ -60,13 +66,13 @@ function StatistiquesPage() {
     const parStyle = STYLES.map((s) => ({
       ...s,
       count: actifs.filter((b) => b.style === s.value).length,
-    })).filter((s) => s.count > 0).sort((a, b) => b.count - a.count);
+    }))
+      .filter((s) => s.count > 0)
+      .sort((a, b) => b.count - a.count);
 
     const especesMap = new Map<string, number>();
     actifs.forEach((b) => especesMap.set(b.espece, (especesMap.get(b.espece) ?? 0) + 1));
-    const topEspeces = [...especesMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    const topEspeces = [...especesMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 
     // Activité 30 derniers jours
     const now = new Date();
@@ -102,7 +108,8 @@ function StatistiquesPage() {
         <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Aperçu</p>
         <h1 className="mt-1 font-display text-4xl font-semibold">Statistiques</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Vue d'ensemble de votre collection ({stats.actifs} arbre{stats.actifs > 1 ? "s" : ""} actif{stats.actifs > 1 ? "s" : ""}).
+          Vue d'ensemble de votre collection ({stats.actifs} arbre{stats.actifs > 1 ? "s" : ""}{" "}
+          actif{stats.actifs > 1 ? "s" : ""}).
         </p>
       </header>
 
@@ -113,23 +120,47 @@ function StatistiquesPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Ajoutez votre premier bonsaï pour voir apparaître les statistiques.
           </p>
-          <Link to="/collection" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <Link
+            to="/collection"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+          >
             Aller à la collection
           </Link>
         </div>
       ) : (
         <>
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <KPI icon={<Sprout className="h-4 w-4" />} label="Bonsaïs actifs" value={stats.actifs} hint={stats.sortis ? `+${stats.sortis} sortis` : undefined} />
-            <KPI icon={<Container className="h-4 w-4" />} label="Poteries" value={stats.totalPoteries} />
+            <KPI
+              icon={<Sprout className="h-4 w-4" />}
+              label="Bonsaïs actifs"
+              value={stats.actifs}
+              hint={stats.sortis ? `+${stats.sortis} sortis` : undefined}
+            />
+            <KPI
+              icon={<Container className="h-4 w-4" />}
+              label="Poteries"
+              value={stats.totalPoteries}
+            />
             <KPI icon={<Camera className="h-4 w-4" />} label="Photos" value={stats.totalPhotos} />
-            <KPI icon={<CalendarIcon className="h-4 w-4" />} label="Rappels actifs" value={stats.rappelsActifs} />
-            <KPI icon={<Euro className="h-4 w-4" />} label="Prix d'achat" value={`${stats.totalPrix.toLocaleString("fr-FR")} €`} />
+            <KPI
+              icon={<CalendarIcon className="h-4 w-4" />}
+              label="Rappels actifs"
+              value={stats.rappelsActifs}
+            />
+            <KPI
+              icon={<Euro className="h-4 w-4" />}
+              label="Prix d'achat"
+              value={`${stats.totalPrix.toLocaleString("fr-FR")} €`}
+            />
             <KPI
               icon={<TrendingUp className="h-4 w-4" />}
               label="Valeur estimée"
               value={`${stats.totalValeur.toLocaleString("fr-FR")} €`}
-              hint={stats.plusValue !== 0 ? `${stats.plusValue > 0 ? "+" : ""}${stats.plusValue.toLocaleString("fr-FR")} €` : undefined}
+              hint={
+                stats.plusValue !== 0
+                  ? `${stats.plusValue > 0 ? "+" : ""}${stats.plusValue.toLocaleString("fr-FR")} €`
+                  : undefined
+              }
               hintPositive={stats.plusValue > 0}
               hintNegative={stats.plusValue < 0}
             />
@@ -150,7 +181,12 @@ function StatistiquesPage() {
               ) : (
                 <div className="space-y-3">
                   {stats.parStyle.map((s) => (
-                    <Bar key={s.value} label={styleLabel(s.value).split(" — ")[0]} count={s.count} max={maxStyle} />
+                    <Bar
+                      key={s.value}
+                      label={styleLabel(s.value).split(" — ")[0]}
+                      count={s.count}
+                      max={maxStyle}
+                    />
                   ))}
                 </div>
               )}
@@ -162,9 +198,14 @@ function StatistiquesPage() {
               ) : (
                 <ul className="space-y-2 text-sm">
                   {stats.topEspeces.map(([nom, n]) => (
-                    <li key={nom} className="flex items-center justify-between gap-3 border-b border-border/60 pb-1.5 last:border-none last:pb-0">
+                    <li
+                      key={nom}
+                      className="flex items-center justify-between gap-3 border-b border-border/60 pb-1.5 last:border-none last:pb-0"
+                    >
                       <span className="truncate italic">{nom}</span>
-                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">{n}</span>
+                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                        {n}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -175,23 +216,33 @@ function StatistiquesPage() {
               <ul className="space-y-2 text-sm">
                 <Row label="Soins (30 derniers jours)" value={stats.journal30} />
                 <Row label="Entrées de journal au total" value={stats.totalJournal} />
-                <Row label="Âge moyen" value={stats.ageMoyen != null ? `${stats.ageMoyen} ans` : "—"} />
+                <Row
+                  label="Âge moyen"
+                  value={stats.ageMoyen != null ? `${stats.ageMoyen} ans` : "—"}
+                />
                 <Row
                   label="Plus vieux bonsaï"
                   value={
                     stats.plusVieux ? (
-                      <Link to="/bonsai/$id" params={{ id: stats.plusVieux.id }} className="text-accent hover:underline">
+                      <Link
+                        to="/bonsai/$id"
+                        params={{ id: stats.plusVieux.id }}
+                        className="text-accent hover:underline"
+                      >
                         {stats.plusVieux.nom} ({stats.plusVieux.ageEstime} ans)
                       </Link>
-                    ) : "—"
+                    ) : (
+                      "—"
+                    )
                   }
                 />
-                <Row label="Étape majoritaire" value={
-                  (() => {
+                <Row
+                  label="Étape majoritaire"
+                  value={(() => {
                     const top = [...stats.parEtape].sort((a, b) => b.count - a.count)[0];
                     return top && top.count > 0 ? `${etapeLabel(top.value)} (${top.count})` : "—";
-                  })()
-                } />
+                  })()}
+                />
               </ul>
             </Card>
           </div>
@@ -201,9 +252,20 @@ function StatistiquesPage() {
   );
 }
 
-function KPI({ icon, label, value, hint, hintPositive, hintNegative }: {
-  icon: React.ReactNode; label: string; value: React.ReactNode; hint?: string;
-  hintPositive?: boolean; hintNegative?: boolean;
+function KPI({
+  icon,
+  label,
+  value,
+  hint,
+  hintPositive,
+  hintNegative,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  hintPositive?: boolean;
+  hintNegative?: boolean;
 }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
@@ -212,7 +274,9 @@ function KPI({ icon, label, value, hint, hintPositive, hintNegative }: {
       </div>
       <div className="mt-2 font-display text-2xl font-semibold">{value}</div>
       {hint && (
-        <div className={`mt-0.5 text-xs ${hintPositive ? "text-emerald-600" : hintNegative ? "text-destructive" : "text-muted-foreground"}`}>
+        <div
+          className={`mt-0.5 text-xs ${hintPositive ? "text-emerald-600" : hintNegative ? "text-destructive" : "text-muted-foreground"}`}
+        >
           {hint}
         </div>
       )}
@@ -238,7 +302,10 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
         <span className="text-muted-foreground">{count}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-secondary">
-        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-accent transition-all"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );

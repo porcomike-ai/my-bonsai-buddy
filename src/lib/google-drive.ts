@@ -70,7 +70,10 @@ export function setClientId(id: string): void {
   localStorage.setItem(LS_CLIENT_ID, id.trim());
 }
 
-interface StoredToken { access_token: string; expires_at: number }
+interface StoredToken {
+  access_token: string;
+  expires_at: number;
+}
 
 // Persistance du jeton en localStorage pour permettre la reconnexion
 // silencieuse au redémarrage de l'app. Le scope `drive.file` limite l'accès
@@ -84,18 +87,34 @@ function getStoredToken(): StoredToken | null {
     const t = JSON.parse(raw) as StoredToken;
     if (t.expires_at - 30_000 < Date.now()) return null;
     return t;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 function storeToken(t: StoredToken): void {
   localStorage.setItem(LS_TOKEN, JSON.stringify(t));
-  try { sessionStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+  try {
+    sessionStorage.removeItem(LS_TOKEN);
+  } catch {
+    /* ignore */
+  }
 }
 function clearToken(): void {
-  try { localStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
-  try { sessionStorage.removeItem(LS_TOKEN); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(LS_TOKEN);
+  } catch {
+    /* ignore */
+  }
+  try {
+    sessionStorage.removeItem(LS_TOKEN);
+  } catch {
+    /* ignore */
+  }
 }
 
-export function isConnected(): boolean { return getStoredToken() !== null; }
+export function isConnected(): boolean {
+  return getStoredToken() !== null;
+}
 export function wasAutoConnectEnabled(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(LS_AUTO) === "1";
@@ -105,29 +124,34 @@ export function getLastBackup(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(LS_LAST_BACKUP);
 }
-function setLastBackup(iso: string): void { localStorage.setItem(LS_LAST_BACKUP, iso); }
+function setLastBackup(iso: string): void {
+  localStorage.setItem(LS_LAST_BACKUP, iso);
+}
 
 function requestToken(prompt: "" | "consent"): Promise<void> {
   const clientId = getClientId();
   if (!clientId) return Promise.reject(new Error("Client ID Google non configuré"));
-  return loadGis().then(() => new Promise<void>((resolve, reject) => {
-    const client = window.google!.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: SCOPE,
-      callback: (resp) => {
-        if (resp.error || !resp.access_token) {
-          reject(new Error(resp.error || "Connexion refusée"));
-          return;
-        }
-        storeToken({
-          access_token: resp.access_token,
-          expires_at: Date.now() + (resp.expires_in ?? 3600) * 1000,
+  return loadGis().then(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const client = window.google!.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: SCOPE,
+          callback: (resp) => {
+            if (resp.error || !resp.access_token) {
+              reject(new Error(resp.error || "Connexion refusée"));
+              return;
+            }
+            storeToken({
+              access_token: resp.access_token,
+              expires_at: Date.now() + (resp.expires_in ?? 3600) * 1000,
+            });
+            resolve();
+          },
         });
-        resolve();
-      },
-    });
-    client.requestAccessToken({ prompt });
-  }));
+        client.requestAccessToken({ prompt });
+      }),
+  );
 }
 
 export async function connect(): Promise<void> {
@@ -160,7 +184,9 @@ export async function silentConnect(): Promise<boolean> {
 export async function disconnect(): Promise<void> {
   const tok = getStoredToken();
   if (tok && window.google?.accounts?.oauth2) {
-    await new Promise<void>((r) => window.google!.accounts.oauth2.revoke(tok.access_token, () => r()));
+    await new Promise<void>((r) =>
+      window.google!.accounts.oauth2.revoke(tok.access_token, () => r()),
+    );
   }
   clearToken();
   localStorage.removeItem(LS_FOLDER_ID);
@@ -169,7 +195,13 @@ export async function disconnect(): Promise<void> {
 
 async function readError(res: Response, fallback: string): Promise<string> {
   try {
-    const data = await res.clone().json() as { error?: { message?: string; status?: string; errors?: { reason?: string; domain?: string }[] } };
+    const data = (await res.clone().json()) as {
+      error?: {
+        message?: string;
+        status?: string;
+        errors?: { reason?: string; domain?: string }[];
+      };
+    };
     const msg = data.error?.message;
     const reason = data.error?.errors?.[0]?.reason;
     if (reason === "accessNotConfigured" || /Drive API has not been used/i.test(msg ?? "")) {
@@ -178,11 +210,17 @@ async function readError(res: Response, fallback: string): Promise<string> {
     if (reason === "storageQuotaExceeded" || /quota/i.test(msg ?? "")) {
       return `Espace Google Drive insuffisant — libérez de la place ou videz la corbeille puis réessayez (${res.status}).`;
     }
-    if (res.status === 429 || reason === "rateLimitExceeded" || reason === "userRateLimitExceeded") {
+    if (
+      res.status === 429 ||
+      reason === "rateLimitExceeded" ||
+      reason === "userRateLimitExceeded"
+    ) {
       return `Limite de débit Google Drive atteinte — patientez quelques secondes puis réessayez (${res.status}).`;
     }
     if (msg) return `${fallback} : ${msg} (${res.status})`;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return `${fallback} (${res.status})`;
 }
 
@@ -218,19 +256,25 @@ async function authedFetch(url: string, init: RequestInit = {}): Promise<Respons
 }
 
 async function verifyFolder(id: string): Promise<boolean> {
-  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=id,trashed`);
+  const res = await authedFetch(
+    `https://www.googleapis.com/drive/v3/files/${id}?fields=id,trashed`,
+  );
   if (!res.ok) return false;
-  const data = await res.json() as { id?: string; trashed?: boolean };
+  const data = (await res.json()) as { id?: string; trashed?: boolean };
   return !!data.id && !data.trashed;
 }
 
 async function ensureFolder(): Promise<string> {
   const cached = localStorage.getItem(LS_FOLDER_ID);
-  if (cached && await verifyFolder(cached)) return cached;
-  const q = encodeURIComponent(`name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+  if (cached && (await verifyFolder(cached))) return cached;
+  const q = encodeURIComponent(
+    `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+  );
+  const res = await authedFetch(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`,
+  );
   if (res.ok) {
-    const data = await res.json() as { files: { id: string }[] };
+    const data = (await res.json()) as { files: { id: string }[] };
     if (data.files.length > 0) {
       localStorage.setItem(LS_FOLDER_ID, data.files[0].id);
       return data.files[0].id;
@@ -244,16 +288,18 @@ async function ensureFolder(): Promise<string> {
     body: JSON.stringify({ name: FOLDER_NAME, mimeType: "application/vnd.google-apps.folder" }),
   });
   if (!create.ok) throw new Error(await readError(create, "Création du dossier échouée"));
-  const folder = await create.json() as { id: string };
+  const folder = (await create.json()) as { id: string };
   localStorage.setItem(LS_FOLDER_ID, folder.id);
   return folder.id;
 }
 
 async function findInFolder(folderId: string, name: string): Promise<{ id: string } | null> {
   const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
-  const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+  const res = await authedFetch(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`,
+  );
   if (!res.ok) return null;
-  const data = await res.json() as { files: { id: string }[] };
+  const data = (await res.json()) as { files: { id: string }[] };
   return data.files[0] ?? null;
 }
 
@@ -269,7 +315,9 @@ async function maybeGunzip(buf: ArrayBuffer): Promise<string> {
   const bytes = new Uint8Array(buf);
   const isGzip = bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
   if (isGzip && typeof DecompressionStream !== "undefined") {
-    const stream = new Response(new Blob([bytes])).body!.pipeThrough(new DecompressionStream("gzip"));
+    const stream = new Response(new Blob([bytes])).body!.pipeThrough(
+      new DecompressionStream("gzip"),
+    );
     return await new Response(stream).text();
   }
   return new TextDecoder().decode(bytes);
@@ -307,7 +355,7 @@ async function uploadBinary(
     }
     throw new Error(await readError(res, "Envoi d'un fichier échoué"));
   }
-  const data = await res.json() as { id: string };
+  const data = (await res.json()) as { id: string };
   return data.id;
 }
 
@@ -337,7 +385,9 @@ async function fetchManifest(folderId: string): Promise<DriveManifest | null> {
 async function uploadManifest(folderId: string, manifest: DriveManifest): Promise<void> {
   const existing = await findInFolder(folderId, MANIFEST_NAME);
   const gz = await gzipString(JSON.stringify(manifest));
-  const blob = new Blob([gz], { type: gz.type === "application/json" ? "application/json" : "application/gzip" });
+  const blob = new Blob([gz], {
+    type: gz.type === "application/json" ? "application/json" : "application/gzip",
+  });
   await uploadBinary(folderId, MANIFEST_NAME, blob, existing?.id);
 }
 
@@ -432,10 +482,20 @@ export async function syncBackup(
 
   // Supprime les fichiers Drive devenus orphelins
   for (const orphan of prevPhotos.values()) {
-    try { await deleteDriveFile(orphan.driveFileId); stats.deleted++; } catch { /* ignore */ }
+    try {
+      await deleteDriveFile(orphan.driveFileId);
+      stats.deleted++;
+    } catch {
+      /* ignore */
+    }
   }
   for (const orphan of prevPoterie.values()) {
-    try { await deleteDriveFile(orphan.driveFileId); stats.deleted++; } catch { /* ignore */ }
+    try {
+      await deleteDriveFile(orphan.driveFileId);
+      stats.deleted++;
+    } catch {
+      /* ignore */
+    }
   }
 
   const manifest: DriveManifest = {
@@ -455,7 +515,13 @@ export async function syncBackup(
   // Nettoyage : supprime d'éventuelles anciennes sauvegardes v1 monolithiques.
   for (const legacy of LEGACY_BACKUP_NAMES) {
     const f = await findInFolder(folderId, legacy);
-    if (f) { try { await deleteDriveFile(f.id); } catch { /* ignore */ } }
+    if (f) {
+      try {
+        await deleteDriveFile(f.id);
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   setLastBackup(new Date().toISOString());
@@ -518,7 +584,7 @@ export async function getBackupSize(): Promise<BackupSize | null> {
     if (pageToken) params.set("pageToken", pageToken);
     const res = await authedFetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`);
     if (!res.ok) throw new Error(await readError(res, "Lecture du dossier Drive échouée"));
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       nextPageToken?: string;
       files: { id: string; name: string; size?: string; mimeType?: string }[];
     };
@@ -533,7 +599,6 @@ export async function getBackupSize(): Promise<BackupSize | null> {
   } while (pageToken);
   return { totalBytes, fileCount, photoCount, manifestBytes };
 }
-
 
 // ============================================================================
 //  Auto-sync au démarrage : si Drive est plus récent → on tire
@@ -558,8 +623,11 @@ export async function autoSyncFromDrive(
   const ok = await silentConnect();
   if (!ok) return { status: "skipped", reason: "Non connecté" };
   let folderId: string;
-  try { folderId = await ensureFolder(); }
-  catch { return { status: "skipped", reason: "Dossier Drive inaccessible" }; }
+  try {
+    folderId = await ensureFolder();
+  } catch {
+    return { status: "skipped", reason: "Dossier Drive inaccessible" };
+  }
   const manifest = await fetchManifest(folderId);
   if (!manifest) return { status: "no-remote" };
   const remoteDate = manifest.exportedAt;

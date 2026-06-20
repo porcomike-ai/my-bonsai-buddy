@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings, BarChart3 } from "lucide-react";
+import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings, ChartBar as BarChart3 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -21,18 +21,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
   const qc = useQueryClient();
   const autoSyncDone = useRef(false);
-  useEffect(() => { startNotificationScheduler(); }, []);
+  useEffect(() => {
+    startNotificationScheduler();
+  }, []);
   useEffect(() => {
     if (autoSyncDone.current) return;
     autoSyncDone.current = true;
     // Reconnexion silencieuse + récupération des données Drive si elles
     // sont plus récentes que la copie locale.
-    autoSyncFromDrive().then((r) => {
-      if (r.status === "pulled") {
-        qc.invalidateQueries();
-        toast.success("Données synchronisées depuis Google Drive");
-      }
-    }).catch(() => { /* silencieux */ });
+    autoSyncFromDrive()
+      .then((r) => {
+        if (r.status === "pulled") {
+          qc.invalidateQueries();
+          toast.success("Données synchronisées depuis Google Drive");
+        }
+      })
+      .catch(() => {
+        /* silencieux */
+      });
   }, [qc]);
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -52,9 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="hidden items-center gap-1 md:flex">
             {NAV.map((item) => {
               const active =
-                item.to === "/"
-                  ? location.pathname === "/"
-                  : location.pathname.startsWith(item.to);
+                item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
               const Icon = item.icon;
               return (
                 <Link
@@ -77,9 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="flex gap-1 overflow-x-auto border-t border-border/60 px-4 py-2 md:hidden">
           {NAV.map((item) => {
             const active =
-              item.to === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(item.to);
+              item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
@@ -87,7 +89,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 to={item.to}
                 className={cn(
                   "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
-                  active ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground",
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />

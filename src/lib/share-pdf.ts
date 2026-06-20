@@ -63,11 +63,15 @@ export async function generateBonsaiPdf(
     try {
       const dataUrl = await blobToDataUrl(photo.blob);
       const img = await loadImage(dataUrl);
-      const maxW = 70, maxH = 70;
+      const maxW = 70,
+        maxH = 70;
       const ratio = Math.min(maxW / img.width, maxH / img.height);
-      const w = img.width * ratio, h = img.height * ratio;
+      const w = img.width * ratio,
+        h = img.height * ratio;
       doc.addImage(dataUrl, "JPEG", margin, y, w, h, undefined, "FAST");
-    } catch { /* image illisible */ }
+    } catch {
+      /* image illisible */
+    }
   }
 
   // Titre + espèce à droite de la photo
@@ -90,10 +94,14 @@ export async function generateBonsaiPdf(
   const infos: Array<[string, string]> = [];
   if (b.ageEstime != null) infos.push(["Âge estimé", `${b.ageEstime} ans`]);
   if (b.hauteurCm != null) infos.push(["Hauteur", `${b.hauteurCm} cm`]);
-  if (b.dateAcquisition) infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);
+  if (b.dateAcquisition)
+    infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);
   if (b.origine) infos.push(["Origine", b.origine]);
   if (poterie) infos.push(["Poterie", poterie.nom]);
-  infos.push(["Statut", (b.dansCollection ?? true) ? "Dans la collection" : "Sorti de la collection"]);
+  infos.push([
+    "Statut",
+    (b.dansCollection ?? true) ? "Dans la collection" : "Sorti de la collection",
+  ]);
 
   let iy = y + 30;
   for (const [label, value] of infos) {
@@ -150,7 +158,8 @@ export async function generateBonsaiPdf(
       if (y > 280) break;
       doc.text(
         `• ${format(parseISO(r.prochaineDate), "d MMM yyyy", { locale: fr })} — ${soinLabel(r.type)}`,
-        margin, y,
+        margin,
+        y,
       );
       y += 5;
     }
@@ -185,7 +194,9 @@ export async function generateBonsaiPdf(
       doc.setFontSize(9);
       doc.text(
         `${Math.floor(i / perPage) + 1} / ${Math.ceil(sorted.length / perPage)}`,
-        W - margin, 14, { align: "right" },
+        W - margin,
+        14,
+        { align: "right" },
       );
       doc.setTextColor(40, 40, 40);
 
@@ -201,14 +212,17 @@ export async function generateBonsaiPdf(
           const img = await loadImage(dataUrl);
           const imgMaxH = cellH - 10;
           const ratio = Math.min(cellW / img.width, imgMaxH / img.height);
-          const w = img.width * ratio, h = img.height * ratio;
+          const w = img.width * ratio,
+            h = img.height * ratio;
           const ix = x + (cellW - w) / 2;
           doc.addImage(dataUrl, "JPEG", ix, yy, w, h, undefined, "FAST");
           doc.setFontSize(9);
           doc.setTextColor(110, 110, 110);
           const caption = `${format(parseISO(p.date), "d MMM yyyy", { locale: fr })}${p.legende ? " — " + p.legende : ""}`;
           doc.text(doc.splitTextToSize(caption, cellW), x, yy + h + 5);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
       doc.setFontSize(8);

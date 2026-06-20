@@ -24,7 +24,9 @@ export interface BackupPayload {
   version: 1;
   exportedAt: string;
   bonsais: Bonsai[];
-  poteries: Array<Omit<Poterie, "photoBlob"> & { photoBlobBase64?: string; photoBlobType?: string }>;
+  poteries: Array<
+    Omit<Poterie, "photoBlob"> & { photoBlobBase64?: string; photoBlobType?: string }
+  >;
   photos: Array<Omit<Photo, "blob"> & { blobBase64: string; blobType: string }>;
   journal: JournalEntry[];
   rappels: Rappel[];
@@ -122,11 +124,7 @@ function base64ToBlob(data: string, type: string): Blob {
  * qualité `quality` (0-1). Renvoie le blob d'origine si la version recompressée
  * n'est pas plus petite, ou en cas d'erreur (ex. fichier non image).
  */
-export async function recompressImage(
-  blob: Blob,
-  maxSide = 1280,
-  quality = 0.7,
-): Promise<Blob> {
+export async function recompressImage(blob: Blob, maxSide = 1280, quality = 0.7): Promise<Blob> {
   if (typeof document === "undefined") return blob;
   if (!blob.type.startsWith("image/")) return blob;
   try {
@@ -209,7 +207,15 @@ export async function buildSnapshot(opts: BuildSnapshotOptions = {}): Promise<Lo
     poteriePhotos.push({ poterieId: p.id, blob, hash });
   }
 
-  return { bonsais, poteries: poteriesMeta, journal, rappels, evenements, photos: photosLocal, poteriePhotos };
+  return {
+    bonsais,
+    poteries: poteriesMeta,
+    journal,
+    rappels,
+    evenements,
+    photos: photosLocal,
+    poteriePhotos,
+  };
 }
 
 // ============================================================================
@@ -318,7 +324,10 @@ export async function buildBackup(opts: BuildSnapshotOptions = {}): Promise<Back
 export async function restoreBackup(payload: BackupPayload): Promise<void> {
   if (payload.version !== 1) throw new Error("Version de sauvegarde non prise en charge");
   const db = await getDB();
-  const tx = db.transaction(["bonsais", "poteries", "photos", "journal", "rappels", "evenements"], "readwrite");
+  const tx = db.transaction(
+    ["bonsais", "poteries", "photos", "journal", "rappels", "evenements"],
+    "readwrite",
+  );
   await Promise.all([
     tx.objectStore("bonsais").clear(),
     tx.objectStore("poteries").clear(),
@@ -329,14 +338,20 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   ]);
   for (const b of payload.bonsais) await tx.objectStore("bonsais").put(b);
   for (const p of payload.poteries) {
-    const { photoBlobBase64, photoBlobType, ...rest } = p as { photoBlobBase64?: string; photoBlobType?: string } & Omit<Poterie, "photoBlob">;
+    const { photoBlobBase64, photoBlobType, ...rest } = p as {
+      photoBlobBase64?: string;
+      photoBlobType?: string;
+    } & Omit<Poterie, "photoBlob">;
     const obj: Poterie = photoBlobBase64
       ? { ...rest, photoBlob: base64ToBlob(photoBlobBase64, photoBlobType || "image/jpeg") }
       : rest;
     await tx.objectStore("poteries").put(obj);
   }
   for (const p of payload.photos) {
-    const { blobBase64, blobType, ...rest } = p as { blobBase64: string; blobType: string } & Omit<Photo, "blob">;
+    const { blobBase64, blobType, ...rest } = p as { blobBase64: string; blobType: string } & Omit<
+      Photo,
+      "blob"
+    >;
     await tx.objectStore("photos").put({ ...rest, blob: base64ToBlob(blobBase64, blobType) });
   }
   for (const j of payload.journal) await tx.objectStore("journal").put(j);

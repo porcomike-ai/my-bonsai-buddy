@@ -6,7 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
-  saveBonsai, savePhoto, uid, listPoteries, type Bonsai, type BonsaiStyle, type BonsaiEtape,
+  saveBonsai,
+  savePhoto,
+  uid,
+  listPoteries,
+  type Bonsai,
+  type BonsaiStyle,
+  type BonsaiEtape,
 } from "@/lib/db";
 import { fileToBlob } from "@/lib/blob-url";
 import { STYLES, ETAPES, getAllEspeces, addCustomEspece } from "@/lib/bonsai-meta";
@@ -21,9 +27,29 @@ const schema = z.object({
   nom: z.string().min(1, "Donnez un nom à votre bonsaï"),
   espece: z.string().min(1, "Indiquez l'espèce"),
   style: z.enum([
-    "chokkan", "moyogi", "shakan", "kengai", "han-kengai", "bunjin", "yose-ue", "ishitsuki",
-    "sokan", "sankan", "kabudachi", "ikadabuki", "netsuranari", "sekijoju", "neagari",
-    "fukinagashi", "hokidachi", "sharimiki", "sabamiki", "nejikan", "takozukuri", "bankan", "autre",
+    "chokkan",
+    "moyogi",
+    "shakan",
+    "kengai",
+    "han-kengai",
+    "bunjin",
+    "yose-ue",
+    "ishitsuki",
+    "sokan",
+    "sankan",
+    "kabudachi",
+    "ikadabuki",
+    "netsuranari",
+    "sekijoju",
+    "neagari",
+    "fukinagashi",
+    "hokidachi",
+    "sharimiki",
+    "sabamiki",
+    "nejikan",
+    "takozukuri",
+    "bankan",
+    "autre",
   ]),
   etape: z.enum(["culture", "pre-bonsai", "bonsai"]),
   ageEstime: z.string().optional(),
@@ -38,7 +64,13 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (b: Bonsai) => void }) {
+export function BonsaiForm({
+  initial,
+  onSaved,
+}: {
+  initial?: Bonsai;
+  onSaved?: (b: Bonsai) => void;
+}) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
@@ -178,7 +210,11 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               {especesList.map((e) => {
                 const value = especeLang === "latin" ? e.latin : e.fr;
                 const other = especeLang === "latin" ? e.fr : e.latin;
-                return <option key={`${e.latin}|${e.fr}`} value={value}>{other}</option>;
+                return (
+                  <option key={`${e.latin}|${e.fr}`} value={value}>
+                    {other}
+                  </option>
+                );
               })}
             </datalist>
           </Field>
@@ -187,7 +223,11 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               {...form.register("style")}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              {STYLES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              {STYLES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Étape">
@@ -195,7 +235,11 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               {...form.register("etape")}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              {ETAPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              {ETAPES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Poterie associée">
@@ -204,7 +248,11 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
               <option value="">Aucune</option>
-              {poteries.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+              {poteries.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nom}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Âge estimé (années)">
@@ -220,15 +268,31 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
             <Input {...form.register("origine")} placeholder="Pépinière Saulieu" />
           </Field>
           <Field label="Prix d'achat (€)">
-            <Input type="number" min={0} step="0.01" {...form.register("prixAchat")} placeholder="120" />
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              {...form.register("prixAchat")}
+              placeholder="120"
+            />
           </Field>
           <Field label="Valeur estimée (€)">
-            <Input type="number" min={0} step="0.01" {...form.register("valeurEstimee")} placeholder="350" />
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              {...form.register("valeurEstimee")}
+              placeholder="350"
+            />
           </Field>
         </div>
 
         <Field label="Notes">
-          <Textarea {...form.register("notes")} rows={4} placeholder="Histoire, observations, projets de mise en forme…" />
+          <Textarea
+            {...form.register("notes")}
+            rows={4}
+            placeholder="Histoire, observations, projets de mise en forme…"
+          />
         </Field>
 
         <Controller
@@ -262,7 +326,17 @@ export function BonsaiForm({ initial, onSaved }: { initial?: Bonsai; onSaved?: (
   );
 }
 
-function Field({ label, error, action, children }: { label: string; error?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  action,
+  children,
+}: {
+  label: string;
+  error?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-2">

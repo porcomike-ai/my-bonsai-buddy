@@ -12,15 +12,21 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Tableau de bord — Bonsaï Studio" },
-      { name: "description", content: "Vue d'ensemble de votre collection de bonsaïs : prochains soins, rappels en retard et derniers arbres ajoutés." },
+      {
+        name: "description",
+        content:
+          "Vue d'ensemble de votre collection de bonsaïs : prochains soins, rappels en retard et derniers arbres ajoutés.",
+      },
       { property: "og:title", content: "Tableau de bord — Bonsaï Studio" },
-      { property: "og:description", content: "Vue d'ensemble de votre collection de bonsaïs et des prochains soins." },
+      {
+        property: "og:description",
+        content: "Vue d'ensemble de votre collection de bonsaïs et des prochains soins.",
+      },
       { property: "og:url", content: "/" },
     ],
   }),
   component: Dashboard,
 });
-
 
 function Dashboard() {
   const bonsais = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
@@ -55,7 +61,8 @@ function Dashboard() {
               Bonjour. Vos arbres vous attendent.
             </h1>
             <p className="mt-3 max-w-md text-sm text-primary-foreground/80 md:text-base">
-              Un espace calme pour observer, soigner et faire grandir votre collection au fil des saisons.
+              Un espace calme pour observer, soigner et faire grandir votre collection au fil des
+              saisons.
             </p>
           </div>
           <Link
@@ -68,8 +75,18 @@ function Dashboard() {
       </section>
 
       <section className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard icon={<Sprout className="h-4 w-4" />} label="Bonsaïs" value={bonsais.data?.length ?? 0} to="/collection" />
-        <StatCard icon={<Container className="h-4 w-4" />} label="Poteries" value={poteries.data?.length ?? 0} to="/poteries" />
+        <StatCard
+          icon={<Sprout className="h-4 w-4" />}
+          label="Bonsaïs"
+          value={bonsais.data?.length ?? 0}
+          to="/collection"
+        />
+        <StatCard
+          icon={<Container className="h-4 w-4" />}
+          label="Poteries"
+          value={poteries.data?.length ?? 0}
+          to="/poteries"
+        />
         <StatCard
           icon={<Bell className="h-4 w-4" />}
           label="Rappels actifs"
@@ -77,12 +94,21 @@ function Dashboard() {
           to="/calendrier"
           highlight={enRetard.length > 0 ? `${enRetard.length} en retard` : undefined}
         />
-        <StatCard icon={<BookOpen className="h-4 w-4" />} label="Entrées journal" value={journal.data?.length ?? 0} to="/journal" />
+        <StatCard
+          icon={<BookOpen className="h-4 w-4" />}
+          label="Entrées journal"
+          value={journal.data?.length ?? 0}
+          to="/journal"
+        />
       </section>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <SectionHeader title="Soins à venir" subtitle="7 prochains jours" link={{ to: "/calendrier", label: "Voir le calendrier" }} />
+          <SectionHeader
+            title="Soins à venir"
+            subtitle="7 prochains jours"
+            link={{ to: "/calendrier", label: "Voir le calendrier" }}
+          />
           {aVenir.length === 0 ? (
             <EmptyBox icon={<CalendarDays className="h-5 w-5" />}>
               Aucun soin programmé pour cette semaine. Ajoutez un rappel depuis une fiche bonsaï.
@@ -102,7 +128,9 @@ function Dashboard() {
                         {soinEmoji(r.type)}
                       </span>
                       <div className="flex-1">
-                        <div className="font-medium">{soinLabel(r.type)} — {b?.nom ?? "—"}</div>
+                        <div className="font-medium">
+                          {soinLabel(r.type)} — {b?.nom ?? "—"}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {format(parseISO(r.prochaineDate), "EEEE d MMMM", { locale: fr })}
                           {r.intervalleJours ? ` · tous les ${r.intervalleJours} j` : ""}
@@ -118,7 +146,10 @@ function Dashboard() {
         </section>
 
         <section>
-          <SectionHeader title="Derniers ajouts" link={{ to: "/collection", label: "Collection" }} />
+          <SectionHeader
+            title="Derniers ajouts"
+            link={{ to: "/collection", label: "Collection" }}
+          />
           {empty ? (
             <EmptyBox icon={<Sprout className="h-5 w-5" />}>
               Votre collection est vide. Commencez en ajoutant votre premier bonsaï.
@@ -133,7 +164,10 @@ function Dashboard() {
                     className="group block overflow-hidden rounded-2xl border border-border bg-card transition hover:border-accent/50"
                   >
                     <div className="aspect-square w-full overflow-hidden">
-                      <BonsaiPhoto photoId={b.photoPrincipale} className="h-full w-full object-cover transition group-hover:scale-105" />
+                      <BonsaiPhoto
+                        photoId={b.photoPrincipale}
+                        className="h-full w-full object-cover transition group-hover:scale-105"
+                      />
                     </div>
                     <div className="p-3">
                       <div className="truncate font-display text-sm font-semibold">{b.nom}</div>
@@ -153,9 +187,17 @@ function Dashboard() {
 }
 
 function StatCard({
-  icon, label, value, to, highlight,
+  icon,
+  label,
+  value,
+  to,
+  highlight,
 }: {
-  icon: React.ReactNode; label: string; value: number; to: string; highlight?: string;
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  to: string;
+  highlight?: string;
 }) {
   return (
     <Link
@@ -163,7 +205,9 @@ function StatCard({
       className="group rounded-2xl border border-border bg-card p-5 transition hover:border-accent/50 hover:shadow-sm"
     >
       <div className="flex items-center justify-between text-muted-foreground">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-foreground">{icon}</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-foreground">
+          {icon}
+        </span>
         <ArrowRight className="h-4 w-4 opacity-0 transition group-hover:opacity-100" />
       </div>
       <div className="mt-3 font-display text-3xl font-semibold text-foreground">{value}</div>
@@ -178,13 +222,21 @@ function StatCard({
 }
 
 function SectionHeader({
-  title, subtitle, link,
-}: { title: string; subtitle?: string; link?: { to: string; label: string } }) {
+  title,
+  subtitle,
+  link,
+}: {
+  title: string;
+  subtitle?: string;
+  link?: { to: string; label: string };
+}) {
   return (
     <div className="mb-4 flex items-end justify-between">
       <div>
         <h2 className="font-display text-2xl font-semibold">{title}</h2>
-        {subtitle && <p className="text-xs uppercase tracking-wider text-muted-foreground">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{subtitle}</p>
+        )}
       </div>
       {link && (
         <Link to={link.to} className="text-sm font-medium text-accent hover:underline">
@@ -198,7 +250,9 @@ function SectionHeader({
 function EmptyBox({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">{icon}</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">
+        {icon}
+      </span>
       <p>{children}</p>
     </div>
   );

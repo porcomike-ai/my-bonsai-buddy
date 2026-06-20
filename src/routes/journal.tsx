@@ -12,7 +12,11 @@ export const Route = createFileRoute("/journal")({
   head: () => ({
     meta: [
       { title: "Journal d'entretien — Bonsaï Studio" },
-      { name: "description", content: "Historique chronologique de tous les soins apportés à votre collection de bonsaïs, filtrable par arbre et par type." },
+      {
+        name: "description",
+        content:
+          "Historique chronologique de tous les soins apportés à votre collection de bonsaïs, filtrable par arbre et par type.",
+      },
       { property: "og:title", content: "Journal d'entretien — Bonsaï Studio" },
       { property: "og:description", content: "Historique des soins apportés à vos bonsaïs." },
       { property: "og:url", content: "/journal" },
@@ -21,7 +25,6 @@ export const Route = createFileRoute("/journal")({
   component: JournalPage,
 });
 
-
 function JournalPage() {
   const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: () => listJournal() });
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
@@ -29,11 +32,15 @@ function JournalPage() {
   const [bFilter, setBFilter] = useState("");
   const [tFilter, setTFilter] = useState("");
 
-  const filtered = useMemo(() => entries.filter((e) => {
-    if (bFilter && e.bonsaiId !== bFilter) return false;
-    if (tFilter && e.type !== tFilter) return false;
-    return true;
-  }), [entries, bFilter, tFilter]);
+  const filtered = useMemo(
+    () =>
+      entries.filter((e) => {
+        if (bFilter && e.bonsaiId !== bFilter) return false;
+        if (tFilter && e.type !== tFilter) return false;
+        return true;
+      }),
+    [entries, bFilter, tFilter],
+  );
 
   // Group by month
   const grouped = useMemo(() => {
@@ -58,13 +65,31 @@ function JournalPage() {
       </header>
 
       <div className="mb-6 flex flex-wrap gap-3">
-        <select value={bFilter} onChange={(e) => setBFilter(e.target.value)} aria-label="Filtrer par bonsaï" className="h-11 rounded-full border border-input bg-card px-4 text-sm">
+        <select
+          value={bFilter}
+          onChange={(e) => setBFilter(e.target.value)}
+          aria-label="Filtrer par bonsaï"
+          className="h-11 rounded-full border border-input bg-card px-4 text-sm"
+        >
           <option value="">Tous les bonsaïs</option>
-          {bonsais.map((b) => <option key={b.id} value={b.id}>{b.nom}</option>)}
+          {bonsais.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.nom}
+            </option>
+          ))}
         </select>
-        <select value={tFilter} onChange={(e) => setTFilter(e.target.value)} aria-label="Filtrer par type de soin" className="h-11 rounded-full border border-input bg-card px-4 text-sm">
+        <select
+          value={tFilter}
+          onChange={(e) => setTFilter(e.target.value)}
+          aria-label="Filtrer par type de soin"
+          className="h-11 rounded-full border border-input bg-card px-4 text-sm"
+        >
           <option value="">Tous les soins</option>
-          {SOINS.map((s) => <option key={s.value} value={s.value}>{s.emoji} {s.label}</option>)}
+          {SOINS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.emoji} {s.label}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -87,7 +112,10 @@ function JournalPage() {
                 {items.map((e) => {
                   const b = bonsais.find((x) => x.id === e.bonsaiId);
                   return (
-                    <li key={e.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
+                    <li
+                      key={e.id}
+                      className="flex items-start gap-3 rounded-xl border border-border bg-card p-3"
+                    >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-lg">
                         {soinEmoji(e.type)}
                       </span>
@@ -96,7 +124,11 @@ function JournalPage() {
                           <div>
                             <span className="font-medium">{soinLabel(e.type)}</span>
                             {b && (
-                              <Link to="/bonsai/$id" params={{ id: b.id }} className="ml-2 text-sm text-accent hover:underline">
+                              <Link
+                                to="/bonsai/$id"
+                                params={{ id: b.id }}
+                                className="ml-2 text-sm text-accent hover:underline"
+                              >
                                 {b.nom}
                               </Link>
                             )}
@@ -105,7 +137,11 @@ function JournalPage() {
                             {format(parseISO(e.date), "EEE d MMM", { locale: fr })}
                           </span>
                         </div>
-                        {e.notes && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{e.notes}</p>}
+                        {e.notes && (
+                          <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                            {e.notes}
+                          </p>
+                        )}
                       </div>
                     </li>
                   );

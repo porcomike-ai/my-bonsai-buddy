@@ -256,7 +256,12 @@ export function addCustomEspece(value: string): void {
   const v = value.trim();
   if (!v) return;
   const all = [...ESPECES, ...getCustomEspeces()];
-  if (all.some((e) => e.latin.toLowerCase() === v.toLowerCase() || e.fr.toLowerCase() === v.toLowerCase())) return;
+  if (
+    all.some(
+      (e) => e.latin.toLowerCase() === v.toLowerCase() || e.fr.toLowerCase() === v.toLowerCase(),
+    )
+  )
+    return;
   const custom = getCustomEspeces();
   custom.push({ latin: v, fr: v });
   localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));

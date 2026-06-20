@@ -114,7 +114,11 @@ export interface Evenement {
 interface BonsaiDB extends DBSchema {
   bonsais: { key: string; value: Bonsai };
   photos: { key: string; value: Photo; indexes: { "by-bonsai": string } };
-  journal: { key: string; value: JournalEntry; indexes: { "by-bonsai": string; "by-date": string } };
+  journal: {
+    key: string;
+    value: JournalEntry;
+    indexes: { "by-bonsai": string; "by-date": string };
+  };
   rappels: { key: string; value: Rappel; indexes: { "by-bonsai": string; "by-date": string } };
   poteries: { key: string; value: Poterie };
   evenements: { key: string; value: Evenement; indexes: { "by-date": string } };

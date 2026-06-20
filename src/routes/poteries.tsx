@@ -16,15 +16,21 @@ export const Route = createFileRoute("/poteries")({
   head: () => ({
     meta: [
       { title: "Poteries — Bonsaï Studio" },
-      { name: "description", content: "Catalogue de vos poteries pour bonsaïs : formes, matières, dimensions et arbres associés." },
+      {
+        name: "description",
+        content:
+          "Catalogue de vos poteries pour bonsaïs : formes, matières, dimensions et arbres associés.",
+      },
       { property: "og:title", content: "Poteries — Bonsaï Studio" },
-      { property: "og:description", content: "Catalogue de vos contenants pour bonsaïs et arbres associés." },
+      {
+        property: "og:description",
+        content: "Catalogue de vos contenants pour bonsaïs et arbres associés.",
+      },
       { property: "og:url", content: "/poteries" },
     ],
   }),
   component: PoteriesPage,
 });
-
 
 function PoteriesPage() {
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
@@ -41,7 +47,9 @@ function PoteriesPage() {
             {poteries.length} contenant{poteries.length > 1 ? "s" : ""} dans votre collection
           </p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nouvelle poterie</Button>
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle poterie
+        </Button>
       </header>
 
       {open && <PoterieForm onClose={() => setOpen(false)} />}
@@ -73,7 +81,8 @@ function PoteriesPage() {
                     </p>
                     {(p.longueurCm || p.largeurCm || p.hauteurCm) && (
                       <p className="text-xs text-muted-foreground">
-                        {[p.longueurCm, p.largeurCm, p.hauteurCm].map((d) => d ?? "?").join(" × ")} cm
+                        {[p.longueurCm, p.largeurCm, p.hauteurCm].map((d) => d ?? "?").join(" × ")}{" "}
+                        cm
                       </p>
                     )}
                     <p className="text-[11px] uppercase tracking-wider">
@@ -98,7 +107,15 @@ function PoterieImage({ blob }: { blob?: Blob }) {
   const url = useBlobUrl(blob);
   return (
     <div className="aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-secondary via-muted to-peach/30">
-      {url ? <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : (
+      {url ? (
+        <img
+          src={url}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+      ) : (
         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
           <Container className="h-10 w-10 opacity-40" />
         </div>
@@ -165,32 +182,119 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   };
 
   return (
-    <form onSubmit={submit} className="mb-8 grid gap-6 rounded-3xl border border-border bg-card p-6 lg:grid-cols-[240px_1fr]">
+    <form
+      onSubmit={submit}
+      className="mb-8 grid gap-6 rounded-3xl border border-border bg-card p-6 lg:grid-cols-[240px_1fr]"
+    >
       <label className="group relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-background transition hover:border-accent/60">
-        {preview ? <img src={preview} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : initial?.photoBlob ? (
+        {preview ? (
+          <img
+            src={preview}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        ) : initial?.photoBlob ? (
           <ExistingImage blob={initial.photoBlob} />
         ) : (
-          <div className="text-center text-muted-foreground"><ImagePlus className="mx-auto h-7 w-7" /><p className="mt-2 text-xs">Photo</p></div>
+          <div className="text-center text-muted-foreground">
+            <ImagePlus className="mx-auto h-7 w-7" />
+            <p className="mt-2 text-xs">Photo</p>
+          </div>
         )}
-        <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        <input
+          type="file"
+          accept="image/*"
+          className="absolute inset-0 cursor-pointer opacity-0"
+          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+        />
       </label>
 
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nom"><Input value={form.nom} onChange={(e) => set("nom", e.target.value)} placeholder="Tokoname ovale brune" /></Field>
-          <Field label="Forme"><Input value={form.forme} onChange={(e) => set("forme", e.target.value)} placeholder="Ovale, rectangle, ronde…" /></Field>
-          <Field label="Matière"><Input value={form.matiere} onChange={(e) => set("matiere", e.target.value)} placeholder="Grès, terre cuite émaillée…" /></Field>
-          <Field label="Couleur"><Input value={form.couleur} onChange={(e) => set("couleur", e.target.value)} placeholder="Brun, vert céladon…" /></Field>
-          <Field label="Longueur (cm)"><Input type="number" min={0} value={form.longueurCm} onChange={(e) => set("longueurCm", e.target.value)} /></Field>
-          <Field label="Largeur (cm)"><Input type="number" min={0} value={form.largeurCm} onChange={(e) => set("largeurCm", e.target.value)} /></Field>
-          <Field label="Hauteur (cm)"><Input type="number" min={0} value={form.hauteurCm} onChange={(e) => set("hauteurCm", e.target.value)} /></Field>
-          <Field label="Prix (€)"><Input type="number" min={0} value={form.prix} onChange={(e) => set("prix", e.target.value)} /></Field>
-          <Field label="Artisan"><Input value={form.artisan} onChange={(e) => set("artisan", e.target.value)} placeholder="Yamaaki, Bigei…" /></Field>
-          <Field label="Origine"><Input value={form.origine} onChange={(e) => set("origine", e.target.value)} placeholder="Japon, Tokoname…" /></Field>
+          <Field label="Nom">
+            <Input
+              value={form.nom}
+              onChange={(e) => set("nom", e.target.value)}
+              placeholder="Tokoname ovale brune"
+            />
+          </Field>
+          <Field label="Forme">
+            <Input
+              value={form.forme}
+              onChange={(e) => set("forme", e.target.value)}
+              placeholder="Ovale, rectangle, ronde…"
+            />
+          </Field>
+          <Field label="Matière">
+            <Input
+              value={form.matiere}
+              onChange={(e) => set("matiere", e.target.value)}
+              placeholder="Grès, terre cuite émaillée…"
+            />
+          </Field>
+          <Field label="Couleur">
+            <Input
+              value={form.couleur}
+              onChange={(e) => set("couleur", e.target.value)}
+              placeholder="Brun, vert céladon…"
+            />
+          </Field>
+          <Field label="Longueur (cm)">
+            <Input
+              type="number"
+              min={0}
+              value={form.longueurCm}
+              onChange={(e) => set("longueurCm", e.target.value)}
+            />
+          </Field>
+          <Field label="Largeur (cm)">
+            <Input
+              type="number"
+              min={0}
+              value={form.largeurCm}
+              onChange={(e) => set("largeurCm", e.target.value)}
+            />
+          </Field>
+          <Field label="Hauteur (cm)">
+            <Input
+              type="number"
+              min={0}
+              value={form.hauteurCm}
+              onChange={(e) => set("hauteurCm", e.target.value)}
+            />
+          </Field>
+          <Field label="Prix (€)">
+            <Input
+              type="number"
+              min={0}
+              value={form.prix}
+              onChange={(e) => set("prix", e.target.value)}
+            />
+          </Field>
+          <Field label="Artisan">
+            <Input
+              value={form.artisan}
+              onChange={(e) => set("artisan", e.target.value)}
+              placeholder="Yamaaki, Bigei…"
+            />
+          </Field>
+          <Field label="Origine">
+            <Input
+              value={form.origine}
+              onChange={(e) => set("origine", e.target.value)}
+              placeholder="Japon, Tokoname…"
+            />
+          </Field>
         </div>
-        <Field label="Notes"><Textarea rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
+        <Field label="Notes">
+          <Textarea rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+        </Field>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
           <Button type="submit">{initial ? "Enregistrer" : "Ajouter la poterie"}</Button>
         </div>
       </div>
@@ -198,11 +302,19 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactElement<{ id?: string }> }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactElement<{ id?: string }>;
+}) {
   const id = React.useId();
   return (
     <div>
-      <Label htmlFor={id} className="mb-1.5 block text-sm">{label}</Label>
+      <Label htmlFor={id} className="mb-1.5 block text-sm">
+        {label}
+      </Label>
       {React.cloneElement(children, { id })}
     </div>
   );
@@ -210,5 +322,7 @@ function Field({ label, children }: { label: string; children: React.ReactElemen
 
 function ExistingImage({ blob }: { blob: Blob }) {
   const url = useBlobUrl(blob);
-  return url ? <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : null;
+  return url ? (
+    <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+  ) : null;
 }

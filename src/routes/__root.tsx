@@ -17,7 +17,9 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl font-semibold text-foreground">404</h1>
-        <h2 className="mt-4 font-display text-xl font-semibold text-foreground">Page introuvable</h2>
+        <h2 className="mt-4 font-display text-xl font-semibold text-foreground">
+          Page introuvable
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Cette page n'existe pas ou a été déplacée.
         </p>
@@ -104,7 +106,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap",
       },
     ],
-
   }),
 
   shellComponent: RootShell,

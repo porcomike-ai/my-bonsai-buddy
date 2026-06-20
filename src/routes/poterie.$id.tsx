@@ -17,7 +17,9 @@ export const Route = createFileRoute("/poterie/$id")({
   },
   head: ({ loaderData, params }) => {
     const nom = loaderData?.nom ?? "Poterie";
-    const bits = [loaderData?.forme, loaderData?.matiere, loaderData?.artisan].filter(Boolean).join(", ");
+    const bits = [loaderData?.forme, loaderData?.matiere, loaderData?.artisan]
+      .filter(Boolean)
+      .join(", ");
     const baseDesc = `${nom}${bits ? ` — ${bits}` : ""} — fiche détaillée de poterie pour bonsaï.`;
     const desc = baseDesc.length > 160 ? baseDesc.slice(0, 157) + "…" : baseDesc;
     const title = `${nom} — Bonsaï Studio`;
@@ -35,19 +37,34 @@ export const Route = createFileRoute("/poterie/$id")({
   component: PoterieDetail,
 });
 
-
 function PoterieDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
 
-  const { data: p, isPending } = useQuery({ queryKey: ["poterie", id], queryFn: () => getPoterie(id) });
+  const { data: p, isPending } = useQuery({
+    queryKey: ["poterie", id],
+    queryFn: () => getPoterie(id),
+  });
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const url = useBlobUrl(p?.photoBlob);
 
-  if (isPending) return <AppShell><p className="text-muted-foreground">Chargement…</p></AppShell>;
-  if (!p) return <AppShell><p>Poterie introuvable.</p><Link to="/poteries" className="text-accent">Retour</Link></AppShell>;
+  if (isPending)
+    return (
+      <AppShell>
+        <p className="text-muted-foreground">Chargement…</p>
+      </AppShell>
+    );
+  if (!p)
+    return (
+      <AppShell>
+        <p>Poterie introuvable.</p>
+        <Link to="/poteries" className="text-accent">
+          Retour
+        </Link>
+      </AppShell>
+    );
 
   const planted = bonsais.find((b) => b.poterieId === p.id);
 
@@ -61,17 +78,32 @@ function PoterieDetail() {
 
   return (
     <AppShell>
-      <Link to="/poteries" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/poteries"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Poteries
       </Link>
 
-      {editing && <PoterieForm initial={p} onClose={() => { setEditing(false); qc.invalidateQueries(); }} />}
+      {editing && (
+        <PoterieForm
+          initial={p}
+          onClose={() => {
+            setEditing(false);
+            qc.invalidateQueries();
+          }}
+        />
+      )}
 
       {!editing && (
         <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
           <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-secondary to-peach/30">
-            {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : (
-              <div className="flex h-full w-full items-center justify-center"><Container className="h-12 w-12 text-muted-foreground" /></div>
+            {url ? (
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <Container className="h-12 w-12 text-muted-foreground" />
+              </div>
             )}
           </div>
 
@@ -84,14 +116,30 @@ function PoterieDetail() {
               {p.matiere && <Stat label="Matière" value={p.matiere} />}
               {p.couleur && <Stat label="Couleur" value={p.couleur} />}
               {(p.longueurCm || p.largeurCm || p.hauteurCm) && (
-                <Stat label="Dimensions" value={`${p.longueurCm ?? "?"} × ${p.largeurCm ?? "?"} × ${p.hauteurCm ?? "?"} cm`} />
+                <Stat
+                  label="Dimensions"
+                  value={`${p.longueurCm ?? "?"} × ${p.largeurCm ?? "?"} × ${p.hauteurCm ?? "?"} cm`}
+                />
               )}
               {p.artisan && <Stat label="Artisan" value={p.artisan} />}
               {p.origine && <Stat label="Origine" value={p.origine} />}
               {p.prix != null && <Stat label="Prix" value={`${p.prix} €`} />}
-              <Stat label="État" value={planted ? (
-                <Link to="/bonsai/$id" params={{ id: planted.id }} className="text-accent hover:underline">Plantée · {planted.nom}</Link>
-              ) : "Libre"} />
+              <Stat
+                label="État"
+                value={
+                  planted ? (
+                    <Link
+                      to="/bonsai/$id"
+                      params={{ id: planted.id }}
+                      className="text-accent hover:underline"
+                    >
+                      Plantée · {planted.nom}
+                    </Link>
+                  ) : (
+                    "Libre"
+                  )
+                }
+              />
             </dl>
 
             {p.notes && (
@@ -102,8 +150,14 @@ function PoterieDetail() {
             )}
 
             <div className="mt-8 flex gap-2">
-              <Button variant="outline" onClick={() => setEditing(true)}><Pencil className="mr-1.5 h-4 w-4" /> Modifier</Button>
-              <Button variant="outline" onClick={remove} className="text-destructive hover:text-destructive">
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil className="mr-1.5 h-4 w-4" /> Modifier
+              </Button>
+              <Button
+                variant="outline"
+                onClick={remove}
+                className="text-destructive hover:text-destructive"
+              >
                 <Trash2 className="mr-1.5 h-4 w-4" /> Supprimer
               </Button>
             </div>
