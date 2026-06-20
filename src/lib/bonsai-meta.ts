@@ -1,4 +1,4 @@
-import type { BonsaiStyle, SoinType, BonsaiEtape } from "./db";
+import type { BonsaiStyle, SoinType, BonsaiEtape } from "./supabase-data";
 
 export const STYLES: { value: BonsaiStyle; label: string }[] = [
   { value: "chokkan", label: "Chokkan — droit formel" },

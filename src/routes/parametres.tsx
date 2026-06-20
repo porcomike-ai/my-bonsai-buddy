@@ -3,33 +3,26 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
-  getClientId,
-  setClientId,
-  connect,
-  disconnect,
-  isConnected,
-  syncBackup,
-  restoreFromDrive,
-  getLastBackup,
-  getBackupSize,
-  type BackupSize,
-} from "@/lib/google-drive";
-import {
-  buildSnapshot,
-  buildBackup,
-  restoreBackup,
-  optimizeStoredImages,
-  type BackupPayload,
-} from "@/lib/backup";
-import { Cloud, CloudOff, Upload, Download, ExternalLink, ShieldCheck, Wand as Wand2, HardDriveDownload, HardDriveUpload, Info, Database } from "lucide-react";
+  exportSupabaseBackup,
+  importSupabaseBackup,
+  type SupabaseBackupPayload,
+  listBonsais,
+  listPhotos,
+  saveBonsai,
+  savePhoto,
+  savePoterie,
+  saveJournal,
+  saveRappel,
+  saveEvenement,
+} from "@/lib/supabase-data";
+import * as idb from "@/lib/db";
+import { useAuth } from "@/components/supabase-auth-provider";
+import { CloudUpload as UploadCloud, Download, HardDriveDownload, HardDriveUpload, Info, LogOut, Database, Wand as Wand2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version";
-import { FirebaseAccountCard } from "@/components/firebase-account-card";
 
 export const Route = createFileRoute("/parametres")({
   head: () => ({
@@ -38,12 +31,12 @@ export const Route = createFileRoute("/parametres")({
       {
         name: "description",
         content:
-          "Paramètres et sauvegarde : connexion à Google Drive, export local compressé et optimisation des photos.",
+          "Paramètres et sauvegarde : exporter/importer vos données Supabase, migrer depuis IndexedDB et options de l'application.",
       },
       { property: "og:title", content: "Paramètres — Bonsaï Studio" },
       {
         property: "og:description",
-        content: "Sauvegardes Google Drive et options de l'application.",
+        content: "Sauvegardes Supabase et options de l'application.",
       },
       { property: "og:url", content: "/parametres" },
     ],
@@ -51,136 +44,53 @@ export const Route = createFileRoute("/parametres")({
   component: ParametresPage,
 });
 
+type Busy = null | "export" | "import" | "migrate";
+
 function ParametresPage() {
   const qc = useQueryClient();
-  const [clientId, setClientIdState] = useState("");
-  const [connected, setConnected] = useState(false);
-  const [last, setLast] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | "save" | "load" | "optim" | "export" | "import">(null);
-  const [size, setSize] = useState<BackupSize | null>(null);
-  const [sizeLoading, setSizeLoading] = useState(false);
+  const { user, signOut } = useAuth();
+  const [busy, setBusy] = useState<Busy>(null);
+  const [hasLocalData, setHasLocalData] = useState(false);
+  const [checkingLocal, setCheckingLocal] = useState(true);
 
-  const refreshSize = async () => {
-    if (!isConnected()) {
-      setSize(null);
+  // Détecte la présence d'anciennes données dans IndexedDB (côté client uniquement).
+  // On utilise le module idb (IndexedDB) et son listBonsais — les données Supabase
+  // sont lues séparément via les fonctions de supabase-data.ts.
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setCheckingLocal(false);
       return;
     }
-    setSizeLoading(true);
-    try {
-      setSize(await getBackupSize());
-    } catch {
-      /* ignore */
-    } finally {
-      setSizeLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setClientIdState(getClientId());
-    const conn = isConnected();
-    setConnected(conn);
-    setLast(getLastBackup());
-    if (conn) refreshSize();
+    let cancelled = false;
+    (async () => {
+      try {
+        const bonsais = await idb.listBonsais();
+        if (!cancelled) setHasLocalData(bonsais.length > 0);
+      } catch {
+        // IndexedDB indisponible ou base inexistante.
+        if (!cancelled) setHasLocalData(false);
+      } finally {
+        if (!cancelled) setCheckingLocal(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const saveClientId = () => {
-    setClientId(clientId);
-    toast.success("Client ID enregistré");
-  };
-
-  const doConnect = async () => {
+  const doSignOut = async () => {
     try {
-      await connect();
-      setConnected(true);
-      toast.success("Connecté à Google Drive");
-      refreshSize();
+      await signOut();
+      toast.success("Déconnecté");
     } catch (e) {
       toast.error((e as Error).message);
-    }
-  };
-  const doDisconnect = async () => {
-    await disconnect();
-    setConnected(false);
-    setSize(null);
-    toast.success("Déconnecté");
-  };
-
-  const doBackup = async () => {
-    setBusy("save");
-    try {
-      const snap = await buildSnapshot();
-      const stats = await syncBackup(snap);
-      setLast(getLastBackup());
-      toast.success(
-        `Sauvegarde envoyée — ${stats.uploaded} photo(s) envoyée(s), ${stats.skipped} inchangée(s)${stats.deleted ? `, ${stats.deleted} supprimée(s)` : ""}.`,
-      );
-      refreshSize();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const doRestore = async () => {
-    if (
-      !confirm(
-        "Restaurer remplacera toutes les données locales par celles de la sauvegarde. Continuer ?",
-      )
-    )
-      return;
-    setBusy("load");
-    try {
-      const r = await restoreFromDrive();
-      if (!r) {
-        toast.error("Aucune sauvegarde trouvée");
-        return;
-      }
-      if ("legacy" in r) {
-        await restoreBackup(r.payload as BackupPayload);
-        await qc.invalidateQueries();
-        toast.success("Sauvegarde (ancien format) restaurée");
-      } else {
-        await qc.invalidateQueries();
-        toast.success(
-          `Restauration : ${r.manifest.bonsais.length} arbre(s), ${r.manifest.photos.length} photo(s)`,
-        );
-      }
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const doOptimize = async () => {
-    if (
-      !confirm(
-        "Recompresser toutes les photos en local (max 1280 px, JPEG qualité 70 %) ? Les fichiers d'origine ne pourront pas être restaurés.",
-      )
-    )
-      return;
-    setBusy("optim");
-    try {
-      const { count, saved } = await optimizeStoredImages();
-      await qc.invalidateQueries();
-      const mb = (saved / 1024 / 1024).toFixed(2);
-      toast.success(
-        count > 0
-          ? `${count} photo(s) optimisée(s) — ${mb} Mo économisés`
-          : "Aucune photo n'a pu être réduite davantage",
-      );
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(null);
     }
   };
 
   const doLocalExport = async () => {
     setBusy("export");
     try {
-      const payload = await buildBackup();
+      const payload = await exportSupabaseBackup();
       const json = JSON.stringify(payload);
       let blob: Blob;
       if (typeof CompressionStream !== "undefined") {
@@ -211,7 +121,8 @@ function ParametresPage() {
   };
 
   const doLocalImport = async (file: File) => {
-    if (!confirm("Importer ce fichier remplacera toutes les données locales. Continuer ?")) return;
+    if (!confirm("Importer ce fichier remplacera les données Supabase actuelles. Continuer ?"))
+      return;
     setBusy("import");
     try {
       const buf = await file.arrayBuffer();
@@ -226,8 +137,8 @@ function ParametresPage() {
       } else {
         text = new TextDecoder().decode(bytes);
       }
-      const payload = JSON.parse(text) as BackupPayload;
-      await restoreBackup(payload);
+      const payload = JSON.parse(text) as SupabaseBackupPayload;
+      await importSupabaseBackup(payload);
       await qc.invalidateQueries();
       toast.success("Sauvegarde restaurée depuis le fichier");
     } catch (e) {
@@ -237,252 +148,190 @@ function ParametresPage() {
     }
   };
 
+  // --- Migration IndexedDB → Supabase ---
+  // Lit toutes les données locales (IndexedDB) et les uploade vers Supabase.
+  const doMigrateLocal = async () => {
+    if (
+      !confirm(
+        "Importer toutes vos données locales (IndexedDB) vers Supabase ? Les doublons (même id) seront écrasés.",
+      )
+    )
+      return;
+    setBusy("migrate");
+    try {
+      // 1. Lire toutes les données depuis IndexedDB via les fonctions de db.ts.
+      //    On utilise le namespace idb pour éviter le conflit de noms avec
+      //    supabase-data.ts (qui exporte aussi listBonsais, listPhotos, etc.).
+      const [bonsais, poteries, journal, rappels, evenements] = await Promise.all([
+        idb.listBonsais(),
+        idb.listPoteries(),
+        idb.listJournal(),
+        idb.listRappels(),
+        idb.listEvenements().catch(() => [] as idb.Evenement[]),
+      ]);
+
+      // Photos : on doit les récupérer par bonsai (listPhotos prend un bonsaiId).
+      const photosParBonsai = await Promise.all(bonsais.map((b) => idb.listPhotos(b.id)));
+      const allPhotos = photosParBonsai.flat();
+
+      // 2. Uploader vers Supabase via les fonctions de supabase-data.ts.
+      //    Ordre : bonsais d'abord (clés étrangères), puis photos/journal/rappels,
+      //    poteries (avec photo éventuelle) et évènements.
+      for (const b of bonsais) {
+        await saveBonsai({
+          id: b.id,
+          nom: b.nom,
+          espece: b.espece,
+          style: b.style,
+          etape: b.etape,
+          ageEstime: b.ageEstime,
+          dateAcquisition: b.dateAcquisition,
+          origine: b.origine,
+          hauteurCm: b.hauteurCm,
+          prixAchat: b.prixAchat,
+          valeurEstimee: b.valeurEstimee,
+          poterieId: b.poterieId,
+          notes: b.notes,
+          dansCollection: b.dansCollection,
+          favori: b.favori,
+          createdAt: b.createdAt,
+        });
+      }
+
+      for (const p of allPhotos) {
+        await savePhoto({
+          id: p.id,
+          bonsaiId: p.bonsaiId,
+          date: p.date,
+          legende: p.legende,
+          blob: p.blob,
+        });
+      }
+
+      for (const j of journal) {
+        await saveJournal({
+          id: j.id,
+          bonsaiId: j.bonsaiId,
+          type: j.type,
+          date: j.date,
+          notes: j.notes,
+          rappelId: j.rappelId,
+        });
+      }
+
+      for (const r of rappels) {
+        await saveRappel({
+          id: r.id,
+          bonsaiId: r.bonsaiId,
+          type: r.type,
+          prochaineDate: r.prochaineDate,
+          intervalleJours: r.intervalleJours,
+          notes: r.notes,
+          actif: r.actif,
+        });
+      }
+
+      for (const p of poteries) {
+        await savePoterie({
+          id: p.id,
+          nom: p.nom,
+          longueurCm: p.longueurCm,
+          largeurCm: p.largeurCm,
+          hauteurCm: p.hauteurCm,
+          forme: p.forme,
+          couleur: p.couleur,
+          matiere: p.matiere,
+          artisan: p.artisan,
+          origine: p.origine,
+          prix: p.prix,
+          notes: p.notes,
+          createdAt: p.createdAt,
+          photoBlob: p.photoBlob,
+        });
+      }
+
+      for (const e of evenements) {
+        await saveEvenement({
+          id: e.id,
+          titre: e.titre,
+          description: e.description,
+          dateHeure: e.dateHeure,
+          rappelMinutes: e.rappelMinutes,
+          notifiedAt: e.notifiedAt,
+          bonsaiId: e.bonsaiId,
+          createdAt: e.createdAt,
+        });
+      }
+
+      await qc.invalidateQueries();
+      setHasLocalData(false);
+      toast.success(
+        `Migration terminée : ${bonsais.length} arbre(s), ${allPhotos.length} photo(s), ${poteries.length} poterie(s), ${journal.length} entrée(s) de journal, ${rappels.length} rappel(s), ${evenements.length} évènement(s).`,
+      );
+    } catch (e) {
+      toast.error("Migration échouée : " + (e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <AppShell>
       <h1 className="font-display text-4xl font-semibold">Paramètres</h1>
       <p className="mt-2 text-muted-foreground">
-        Sauvegardez votre collection sur Google Drive pour la retrouver sur un autre appareil.
+        Gérez vos données synchronisées via Supabase, importez vos anciennes données locales et
+        exportez une sauvegarde de sécurité.
       </p>
 
-      <section className="mt-10 space-y-3">
-        <h2 className="font-display text-xl font-semibold">Compte Google (Firebase)</h2>
-        <p className="text-sm text-muted-foreground">
-          La nouvelle synchronisation Cloud Firestore remplacera bientôt Google Drive. Connecte-toi
-          pour préparer la migration.
-        </p>
-        <FirebaseAccountCard />
-      </section>
-
+      {/* Déconnexion Supabase */}
       <section className="mt-10 rounded-3xl border border-border bg-card p-6">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-display text-xl font-semibold">Configuration unique</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Pour des raisons de sécurité, vous devez créer votre propre identifiant OAuth Google
-              (gratuit) — ainsi vous restez seul propriétaire de vos données.
-            </p>
-          </div>
-        </div>
-
-        <ol className="mt-5 space-y-2 text-sm text-muted-foreground">
-          <li>
-            <strong className="text-foreground">1.</strong> Ouvrez{" "}
-            <a
-              className="text-accent hover:underline"
-              href="https://console.cloud.google.com/apis/credentials"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Google Cloud Console → Credentials <ExternalLink className="inline h-3 w-3" />
-            </a>{" "}
-            et créez un projet.
-          </li>
-          <li>
-            <strong className="text-foreground">2.</strong>{" "}
-            <strong className="text-foreground">Activez l'API Google Drive</strong> : ouvrez{" "}
-            <a
-              className="text-accent hover:underline"
-              href="https://console.cloud.google.com/apis/library/drive.googleapis.com"
-              target="_blank"
-              rel="noreferrer"
-            >
-              API Library → Google Drive API <ExternalLink className="inline h-3 w-3" />
-            </a>{" "}
-            et cliquez sur <em>Activer</em>.{" "}
-            <span className="text-foreground">
-              (Étape indispensable — sans cela, une erreur 403 apparaît.)
-            </span>
-          </li>
-          <li>
-            <strong className="text-foreground">3.</strong> Configurez l'écran OAuth (mode Externe,
-            ajoutez votre email comme testeur).
-          </li>
-          <li>
-            <strong className="text-foreground">4.</strong> Créez un identifiant OAuth de type{" "}
-            <em>Application Web</em>. Dans <em>Origines JavaScript autorisées</em>, ajoutez :{" "}
-            <code className="rounded bg-secondary px-1.5 py-0.5 text-xs">
-              {typeof window !== "undefined" ? window.location.origin : ""}
-            </code>
-          </li>
-          <li>
-            <strong className="text-foreground">5.</strong> Copiez le <em>Client ID</em> et
-            collez-le ci-dessous.
-          </li>
-        </ol>
-
-        <div className="mt-5">
-          <Label htmlFor="cid" className="mb-1.5 block">
-            Google OAuth Client ID
-          </Label>
-          <div className="flex gap-2">
-            <Input
-              id="cid"
-              value={clientId}
-              onChange={(e) => setClientIdState(e.target.value)}
-              placeholder="xxxxx.apps.googleusercontent.com"
-            />
-            <Button onClick={saveClientId}>Enregistrer</Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
-        <div className="flex items-start gap-3">
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full ${connected ? "bg-accent/15 text-accent" : "bg-secondary text-muted-foreground"}`}
-          >
-            {connected ? <Cloud className="h-5 w-5" /> : <CloudOff className="h-5 w-5" />}
+            <LogOut className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h2 className="font-display text-xl font-semibold">Compte Google Drive</h2>
+            <h2 className="font-display text-xl font-semibold">Compte</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {connected ? "Connecté. Vous pouvez sauvegarder et restaurer." : "Non connecté."}
+              {user ? `Connecté en tant que ${user.email}` : "Non connecté."}
             </p>
-            {last && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Dernière sauvegarde :{" "}
-                {format(parseISO(last), "d MMM yyyy 'à' HH:mm", { locale: fr })}
-              </p>
-            )}
           </div>
-          {connected ? (
-            <Button variant="outline" onClick={doDisconnect}>
+          {user && (
+            <Button variant="outline" onClick={doSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
               Se déconnecter
-            </Button>
-          ) : (
-            <Button onClick={doConnect} disabled={!clientId}>
-              Connecter Google
             </Button>
           )}
         </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Button
-            variant="outline"
-            onClick={doBackup}
-            disabled={!connected || busy !== null}
-            className="h-auto py-4"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            <div className="text-left">
-              <div className="font-medium">
-                {busy === "save" ? "Envoi en cours…" : "Sauvegarder maintenant"}
-              </div>
-              <div className="text-xs font-normal text-muted-foreground">
-                Dossier « Bonsaï Studio » sur votre Drive
-              </div>
-            </div>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={doRestore}
-            disabled={!connected || busy !== null}
-            className="h-auto py-4"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            <div className="text-left">
-              <div className="font-medium">
-                {busy === "load" ? "Restauration…" : "Restaurer depuis Drive"}
-              </div>
-              <div className="text-xs font-normal text-muted-foreground">
-                Remplace les données locales
-              </div>
-            </div>
-          </Button>
-        </div>
-
-        {connected && (
-          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 p-4">
-            <Database className="mt-0.5 h-4 w-4 text-accent" />
-            <div className="flex-1 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">Taille sur Google Drive</span>
-                <button
-                  type="button"
-                  onClick={refreshSize}
-                  disabled={sizeLoading}
-                  className="text-xs text-accent hover:underline disabled:opacity-50"
-                >
-                  {sizeLoading ? "Calcul…" : "Actualiser"}
-                </button>
-              </div>
-              {size ? (
-                <>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    <strong className="text-foreground">{formatBytes(size.totalBytes)}</strong>
-                    {" — "}
-                    {size.fileCount} fichier(s), dont {size.photoCount} photo(s)
-                    {size.manifestBytes > 0 && <> · manifest {formatBytes(size.manifestBytes)}</>}
-                  </p>
-                </>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {sizeLoading
-                    ? "Calcul en cours…"
-                    : "Aucune sauvegarde encore — cliquez sur « Sauvegarder maintenant »."}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        <p className="mt-4 text-xs text-muted-foreground">
-          L'application n'a accès qu'aux fichiers qu'elle crée elle-même (scope{" "}
-          <code>drive.file</code>) — elle ne peut pas lire le reste de votre Drive.
-        </p>
       </section>
 
-      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <Wand2 className="h-5 w-5" />
+      {/* Import IndexedDB → Supabase */}
+      {typeof window !== "undefined" && !checkingLocal && hasLocalData && (
+        <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <Database className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-display text-xl font-semibold">
+                Importer mes données locales (IndexedDB) vers Supabase
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Des données locales (IndexedDB) ont été détectées sur cet appareil. Importez-les
+                vers Supabase pour les synchroniser dans le cloud. Les éléments existants avec le
+                même identifiant seront écrasés.
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h2 className="font-display text-xl font-semibold">
-              Réduire la taille de la sauvegarde
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Les sauvegardes envoyées sur Drive sont déjà <strong>compressées en gzip</strong> et
-              les photos sont <strong>recompressées automatiquement</strong> (max 1280 px, JPEG 70
-              %) pendant l'export — sans toucher à vos fichiers locaux.
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Pour libérer aussi de l'espace sur votre téléphone, vous pouvez recompresser les
-              photos directement dans la base locale.
-            </p>
+          <div className="mt-5">
+            <Button onClick={doMigrateLocal} disabled={busy !== null}>
+              <UploadCloud className="mr-2 h-4 w-4" />
+              {busy === "migrate" ? "Migration en cours…" : "Importer vers Supabase"}
+            </Button>
           </div>
-        </div>
-        <div className="mt-5">
-          <Button variant="outline" onClick={doOptimize} disabled={busy !== null}>
-            <Wand2 className="mr-2 h-4 w-4" />
-            {busy === "optim" ? "Optimisation…" : "Optimiser les photos locales"}
-          </Button>
-        </div>
-        <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-          <li>
-            Sauvegardes <strong>incrémentales</strong> : seules les photos nouvelles ou modifiées
-            sont ré-envoyées (empreinte SHA-256).
-          </li>
-          <li>
-            Chaque photo est stockée en <strong>binaire séparé</strong> sur Drive — pas d'encodage
-            base64 (~ −33 % par rapport au format précédent).
-          </li>
-          <li>
-            Manifest JSON gzippé → <strong>−60 à −80 %</strong> sur les métadonnées.
-          </li>
-          <li>
-            Redimensionnement à 1280 px, qualité JPEG 70 % → <strong>−70 à −90 %</strong> sur le
-            poids des images.
-          </li>
-          <li>
-            Évitez de stocker plusieurs photos quasi identiques par arbre — gardez les meilleures.
-          </li>
-        </ul>
-      </section>
+        </section>
+      )}
 
+      {/* Sauvegarde locale (filet de sécurité) */}
       <section className="mt-6 rounded-3xl border border-border bg-card p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
@@ -494,8 +343,8 @@ function ParametresPage() {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Téléchargez un fichier <code>.json.gz</code> contenant toute votre collection (photos
-              comprises). Utile si Google Drive est indisponible, ou pour transférer manuellement
-              vers un autre appareil.
+              comprises), lue depuis Supabase. Utile pour archiver ou transférer vers un autre
+              appareil.
             </p>
           </div>
         </div>
@@ -542,6 +391,30 @@ function ParametresPage() {
         </div>
       </section>
 
+      {/* Réduire la taille de la sauvegarde */}
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <Wand2 className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">
+              Réduire la taille de la sauvegarde
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Les photos sont <strong>recompressées automatiquement</strong> côté navigateur lors de
+              l'export local (max 1280 px, JPEG qualité 70 %) pour limiter la taille du fichier de
+              sauvegarde.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Vos photos restent stockées intactes dans Supabase Storage — seuls les exports en
+              bénéficient.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* À propos */}
       <section className="mt-6 rounded-3xl border border-border bg-card p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
@@ -559,12 +432,4 @@ function ParametresPage() {
       </section>
     </AppShell>
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (!bytes || bytes < 0) return "0 o";
-  const units = ["o", "Ko", "Mo", "Go", "To"];
-  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-  const v = bytes / Math.pow(1024, i);
-  return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }

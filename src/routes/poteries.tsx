@@ -1,8 +1,15 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { listPoteries, listBonsais, savePoterie, uid, type Poterie } from "@/lib/db";
+import { useEffect, useState } from "react";
+import {
+  listPoteries,
+  listBonsais,
+  savePoterie,
+  getPoteriePhoto,
+  uid,
+  type Poterie,
+} from "@/lib/supabase-data";
 import { fileToBlob, useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
@@ -73,7 +80,7 @@ function PoteriesPage() {
                   params={{ id: p.id }}
                   className="group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg"
                 >
-                  <PoterieImage blob={p.photoBlob} />
+                  <PoterieImage poterie={p} />
                   <div className="space-y-1.5 p-4">
                     <h2 className="truncate font-display text-lg font-semibold">{p.nom}</h2>
                     <p className="text-xs text-muted-foreground">
@@ -103,7 +110,25 @@ function PoteriesPage() {
   );
 }
 
-function PoterieImage({ blob }: { blob?: Blob }) {
+function PoterieImage({ poterie }: { poterie: Poterie }) {
+  const [blob, setBlob] = useState<Blob | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    if (!poterie) {
+      setBlob(undefined);
+      return;
+    }
+    getPoteriePhoto(poterie)
+      .then((b) => {
+        if (!cancelled) setBlob(b);
+      })
+      .catch(() => {
+        if (!cancelled) setBlob(undefined);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [poterie]);
   const url = useBlobUrl(blob);
   return (
     <div className="aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-secondary via-muted to-peach/30">
@@ -150,8 +175,7 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
       toast.error("Donnez un nom à la poterie");
       return;
     }
-    let photoBlob = initial?.photoBlob;
-    if (file) photoBlob = await fileToBlob(file);
+    const photoBlob = file ? await fileToBlob(file) : undefined;
 
     const p: Poterie = {
       id: initial?.id ?? uid(),
@@ -166,10 +190,10 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
       origine: form.origine.trim() || undefined,
       prix: form.prix ? Number(form.prix) : undefined,
       notes: form.notes.trim() || undefined,
-      photoBlob,
+      photoPath: initial?.photoPath,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
-    await savePoterie(p);
+    await savePoterie(photoBlob ? { ...p, photoBlob } : p);
     await qc.invalidateQueries();
     toast.success(initial ? "Poterie mise à jour" : "Poterie ajoutée");
     onClose();
@@ -195,8 +219,8 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
             decoding="async"
             className="h-full w-full object-cover"
           />
-        ) : initial?.photoBlob ? (
-          <ExistingImage blob={initial.photoBlob} />
+        ) : initial?.photoPath ? (
+          <ExistingImage poterie={initial} />
         ) : (
           <div className="text-center text-muted-foreground">
             <ImagePlus className="mx-auto h-7 w-7" />
@@ -320,7 +344,21 @@ function Field({
   );
 }
 
-function ExistingImage({ blob }: { blob: Blob }) {
+function ExistingImage({ poterie }: { poterie: Poterie }) {
+  const [blob, setBlob] = useState<Blob | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    getPoteriePhoto(poterie)
+      .then((b) => {
+        if (!cancelled) setBlob(b);
+      })
+      .catch(() => {
+        if (!cancelled) setBlob(undefined);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [poterie]);
   const url = useBlobUrl(blob);
   return url ? (
     <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />

@@ -1,4 +1,4 @@
-import { listEvenements, saveEvenement, type Evenement } from "./db";
+import { listEvenements, saveEvenement, type Evenement } from "./supabase-data";
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (typeof window === "undefined" || !("Notification" in window)) return "denied";

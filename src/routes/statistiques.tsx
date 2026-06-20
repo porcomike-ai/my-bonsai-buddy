@@ -1,11 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { listBonsais, listPhotos, listJournal, listRappels, listPoteries } from "@/lib/db";
-import { getDB } from "@/lib/db";
+import {
+  listBonsais,
+  listPhotos,
+  listJournal,
+  listRappels,
+  listPoteries,
+} from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { ETAPES, STYLES, styleLabel, etapeLabel } from "@/lib/bonsai-meta";
-import { ChartBar as BarChart3, Sprout, Camera, Euro, TrendingUp, Container, Calendar as CalendarIcon } from "lucide-react";
+import {
+  ChartBar as BarChart3,
+  Sprout,
+  Camera,
+  Euro,
+  TrendingUp,
+  Container,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { parseISO, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/statistiques")({
@@ -26,8 +39,9 @@ export const Route = createFileRoute("/statistiques")({
 });
 
 async function loadAllPhotos() {
-  const db = await getDB();
-  return db.getAll("photos");
+  const bonsais = await listBonsais();
+  const photosByBonsai = await Promise.all(bonsais.map((b) => listPhotos(b.id)));
+  return photosByBonsai.flat();
 }
 
 async function loadAllJournal() {

@@ -13,7 +13,7 @@ import {
   type Bonsai,
   type BonsaiStyle,
   type BonsaiEtape,
-} from "@/lib/db";
+} from "@/lib/supabase-data";
 import { fileToBlob } from "@/lib/blob-url";
 import { STYLES, ETAPES, getAllEspeces, addCustomEspece } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
@@ -124,9 +124,8 @@ export function BonsaiForm({
 
     if (file) {
       const blob = await fileToBlob(file);
-      photoId = uid();
-      await savePhoto({
-        id: photoId,
+      photoId = await savePhoto({
+        id: uid(),
         bonsaiId: id,
         blob,
         date: new Date().toISOString(),

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { listBonsais, listRappels, listJournal, listPoteries } from "@/lib/db";
+import { listBonsais, listRappels, listJournal, listPoteries } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { soinEmoji, soinLabel, styleLabel } from "@/lib/bonsai-meta";

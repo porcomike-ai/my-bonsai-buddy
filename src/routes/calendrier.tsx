@@ -11,7 +11,7 @@ import {
   saveEvenement,
   deleteEvenement,
   type Evenement,
-} from "@/lib/db";
+} from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 import {

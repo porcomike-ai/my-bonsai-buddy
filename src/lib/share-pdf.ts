@@ -1,7 +1,16 @@
 import { jsPDF } from "jspdf";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getBonsai, getPhoto, getPoterie, listJournal, listPhotos, listRappels } from "./db";
+import {
+  getBonsai,
+  getPhoto,
+  getPhotoBlob,
+  getPoteriePhoto,
+  getPoterie,
+  listJournal,
+  listPhotos,
+  listRappels,
+} from "./supabase-data";
 import { soinLabel, styleLabel } from "./bonsai-meta";
 
 async function blobToDataUrl(blob: Blob): Promise<string> {
@@ -31,13 +40,15 @@ export async function generateBonsaiPdf(
   const photosOpt = options.photos ?? "principale";
   const b = await getBonsai(bonsaiId);
   if (!b) throw new Error("Bonsaï introuvable");
-  const [photo, poterie, journal, rappels, allPhotos] = await Promise.all([
-    b.photoPrincipale ? getPhoto(b.photoPrincipale) : Promise.resolve(undefined),
+  const [poterie, journal, rappels, allPhotos] = await Promise.all([
     b.poterieId ? getPoterie(b.poterieId) : Promise.resolve(undefined),
     listJournal(bonsaiId),
     listRappels(bonsaiId),
     photosOpt === "toutes" ? listPhotos(bonsaiId) : Promise.resolve([]),
   ]);
+  const principalBlob = b.photoPrincipale
+    ? await getPhotoBlob({ storagePath: b.photoPrincipale })
+    : undefined;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210;
@@ -59,9 +70,9 @@ export async function generateBonsaiPdf(
   doc.setTextColor(40, 40, 40);
 
   // Photo
-  if (photo) {
+  if (principalBlob) {
     try {
-      const dataUrl = await blobToDataUrl(photo.blob);
+      const dataUrl = await blobToDataUrl(principalBlob);
       const img = await loadImage(dataUrl);
       const maxW = 70,
         maxH = 70;
@@ -208,7 +219,9 @@ export async function generateBonsaiPdf(
         const x = margin + col * (cellW + gap);
         const yy = 30 + row * (cellH + gap);
         try {
-          const dataUrl = await blobToDataUrl(p.blob);
+          const blob = await getPhotoBlob(p);
+          if (!blob) continue;
+          const dataUrl = await blobToDataUrl(blob);
           const img = await loadImage(dataUrl);
           const imgMaxH = cellH - 10;
           const ratio = Math.min(cellW / img.width, imgMaxH / img.height);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getPhoto } from "@/lib/db";
+import { getPhotoBlob } from "@/lib/supabase-data";
 import { useBlobUrl } from "@/lib/blob-url";
 import { cn } from "@/lib/utils";
 import { Leaf } from "lucide-react";
@@ -20,9 +20,14 @@ export function BonsaiPhoto({
       setBlob(undefined);
       return;
     }
-    getPhoto(photoId).then((p) => {
-      if (!cancelled) setBlob(p?.blob);
-    });
+    // `photoId` contient désormais le chemin Storage (ex. "{uid}/{bonsaiId}/{photoId}.jpg").
+    getPhotoBlob({ storagePath: photoId })
+      .then((blob) => {
+        if (!cancelled) setBlob(blob);
+      })
+      .catch(() => {
+        if (!cancelled) setBlob(undefined);
+      });
     return () => {
       cancelled = true;
     };

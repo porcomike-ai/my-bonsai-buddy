@@ -1,11 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Leaf, LayoutDashboard, Sprout, Calendar, BookOpen, Container, Settings, ChartBar as BarChart3 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import {
+  Leaf,
+  LayoutDashboard,
+  Sprout,
+  Calendar,
+  BookOpen,
+  Container,
+  Settings,
+  ChartBar as BarChart3,
+} from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { startNotificationScheduler } from "@/lib/notifications";
-import { autoSyncFromDrive } from "@/lib/google-drive";
 
 const NAV = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard },
@@ -19,27 +25,9 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
-  const qc = useQueryClient();
-  const autoSyncDone = useRef(false);
   useEffect(() => {
     startNotificationScheduler();
   }, []);
-  useEffect(() => {
-    if (autoSyncDone.current) return;
-    autoSyncDone.current = true;
-    // Reconnexion silencieuse + récupération des données Drive si elles
-    // sont plus récentes que la copie locale.
-    autoSyncFromDrive()
-      .then((r) => {
-        if (r.status === "pulled") {
-          qc.invalidateQueries();
-          toast.success("Données synchronisées depuis Google Drive");
-        }
-      })
-      .catch(() => {
-        /* silencieux */
-      });
-  }, [qc]);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl">
@@ -103,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
       <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
       <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        Bonsaï Studio · vos données restent sur cet appareil
+        Bonsaï Studio · vos données sont synchronisées via Supabase
       </footer>
     </div>
   );

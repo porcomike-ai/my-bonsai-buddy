@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   getBonsai,
   deleteBonsai,
@@ -9,7 +9,10 @@ import {
   listRappels,
   getPoterie,
   savePhoto,
+  getPhotoBlob,
   deletePhoto,
+  updatePhotoLegende,
+  updatePhotoDate,
   saveJournal,
   deleteJournal,
   saveRappel,
@@ -18,7 +21,7 @@ import {
   uid,
   type SoinType,
   type Photo,
-} from "@/lib/db";
+} from "@/lib/supabase-data";
 import { fileToBlob, useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
@@ -365,7 +368,7 @@ function GalerieTab({
   const qc = useQueryClient();
   const onAdd = async (f: File) => {
     const blob = await fileToBlob(f);
-    await savePhoto({ id: uid(), bonsaiId, blob, date: new Date().toISOString() });
+    await savePhoto({ id: uid(), bonsaiId, blob, date: new Date().toISOString(), storagePath: "" });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
     toast.success("Photo ajoutée");
   };
@@ -375,11 +378,11 @@ function GalerieTab({
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
   const updateLegende = async (p: Photo, legende: string) => {
-    await savePhoto({ ...p, legende: legende || undefined });
+    await updatePhotoLegende(p.id, legende || null);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
   const updateDate = async (p: Photo, date: string) => {
-    await savePhoto({ ...p, date });
+    await updatePhotoDate(p.id, date);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
   const [sortDesc, setSortDesc] = useState(true);
@@ -440,6 +443,28 @@ function GalerieTab({
   );
 }
 
+function usePhotoUrl(photo: Photo): string | undefined {
+  const [blob, setBlob] = useState<Blob | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    if (!photo) {
+      setBlob(undefined);
+      return;
+    }
+    getPhotoBlob(photo)
+      .then((b) => {
+        if (!cancelled) setBlob(b);
+      })
+      .catch(() => {
+        if (!cancelled) setBlob(undefined);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [photo]);
+  return useBlobUrl(blob);
+}
+
 function PhotoTimeline({
   p,
   isMain,
@@ -455,7 +480,7 @@ function PhotoTimeline({
   onLegende: (t: string) => void | Promise<void>;
   onDate: (d: string) => void | Promise<void>;
 }) {
-  const url = useBlobUrl(p.blob);
+  const url = usePhotoUrl(p);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(p.legende ?? "");
   const [editingDate, setEditingDate] = useState(false);

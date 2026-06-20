@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { getPoterie, listBonsais, deletePoterie } from "@/lib/db";
+import { useEffect, useState } from "react";
+import { getPoterie, listBonsais, deletePoterie, getPoteriePhoto } from "@/lib/supabase-data";
 import { useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,14 @@ export const Route = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({ params }) => {
     const p = await getPoterie(params.id);
-    return p ? { nom: p.nom, forme: p.forme, matiere: p.matiere, artisan: p.artisan } : null;
+    return p
+      ? {
+          nom: p.nom,
+          forme: p.forme,
+          matiere: p.matiere,
+          artisan: p.artisan,
+        }
+      : null;
   },
   head: ({ loaderData, params }) => {
     const nom = loaderData?.nom ?? "Poterie";
@@ -48,7 +55,26 @@ function PoterieDetail() {
     queryFn: () => getPoterie(id),
   });
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
-  const url = useBlobUrl(p?.photoBlob);
+
+  const [blob, setBlob] = useState<Blob | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    if (!p) {
+      setBlob(undefined);
+      return;
+    }
+    getPoteriePhoto(p)
+      .then((b) => {
+        if (!cancelled) setBlob(b);
+      })
+      .catch(() => {
+        if (!cancelled) setBlob(undefined);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [p]);
+  const url = useBlobUrl(blob);
 
   if (isPending)
     return (

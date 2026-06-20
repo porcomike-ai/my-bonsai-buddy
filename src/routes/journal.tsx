@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listJournal, listBonsais } from "@/lib/db";
+import { listJournal, listBonsais } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { SOINS, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 import { format, parseISO } from "date-fns";

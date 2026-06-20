@@ -4,13 +4,15 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
-import { FirebaseAuthProvider } from "@/integrations/firebase/auth";
+import { SupabaseAuthProvider, useAuth } from "@/components/supabase-auth-provider";
 
 function NotFoundComponent() {
   return (
@@ -133,10 +135,35 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <FirebaseAuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
-      </FirebaseAuthProvider>
+      <SupabaseAuthProvider>
+        <AuthGate>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </AuthGate>
+      </SupabaseAuthProvider>
     </QueryClientProvider>
   );
+}
+
+// Garde de route : redirige vers /connexion si l'utilisateur n'est pas authentifié.
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+
+  useEffect(() => {
+    const isAuthRoute = pathname === "/connexion" || pathname === "/inscription";
+    if (!loading && !user && !isAuthRoute) {
+      navigate({ to: "/connexion" });
+    }
+  }, [user, loading, pathname, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">Chargement…</div>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }

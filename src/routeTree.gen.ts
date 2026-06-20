@@ -14,6 +14,8 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PoteriesRouteImport } from './routes/poteries'
 import { Route as ParametresRouteImport } from './routes/parametres'
 import { Route as JournalRouteImport } from './routes/journal'
+import { Route as InscriptionRouteImport } from './routes/inscription'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CalendrierRouteImport } from './routes/calendrier'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +46,16 @@ const ParametresRoute = ParametresRouteImport.update({
 const JournalRoute = JournalRouteImport.update({
   id: '/journal',
   path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionRoute = CollectionRouteImport.update({
@@ -81,6 +93,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendrier': typeof CalendrierRoute
   '/collection': typeof CollectionRoute
+  '/connexion': typeof ConnexionRoute
+  '/inscription': typeof InscriptionRoute
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
@@ -94,6 +108,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendrier': typeof CalendrierRoute
   '/collection': typeof CollectionRoute
+  '/connexion': typeof ConnexionRoute
+  '/inscription': typeof InscriptionRoute
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
@@ -108,6 +124,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/calendrier': typeof CalendrierRoute
   '/collection': typeof CollectionRoute
+  '/connexion': typeof ConnexionRoute
+  '/inscription': typeof InscriptionRoute
   '/journal': typeof JournalRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
@@ -123,6 +141,8 @@ export interface FileRouteTypes {
     | '/'
     | '/calendrier'
     | '/collection'
+    | '/connexion'
+    | '/inscription'
     | '/journal'
     | '/parametres'
     | '/poteries'
@@ -136,6 +156,8 @@ export interface FileRouteTypes {
     | '/'
     | '/calendrier'
     | '/collection'
+    | '/connexion'
+    | '/inscription'
     | '/journal'
     | '/parametres'
     | '/poteries'
@@ -149,6 +171,8 @@ export interface FileRouteTypes {
     | '/'
     | '/calendrier'
     | '/collection'
+    | '/connexion'
+    | '/inscription'
     | '/journal'
     | '/parametres'
     | '/poteries'
@@ -163,6 +187,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendrierRoute: typeof CalendrierRoute
   CollectionRoute: typeof CollectionRoute
+  ConnexionRoute: typeof ConnexionRoute
+  InscriptionRoute: typeof InscriptionRoute
   JournalRoute: typeof JournalRoute
   ParametresRoute: typeof ParametresRoute
   PoteriesRoute: typeof PoteriesRoute
@@ -208,6 +234,20 @@ declare module '@tanstack/react-router' {
       path: '/journal'
       fullPath: '/journal'
       preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collection': {
@@ -259,6 +299,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendrierRoute: CalendrierRoute,
   CollectionRoute: CollectionRoute,
+  ConnexionRoute: ConnexionRoute,
+  InscriptionRoute: InscriptionRoute,
   JournalRoute: JournalRoute,
   ParametresRoute: ParametresRoute,
   PoteriesRoute: PoteriesRoute,
