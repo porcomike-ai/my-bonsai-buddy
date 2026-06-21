@@ -53,6 +53,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { shareBonsaiPdf } from "@/lib/share-pdf";
+import { AddPhotoDialog, useFileInput, type PhotoSource } from "@/components/add-photo-dialog";
+import { PhotoLightbox } from "@/components/photo-lightbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -366,12 +368,53 @@ function GalerieTab({
   onSetMain: (id: string) => void;
 }) {
   const qc = useQueryClient();
-  const onAdd = async (f: File) => {
-    const blob = await fileToBlob(f);
-    await savePhoto({ id: uid(), bonsaiId, blob, date: new Date().toISOString(), storagePath: "" });
+
+  // --- État du dialogue d'ajout de photo ---
+  const cameraInput = useFileInput();
+  const galleryInput = useFileInput();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogSource, setDialogSource] = useState<PhotoSource>("camera");
+  const dialogFile = dialogSource === "camera" ? cameraInput.file : galleryInput.file;
+
+  const openCamera = () => {
+    setDialogSource("camera");
+    cameraInput.inputRef.current?.click();
+  };
+  const openGallery = () => {
+    setDialogSource("gallery");
+    galleryInput.inputRef.current?.click();
+  };
+
+  // Quand un fichier est sélectionné, on ouvre le dialogue de validation.
+  useEffect(() => {
+    if (dialogFile) setDialogOpen(true);
+  }, [dialogFile]);
+
+  const onConfirm = async ({
+    blob,
+    date,
+    legende,
+  }: {
+    blob: Blob;
+    date: string;
+    legende: string;
+  }) => {
+    await savePhoto({
+      id: uid(),
+      bonsaiId,
+      blob,
+      date,
+      legende: legende || undefined,
+    });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
     toast.success("Photo ajoutée");
+    cameraInput.reset();
+    galleryInput.reset();
   };
+
+  // --- État de la visionneuse plein écran ---
+  const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
+
   const remove = async (pid: string) => {
     if (!confirm("Supprimer cette photo ?")) return;
     await deletePhoto(pid);
@@ -392,27 +435,44 @@ function GalerieTab({
 
   return (
     <div>
+      {/* Inputs file cachés — un pour l'appareil photo, un pour la galerie */}
+      <input
+        ref={cameraInput.inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) cameraInput.setFile(f);
+        }}
+      />
+      <input
+        ref={galleryInput.inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) galleryInput.setFile(f);
+        }}
+      />
+
       <div className="mb-5 grid grid-cols-2 gap-3">
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-5 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground">
+        <button
+          onClick={openCamera}
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-5 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground"
+        >
           <Camera className="h-4 w-4" /> Appareil photo
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && onAdd(e.target.files[0])}
-          />
-        </label>
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-5 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground">
+        </button>
+        <button
+          onClick={openGallery}
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card px-4 py-5 text-sm font-medium text-muted-foreground transition hover:border-accent/60 hover:text-foreground"
+        >
           <FolderOpen className="h-4 w-4" /> Galerie
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && onAdd(e.target.files[0])}
-          />
-        </label>
+        </button>
       </div>
+
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Aucune photo pour l'instant. Documentez l'évolution de votre arbre.
@@ -434,11 +494,27 @@ function GalerieTab({
                 onDelete={() => remove(p.id)}
                 onLegende={(t) => updateLegende(p, t)}
                 onDate={(d) => updateDate(p, d)}
+                onOpenLightbox={() => setLightboxPhoto(p)}
               />
             ))}
           </ol>
         </>
       )}
+
+      <AddPhotoDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        source={dialogSource}
+        file={dialogFile}
+        onConfirm={onConfirm}
+      />
+      <PhotoLightbox
+        photo={lightboxPhoto}
+        open={!!lightboxPhoto}
+        onOpenChange={(o) => {
+          if (!o) setLightboxPhoto(null);
+        }}
+      />
     </div>
   );
 }
@@ -472,6 +548,7 @@ function PhotoTimeline({
   onDelete,
   onLegende,
   onDate,
+  onOpenLightbox,
 }: {
   p: Photo;
   isMain: boolean;
@@ -479,6 +556,7 @@ function PhotoTimeline({
   onDelete: () => void;
   onLegende: (t: string) => void | Promise<void>;
   onDate: (d: string) => void | Promise<void>;
+  onOpenLightbox: () => void;
 }) {
   const url = usePhotoUrl(p);
   const [editing, setEditing] = useState(false);
@@ -533,8 +611,9 @@ function PhotoTimeline({
             src={url}
             alt={p.legende ?? ""}
             loading="lazy"
+            onClick={onOpenLightbox}
+            className="max-h-96 w-full cursor-zoom-in object-contain transition hover:opacity-95"
             decoding="async"
-            className="w-full max-w-md object-cover"
           />
         )}
         <div className="space-y-2 p-3">

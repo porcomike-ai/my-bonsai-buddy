@@ -19,7 +19,16 @@ import {
 } from "@/lib/supabase-data";
 import * as idb from "@/lib/db";
 import { useAuth } from "@/components/supabase-auth-provider";
-import { CloudUpload as UploadCloud, Download, HardDriveDownload, HardDriveUpload, Info, LogOut, Database, Wand as Wand2 } from "lucide-react";
+import {
+  CloudUpload as UploadCloud,
+  Download,
+  HardDriveDownload,
+  HardDriveUpload,
+  Info,
+  LogOut,
+  Database,
+  Wand as Wand2,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { APP_VERSION, APP_VERSION_DATE } from "@/lib/version";
