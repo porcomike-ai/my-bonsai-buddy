@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, l as listBonsais } from "./router-5kye6AS8.mjs";
-import { A as AppShell } from "./app-shell-D2hlU-O7.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-BWTISEsp.mjs";
+import { I as Input, l as listBonsais } from "./router-B7dkk4ae.mjs";
+import { A as AppShell } from "./app-shell-DyFFU200.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-xfawVNqf.mjs";
 import { S as STYLES, s as styleLabel } from "./bonsai-meta-BJOj-HVV.mjs";
 import "../_libs/sonner.mjs";
 import { P as Plus, j as Search, S as Sprout, k as Star } from "../_libs/lucide-react.mjs";

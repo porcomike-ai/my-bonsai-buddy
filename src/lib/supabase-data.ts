@@ -332,7 +332,11 @@ export async function getBonsai(id: string): Promise<Bonsai | undefined> {
 }
 
 export async function saveBonsai(b: Bonsai): Promise<void> {
-  const { error } = await db.from("bonsais").upsert(bonsaiToRow(b));
+  const {
+    data: { user },
+  } = await db.auth.getUser();
+  if (!user) throw new Error("Non authentifié");
+  const { error } = await db.from("bonsais").upsert({ ...bonsaiToRow(b), user_id: user.id });
   if (error) throw error;
 }
 
@@ -367,6 +371,7 @@ export async function getPhoto(id: string): Promise<Photo | undefined> {
 /** Sauvegarde une photo : upload Storage + insert ligne. Retourne le storage_path. */
 export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string> {
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
+  const uidStr = await currentUserId();
   const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
     id: photo.id,
@@ -374,6 +379,7 @@ export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string>
     storage_path: path,
     date: photo.date,
     legende: photo.legende ?? null,
+    user_id: uidStr,
   });
   if (error) {
     await deleteStorageObject(BONSAI_BUCKET, path);

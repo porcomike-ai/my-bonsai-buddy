@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { e as useRouterState, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { r as cn, q as listEvenements, n as saveEvenement } from "./router-5kye6AS8.mjs";
+import { r as cn, q as listEvenements, n as saveEvenement } from "./router-B7dkk4ae.mjs";
 import { L as Leaf, d as LayoutDashboard, S as Sprout, a as Container, c as Calendar, B as BookOpen, C as ChartBar, e as Settings } from "../_libs/lucide-react.mjs";
 async function requestNotificationPermission() {
   if (typeof window === "undefined" || !("Notification" in window)) return "denied";

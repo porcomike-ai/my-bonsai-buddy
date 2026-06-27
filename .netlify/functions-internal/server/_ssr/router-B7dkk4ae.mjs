@@ -214,7 +214,7 @@ function AuthGate({ children }) {
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$b = () => import("./statistiques-DkbbK2Mn.mjs");
+const $$splitComponentImporter$b = () => import("./statistiques-C7W_GKB0.mjs");
 const Route$c = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -458,7 +458,11 @@ async function getBonsai(id) {
   return data ? rowToBonsai(data) : void 0;
 }
 async function saveBonsai(b) {
-  const { error } = await db.from("bonsais").upsert(bonsaiToRow(b));
+  const {
+    data: { user }
+  } = await db.auth.getUser();
+  if (!user) throw new Error("Non authentifié");
+  const { error } = await db.from("bonsais").upsert({ ...bonsaiToRow(b), user_id: user.id });
   if (error) throw error;
 }
 async function deleteBonsai(id) {
@@ -482,13 +486,15 @@ async function getPhoto(id) {
 }
 async function savePhoto(photo) {
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
+  const uidStr = await currentUserId();
   const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
     id: photo.id,
     bonsai_id: photo.bonsaiId,
     storage_path: path,
     date: photo.date,
-    legende: photo.legende ?? null
+    legende: photo.legende ?? null,
+    user_id: uidStr
   });
   if (error) {
     await deleteStorageObject(BONSAI_BUCKET, path);
@@ -823,7 +829,7 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitComponentImporter$a = () => import("./poteries-CJro740y.mjs");
+const $$splitComponentImporter$a = () => import("./poteries-DLdMHYIS.mjs");
 const Route$a = createFileRoute("/poteries")({
   head: () => ({
     meta: [{
@@ -969,7 +975,7 @@ function ExistingImage({
   const url = useBlobUrl(blob);
   return url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : null;
 }
-const $$splitComponentImporter$9 = () => import("./parametres-CLaoOBDT.mjs");
+const $$splitComponentImporter$9 = () => import("./parametres-Cm9l7Mli.mjs");
 const Route$9 = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -990,7 +996,7 @@ const Route$9 = createFileRoute("/parametres")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./journal-o8-AAOVZ.mjs");
+const $$splitComponentImporter$8 = () => import("./journal-BTZRIDd8.mjs");
 const Route$8 = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -1011,7 +1017,7 @@ const Route$8 = createFileRoute("/journal")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./inscription-Bnj0ElOx.mjs");
+const $$splitComponentImporter$7 = () => import("./inscription-C8WkI_VV.mjs");
 const Route$7 = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -1023,7 +1029,7 @@ const Route$7 = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
-const $$splitComponentImporter$6 = () => import("./connexion-BqfgsMh8.mjs");
+const $$splitComponentImporter$6 = () => import("./connexion-CXpXklDA.mjs");
 const Route$6 = createFileRoute("/connexion")({
   head: () => ({
     meta: [{
@@ -1035,7 +1041,7 @@ const Route$6 = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component")
 });
-const $$splitComponentImporter$5 = () => import("./collection-Bsme70-R.mjs");
+const $$splitComponentImporter$5 = () => import("./collection-BBCXDc3C.mjs");
 const Route$5 = createFileRoute("/collection")({
   head: () => ({
     meta: [{
@@ -1056,7 +1062,7 @@ const Route$5 = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./calendrier-rtkfH6dc.mjs");
+const $$splitComponentImporter$4 = () => import("./calendrier-Cehgvzpo.mjs");
 const Route$4 = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -1077,7 +1083,7 @@ const Route$4 = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-Bi5yAa-Y.mjs");
+const $$splitComponentImporter$3 = () => import("./index-CPd7FPBN.mjs");
 const Route$3 = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -1098,7 +1104,7 @@ const Route$3 = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./poterie._id-CRoGC0Xi.mjs");
+const $$splitComponentImporter$2 = () => import("./poterie._id-BPj8A18G.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -1144,7 +1150,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-B8r9xmNA.mjs");
+const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-CIGq8mGP.mjs");
 const Route$1 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -1168,7 +1174,7 @@ const Route$1 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./bonsai._id-CKqcnGzH.mjs");
+const $$splitComponentImporter = () => import("./bonsai._id-BnGbfmT5.mjs");
 const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
   loader: async ({
