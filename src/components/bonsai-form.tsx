@@ -5,6 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useAuth } from "@/components/supabase-auth-provider";
 import {
   saveBonsai,
   savePhoto,
@@ -73,6 +74,7 @@ export function BonsaiForm({
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -118,45 +120,58 @@ export function BonsaiForm({
   };
 
   const submit = form.handleSubmit(async (values) => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour ajouter un bonsaï à votre collection");
+      navigate({ to: "/connexion" });
+      return;
+    }
+
     const id = initial?.id ?? uid();
     let photoId = initial?.photoPrincipale;
     addCustomEspece(values.espece);
 
-    if (file) {
-      const blob = await fileToBlob(file);
-      photoId = await savePhoto({
-        id: uid(),
-        bonsaiId: id,
-        blob,
-        date: new Date().toISOString(),
-        legende: "Photo principale",
-      });
+    try {
+      const b: Bonsai = {
+        id,
+        nom: values.nom.trim(),
+        espece: values.espece.trim(),
+        style: values.style as BonsaiStyle,
+        etape: values.etape as BonsaiEtape,
+        ageEstime: values.ageEstime ? Number(values.ageEstime) : undefined,
+        hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : undefined,
+        prixAchat: values.prixAchat ? Number(values.prixAchat) : undefined,
+        valeurEstimee: values.valeurEstimee ? Number(values.valeurEstimee) : undefined,
+        dateAcquisition: values.dateAcquisition || undefined,
+        origine: values.origine?.trim() || undefined,
+        poterieId: values.poterieId || undefined,
+        notes: values.notes?.trim() || undefined,
+        photoPrincipale: photoId,
+        dansCollection: values.dansCollection,
+        createdAt: initial?.createdAt ?? new Date().toISOString(),
+      };
+
+      await saveBonsai(b);
+
+      if (file) {
+        const blob = await fileToBlob(file);
+        photoId = await savePhoto({
+          id: uid(),
+          bonsaiId: id,
+          blob,
+          date: new Date().toISOString(),
+          legende: "Photo principale",
+        });
+        b.photoPrincipale = photoId;
+        await saveBonsai(b);
+      }
+
+      await qc.invalidateQueries();
+      toast.success(initial ? "Bonsaï mis à jour" : "Bonsaï ajouté à votre collection");
+      if (onSaved) onSaved(b);
+      else navigate({ to: "/bonsai/$id", params: { id } });
+    } catch (error) {
+      toast.error("Erreur lors de l'enregistrement: " + (error as Error).message);
     }
-
-    const b: Bonsai = {
-      id,
-      nom: values.nom.trim(),
-      espece: values.espece.trim(),
-      style: values.style as BonsaiStyle,
-      etape: values.etape as BonsaiEtape,
-      ageEstime: values.ageEstime ? Number(values.ageEstime) : undefined,
-      hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : undefined,
-      prixAchat: values.prixAchat ? Number(values.prixAchat) : undefined,
-      valeurEstimee: values.valeurEstimee ? Number(values.valeurEstimee) : undefined,
-      dateAcquisition: values.dateAcquisition || undefined,
-      origine: values.origine?.trim() || undefined,
-      poterieId: values.poterieId || undefined,
-      notes: values.notes?.trim() || undefined,
-      photoPrincipale: photoId,
-      dansCollection: values.dansCollection,
-      createdAt: initial?.createdAt ?? new Date().toISOString(),
-    };
-
-    await saveBonsai(b);
-    await qc.invalidateQueries();
-    toast.success(initial ? "Bonsaï mis à jour" : "Bonsaï ajouté à votre collection");
-    if (onSaved) onSaved(b);
-    else navigate({ to: "/bonsai/$id", params: { id } });
   });
 
   return (
