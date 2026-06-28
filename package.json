@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "version:patch": "node scripts/bump-version.js patch",
     "version:minor": "node scripts/bump-version.js minor",
-    "version:major": "node scripts/bump-version.js major"
+    "version:major": "node scripts/bump-version.js major",
+    "version:auto": "node scripts/bump-version.js auto"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
