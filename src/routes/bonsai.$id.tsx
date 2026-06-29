@@ -277,8 +277,10 @@ function BonsaiDetail() {
                 photos={photos}
                 mainId={b.photoPrincipale}
                 onSetMain={async (pid) => {
-                  await saveBonsai({ ...b, photoPrincipale: pid });
-                  qc.invalidateQueries();
+                  const photo = photos.find(p => p.id === pid);
+                  if (!photo) return;
+                  await saveBonsai({ ...b, photoPrincipale: photo.storagePath });
+                  qc.invalidateQueries({ queryKey: ["bonsai", id] });
                 }}
               />
             </TabsContent>
@@ -698,6 +700,7 @@ function JournalTab({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [type, setType] = useState<SoinType>("arrosage");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
@@ -718,6 +721,28 @@ function JournalTab({
   const remove = async (eid: string) => {
     await deleteJournal(eid);
     qc.invalidateQueries();
+  };
+  const edit = (e: { id: string; type: string; date: string; notes?: string }) => {
+    setEditingId(e.id);
+    setType(e.type as SoinType);
+    setDate(e.date.slice(0, 10));
+    setNotes(e.notes || "");
+    setOpen(true);
+  };
+  const update = async () => {
+    if (!editingId) return;
+    await saveJournal({
+      id: editingId,
+      bonsaiId,
+      type,
+      date: new Date(date).toISOString(),
+      notes: notes || undefined,
+    });
+    qc.invalidateQueries();
+    setOpen(false);
+    setEditingId(null);
+    setNotes("");
+    toast.success("Entrée mise à jour");
   };
 
   return (
@@ -758,10 +783,19 @@ function JournalTab({
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false);
+                setEditingId(null);
+                setNotes("");
+              }}
+            >
               Annuler
             </Button>
-            <Button onClick={add}>Enregistrer</Button>
+            <Button onClick={editingId ? update : add}>
+              {editingId ? "Mettre à jour" : "Enregistrer"}
+            </Button>
           </div>
         </div>
       )}
@@ -775,7 +809,8 @@ function JournalTab({
           {entries.map((e) => (
             <li
               key={e.id}
-              className="flex items-start gap-3 rounded-xl border border-border bg-card p-3"
+              className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:bg-secondary/40 transition"
+              onClick={() => edit(e)}
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-base">
                 {soinEmoji(e.type)}
@@ -796,7 +831,10 @@ function JournalTab({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => remove(e.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  remove(e.id);
+                }}
                 className="text-muted-foreground hover:text-destructive"
               >
                 <X className="h-4 w-4" />
