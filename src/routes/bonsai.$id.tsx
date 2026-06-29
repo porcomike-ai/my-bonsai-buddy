@@ -278,7 +278,7 @@ function BonsaiDetail() {
                 mainId={b.photoPrincipale}
                 onSetMain={async (pid) => {
                   await saveBonsai({ ...b, photoPrincipale: pid });
-                  qc.invalidateQueries();
+                  qc.invalidateQueries({ queryKey: ["bonsai", id] });
                 }}
               />
             </TabsContent>
