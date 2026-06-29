@@ -722,9 +722,9 @@ function JournalTab({
     await deleteJournal(eid);
     qc.invalidateQueries();
   };
-  const edit = (e: typeof entries[0]) => {
+  const edit = (e: { id: string; type: string; date: string; notes?: string }) => {
     setEditingId(e.id);
-    setType(e.type);
+    setType(e.type as SoinType);
     setDate(e.date.slice(0, 10));
     setNotes(e.notes || "");
     setOpen(true);
