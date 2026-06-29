@@ -272,6 +272,7 @@ function EvenementsSection({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
   const [dateHeure, setDateHeure] = useState(() => {
@@ -315,6 +316,39 @@ function EvenementsSection({
     setDescription("");
     toast.success("Évènement ajouté");
     if (notifStatus !== "granted" && notifStatus !== "unsupported") ask();
+  };
+
+  const edit = (e: Evenement) => {
+    setEditingId(e.id);
+    setTitre(e.titre);
+    setDescription(e.description || "");
+    setDateHeure(formatLocal(new Date(e.dateHeure)));
+    setRappelMinutes(e.rappelMinutes?.toString() || "60");
+    setBonsaiId(e.bonsaiId || "");
+    setOpen(true);
+  };
+
+  const update = async () => {
+    if (!editingId || !titre.trim()) {
+      toast.error("Donnez un titre à l'évènement");
+      return;
+    }
+    const iso = new Date(dateHeure).toISOString();
+    await saveEvenement({
+      id: editingId,
+      titre: titre.trim(),
+      description: description.trim() || undefined,
+      dateHeure: iso,
+      rappelMinutes: rappelMinutes ? Number(rappelMinutes) : undefined,
+      bonsaiId: bonsaiId || undefined,
+      createdAt: new Date().toISOString(),
+    });
+    qc.invalidateQueries({ queryKey: ["evenements"] });
+    setOpen(false);
+    setEditingId(null);
+    setTitre("");
+    setDescription("");
+    toast.success("Évènement mis à jour");
   };
 
   const remove = async (id: string) => {
@@ -416,11 +450,19 @@ function EvenementsSection({
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false);
+                setEditingId(null);
+                setTitre("");
+                setDescription("");
+              }}
+            >
               Annuler
             </Button>
-            <Button onClick={add}>
-              <Plus className="mr-1 h-4 w-4" /> Ajouter
+            <Button onClick={editingId ? update : add}>
+              {editingId ? "Mettre à jour" : <><Plus className="mr-1 h-4 w-4" /> Ajouter</>}
             </Button>
           </div>
           {notifStatus !== "granted" && notifStatus !== "unsupported" && (
@@ -442,7 +484,8 @@ function EvenementsSection({
             return (
               <li
                 key={e.id}
-                className="flex items-start gap-3 rounded-xl border border-border bg-card p-3"
+                className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:bg-secondary/40 transition"
+                onClick={() => edit(e)}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
                   <CalendarPlus className="h-4 w-4" />
@@ -459,6 +502,7 @@ function EvenementsSection({
                       to="/bonsai/$id"
                       params={{ id: b.id }}
                       className="text-xs text-accent hover:underline"
+                      onClick={(event) => event.stopPropagation()}
                     >
                       {b.nom}
                     </Link>
@@ -481,7 +525,10 @@ function EvenementsSection({
                   variant="ghost"
                   size="icon"
                   aria-label={`Supprimer l'évènement ${e.titre}`}
-                  onClick={() => remove(e.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    remove(e.id);
+                  }}
                   className="text-muted-foreground hover:text-destructive"
                 >
                   <X className="h-4 w-4" />
