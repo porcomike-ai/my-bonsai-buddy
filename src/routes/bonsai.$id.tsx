@@ -277,7 +277,9 @@ function BonsaiDetail() {
                 photos={photos}
                 mainId={b.photoPrincipale}
                 onSetMain={async (pid) => {
-                  await saveBonsai({ ...b, photoPrincipale: pid });
+                  const photo = photos.find(p => p.id === pid);
+                  if (!photo) return;
+                  await saveBonsai({ ...b, photoPrincipale: photo.storagePath });
                   qc.invalidateQueries({ queryKey: ["bonsai", id] });
                 }}
               />
