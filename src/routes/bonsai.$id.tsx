@@ -376,7 +376,9 @@ function GalerieTab({
   const galleryInput = useFileInput();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogSource, setDialogSource] = useState<PhotoSource>("camera");
-  const dialogFile = dialogSource === "camera" ? cameraInput.file : galleryInput.file;
+  const [fileQueue, setFileQueue] = useState<File[]>([]);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [processedCount, setProcessedCount] = useState(0);
 
   const openCamera = () => {
     setDialogSource("camera");
@@ -387,10 +389,28 @@ function GalerieTab({
     galleryInput.inputRef.current?.click();
   };
 
-  // Quand un fichier est sélectionné, on ouvre le dialogue de validation.
+  // Quand des fichiers sont sélectionnés depuis la galerie, on les met en file d'attente
   useEffect(() => {
-    if (dialogFile) setDialogOpen(true);
-  }, [dialogFile]);
+    if (dialogSource === "gallery" && galleryInput.inputRef.current?.files) {
+      const files = Array.from(galleryInput.inputRef.current.files);
+      if (files.length > 0) {
+        setFileQueue(files);
+        setProcessedCount(0);
+        setCurrentFile(files[0]);
+        setDialogOpen(true);
+      }
+    }
+  }, [galleryInput.file, dialogSource]);
+
+  // Quand un fichier est sélectionné depuis l'appareil photo, on l'ouvre directement
+  useEffect(() => {
+    if (dialogSource === "camera" && cameraInput.file) {
+      setCurrentFile(cameraInput.file);
+      setFileQueue([cameraInput.file]);
+      setProcessedCount(0);
+      setDialogOpen(true);
+    }
+  }, [cameraInput.file, dialogSource]);
 
   const onConfirm = async ({
     blob,
@@ -409,9 +429,22 @@ function GalerieTab({
       legende: legende || undefined,
     });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
-    toast.success("Photo ajoutée");
-    cameraInput.reset();
-    galleryInput.reset();
+    
+    // Passer au fichier suivant s'il y en a
+    const nextIndex = processedCount + 1;
+    if (nextIndex < fileQueue.length) {
+      setCurrentFile(fileQueue[nextIndex]);
+      setProcessedCount(nextIndex);
+    } else {
+      // Tous les fichiers traités
+      setDialogOpen(false);
+      setFileQueue([]);
+      setCurrentFile(null);
+      setProcessedCount(0);
+      cameraInput.reset();
+      galleryInput.reset();
+      toast.success(`${fileQueue.length} photo${fileQueue.length > 1 ? 's' : ''} ajoutée${fileQueue.length > 1 ? 's' : ''}`);
+    }
   };
 
   // --- État de la visionneuse plein écran ---
@@ -453,10 +486,13 @@ function GalerieTab({
         ref={galleryInput.inputRef}
         type="file"
         accept="image/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) galleryInput.setFile(f);
+          const files = e.target.files;
+          if (files && files.length > 0) {
+            galleryInput.setFile(files[0]);
+          }
         }}
       />
 
@@ -505,10 +541,21 @@ function GalerieTab({
 
       <AddPhotoDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDialogOpen(false);
+            setFileQueue([]);
+            setCurrentFile(null);
+            setProcessedCount(0);
+            cameraInput.reset();
+            galleryInput.reset();
+          }
+        }}
         source={dialogSource}
-        file={dialogFile}
+        file={currentFile}
         onConfirm={onConfirm}
+        currentIndex={processedCount}
+        totalCount={fileQueue.length}
       />
       <PhotoLightbox
         photo={lightboxPhoto}
