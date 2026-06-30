@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Container, ImagePlus, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { AddPhotoDialog, type PhotoSource } from "@/components/add-photo-dialog";
 
 export const Route = createFileRoute("/poteries")({
   head: () => ({
@@ -154,6 +155,9 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogSource, setDialogSource] = useState<PhotoSource>("gallery");
+  const [photoData, setPhotoData] = useState<{ blob: Blob; date: string; legende: string } | null>(null);
   const [form, setForm] = useState({
     nom: initial?.nom ?? "",
     longueurCm: initial?.longueurCm?.toString() ?? "",
@@ -175,7 +179,7 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
       toast.error("Donnez un nom à la poterie");
       return;
     }
-    const photoBlob = file ? await fileToBlob(file) : undefined;
+    const photoBlob = photoData?.blob;
 
     const p: Poterie = {
       id: initial?.id ?? uid(),
@@ -203,6 +207,13 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   const onFile = (f: File) => {
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setDialogSource("gallery");
+    setDialogOpen(true);
+  };
+
+  const handlePhotoConfirm = async (data: { blob: Blob; date: string; legende: string }) => {
+    setPhotoData(data);
+    setDialogOpen(false);
   };
 
   return (
@@ -322,6 +333,14 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
           <Button type="submit">{initial ? "Enregistrer" : "Ajouter la poterie"}</Button>
         </div>
       </div>
+
+      <AddPhotoDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        source={dialogSource}
+        file={file}
+        onConfirm={handlePhotoConfirm}
+      />
     </form>
   );
 }
