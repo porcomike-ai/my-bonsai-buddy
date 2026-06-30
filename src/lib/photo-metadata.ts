@@ -112,24 +112,44 @@ export async function readExifDate(blob: Blob): Promise<string | undefined> {
 
 /**
  * Détecte un motif de date dans un nom de fichier.
- * Patterns supportés : YYYYMMDD, YYYY-MM-DD, IMG_YYYYMMDD, etc.
+ * Patterns supportés : YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY,
+ * avec ou sans délimiteurs autour, même avec des chiffres collés avant ou après.
  * Retourne une date ISO, ou undefined si aucun motif n'est trouvé.
  */
 export function dateFromFilename(name: string): string | undefined {
-  // Évite les faux positifs sur des nombres courts en exigeant un délimiteur.
+  // Patterns robustes pour détecter les dates avec différents formats et séparateurs
   const patterns = [
-    /(?:^|[_\-\s])(\d{4})(\d{2})(\d{2})(?:[_\-\s.]|$)/, // YYYYMMDD
-    /(?:^|[_\-\s])(\d{4})-(\d{2})-(\d{2})(?:[_\-\s.]|$)/, // YYYY-MM-DD
+    // Format YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD avec délimiteurs autour ou non
+    /(\d{4})[-\/.](\d{2})[-\/.](\d{2})/,
+    // Format DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY avec délimiteurs autour ou non
+    /(\d{2})[-\/.](\d{2})[-\/.](\d{4})/,
+    // Format YYYYMMDD (sans séparateurs)
+    /(\d{4})(\d{2})(\d{2})/,
   ];
 
   for (const re of patterns) {
     const m = name.match(re);
     if (!m) continue;
-    const year = Number(m[1]);
-    const month = Number(m[2]);
-    const day = Number(m[3]);
+
+    let year: number, month: number, day: number;
+
+    // Détermine si c'est YYYY-MM-DD ou DD-MM-YYYY
+    if (m[1].length === 4) {
+      // Format YYYY-MM-DD
+      year = Number(m[1]);
+      month = Number(m[2]);
+      day = Number(m[3]);
+    } else {
+      // Format DD-MM-YYYY
+      day = Number(m[1]);
+      month = Number(m[2]);
+      year = Number(m[3]);
+    }
+
     // Validation basique du mois/jour.
     if (month < 1 || month > 12 || day < 1 || day > 31) continue;
+    // Validation de l'année (raisonnable pour des photos)
+    if (year < 1900 || year > 2100) continue;
     // Vérifie que la date est valide réellement (ex: pas le 31 février).
     const d = new Date(year, month - 1, day, 12, 0, 0);
     if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) continue;
