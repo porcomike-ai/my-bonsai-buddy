@@ -269,11 +269,11 @@ function getState(open) {
   return open ? "open" : "closed";
 }
 export {
-  Dialog as D,
+  DialogOverlay as D,
   DialogPortal as a,
   DialogContent as b,
   DialogClose as c,
   DialogTitle as d,
-  DialogOverlay as e,
-  DialogDescription as f
+  DialogDescription as e,
+  Dialog as f
 };

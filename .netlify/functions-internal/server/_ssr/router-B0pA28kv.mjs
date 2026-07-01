@@ -9,7 +9,10 @@ import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { R as Root } from "../_libs/radix-ui__react-label.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
-import { I as ImagePlus } from "../_libs/lucide-react.mjs";
+import { D as DialogOverlay$1, a as DialogPortal$1, b as DialogContent$1, c as DialogClose, d as DialogTitle$1, e as DialogDescription$1, f as Dialog$1 } from "../_libs/radix-ui__react-dialog.mjs";
+import { R as RadioGroup$1, a as RadioGroupItem$1, b as RadioGroupIndicator } from "../_libs/radix-ui__react-radio-group.mjs";
+import { X, C as Circle, a as Camera, S as Sparkles, b as Calendar, F as FileText, L as Loader, I as ImagePlus } from "../_libs/lucide-react.mjs";
+import { f as format, p as parseISO, a as fr } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -34,7 +37,31 @@ import "tslib";
 import "../_libs/supabase__functions-js.mjs";
 import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
-const appCss = "/assets/styles-B_U4luHo.css";
+import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-context.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
+import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
+import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
+import "../_libs/radix-ui__react-direction.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+const appCss = "/assets/styles-DpAUzwZu.css";
 const Toaster = ({ ...props }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Toaster$1,
@@ -214,7 +241,7 @@ function AuthGate({ children }) {
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$b = () => import("./statistiques-C7W_GKB0.mjs");
+const $$splitComponentImporter$b = () => import("./statistiques-BwDo3u98.mjs");
 const Route$c = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -829,7 +856,354 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitComponentImporter$a = () => import("./poteries-DLdMHYIS.mjs");
+const Dialog = Dialog$1;
+const DialogPortal = DialogPortal$1;
+const DialogOverlay = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  DialogOverlay$1,
+  {
+    ref,
+    className: cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    ),
+    ...props
+  }
+));
+DialogOverlay.displayName = DialogOverlay$1.displayName;
+const DialogContent = reactExports.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogPortal, { children: [
+  /* @__PURE__ */ jsxRuntimeExports.jsx(DialogOverlay, {}),
+  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    DialogContent$1,
+    {
+      ref,
+      className: cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+        className
+      ),
+      ...props,
+      children: [
+        children,
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogClose, { className: "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "sr-only", children: "Close" })
+        ] })
+      ]
+    }
+  )
+] }));
+DialogContent.displayName = DialogContent$1.displayName;
+const DialogHeader = ({ className, ...props }) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("flex flex-col space-y-1.5 text-center sm:text-left", className), ...props });
+DialogHeader.displayName = "DialogHeader";
+const DialogFooter = ({ className, ...props }) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  "div",
+  {
+    className: cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className),
+    ...props
+  }
+);
+DialogFooter.displayName = "DialogFooter";
+const DialogTitle = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  DialogTitle$1,
+  {
+    ref,
+    className: cn("text-lg font-semibold leading-none tracking-tight", className),
+    ...props
+  }
+));
+DialogTitle.displayName = DialogTitle$1.displayName;
+const DialogDescription = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  DialogDescription$1,
+  {
+    ref,
+    className: cn("text-sm text-muted-foreground", className),
+    ...props
+  }
+));
+DialogDescription.displayName = DialogDescription$1.displayName;
+const RadioGroup = reactExports.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroup$1, { className: cn("grid gap-2", className), ...props, ref });
+});
+RadioGroup.displayName = RadioGroup$1.displayName;
+const RadioGroupItem = reactExports.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    RadioGroupItem$1,
+    {
+      ref,
+      className: cn(
+        "aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      ),
+      ...props,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupIndicator, { className: "flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Circle, { className: "h-3.5 w-3.5 fill-primary" }) })
+    }
+  );
+});
+RadioGroupItem.displayName = RadioGroupItem$1.displayName;
+async function readExifDate(blob) {
+  try {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    if (buf.length < 4 || buf[0] !== 255 || buf[1] !== 216) return void 0;
+    let offset = 2;
+    while (offset < buf.length) {
+      if (buf[offset] !== 255) break;
+      const marker = buf[offset + 1];
+      if (marker !== 225) {
+        const segLen = buf[offset + 2] << 8 | buf[offset + 3];
+        offset += 2 + segLen;
+        continue;
+      }
+      const segStart = offset + 4;
+      const exifHeader = buf.subarray(segStart, segStart + 6);
+      if (exifHeader[0] !== 69 || exifHeader[1] !== 120 || exifHeader[2] !== 105 || exifHeader[3] !== 102) {
+        return void 0;
+      }
+      const tiffOffset = segStart + 6;
+      const isLittleEndian = buf[tiffOffset] === 73;
+      const read16 = (o) => isLittleEndian ? buf[o] | buf[o + 1] << 8 : buf[o] << 8 | buf[o + 1];
+      const read32 = (o) => isLittleEndian ? buf[o] | buf[o + 1] << 8 | buf[o + 2] << 16 | buf[o + 3] << 24 : buf[o] << 24 | buf[o + 1] << 16 | buf[o + 2] << 8 | buf[o + 3];
+      const ifd0Offset = tiffOffset + read32(tiffOffset + 4);
+      const numEntries = read16(ifd0Offset);
+      let exifIfdOffset = 0;
+      for (let i = 0; i < numEntries; i++) {
+        const entryOffset = ifd0Offset + 2 + i * 12;
+        const tag = read16(entryOffset);
+        if (tag === 34665) {
+          exifIfdOffset = tiffOffset + read32(entryOffset + 8);
+          break;
+        }
+      }
+      if (!exifIfdOffset) return void 0;
+      const exifEntries = read16(exifIfdOffset);
+      for (let i = 0; i < exifEntries; i++) {
+        const entryOffset = exifIfdOffset + 2 + i * 12;
+        const tag = read16(entryOffset);
+        if (tag !== 36867 && tag !== 306) continue;
+        const type = read16(entryOffset + 2);
+        if (type !== 2) continue;
+        const valueOffset = read32(entryOffset + 8);
+        const strStart = tiffOffset + valueOffset;
+        let raw = "";
+        for (let j = 0; j < 20; j++) {
+          const c = buf[strStart + j];
+          if (c === 0) break;
+          raw += String.fromCharCode(c);
+        }
+        const m = raw.trim().match(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+        if (m) {
+          return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`;
+        }
+        const m2 = raw.trim().match(/^(\d{4}):(\d{2}):(\d{2})/);
+        if (m2) {
+          return `${m2[1]}-${m2[2]}-${m2[3]}T12:00:00`;
+        }
+      }
+      return void 0;
+    }
+  } catch {
+  }
+  return void 0;
+}
+function dateFromFilename(name) {
+  const patterns = [
+    // Format YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD avec délimiteurs autour ou non
+    /(\d{4})[-\/.](\d{2})[-\/.](\d{2})/,
+    // Format DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY avec délimiteurs autour ou non
+    /(\d{2})[-\/.](\d{2})[-\/.](\d{4})/,
+    // Format YYYYMMDD (sans séparateurs)
+    /(\d{4})(\d{2})(\d{2})/
+  ];
+  for (const re of patterns) {
+    const m = name.match(re);
+    if (!m) continue;
+    let year, month, day;
+    if (m[1].length === 4) {
+      year = Number(m[1]);
+      month = Number(m[2]);
+      day = Number(m[3]);
+    } else {
+      day = Number(m[1]);
+      month = Number(m[2]);
+      year = Number(m[3]);
+    }
+    if (month < 1 || month > 12 || day < 1 || day > 31) continue;
+    if (year < 1900 || year > 2100) continue;
+    const d = new Date(year, month - 1, day, 12, 0, 0);
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) continue;
+    return d.toISOString();
+  }
+  return void 0;
+}
+function AddPhotoDialog({
+  open,
+  onOpenChange,
+  source,
+  file,
+  onConfirm,
+  currentIndex = 0,
+  totalCount = 1
+}) {
+  const [preview, setPreview] = reactExports.useState(void 0);
+  const [blob, setBlob] = reactExports.useState(null);
+  const [exifDate, setExifDate] = reactExports.useState(void 0);
+  const [filenameDate, setFilenameDate] = reactExports.useState(void 0);
+  const [selectedMode, setSelectedMode] = reactExports.useState("today");
+  const [customDate, setCustomDate] = reactExports.useState((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+  const [legende, setLegende] = reactExports.useState("");
+  const [busy, setBusy] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    if (!open || !file) {
+      setBlob(null);
+      setPreview(void 0);
+      setExifDate(void 0);
+      setFilenameDate(void 0);
+      setLegende("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const url = URL.createObjectURL(file);
+      if (!cancelled) setPreview(url);
+      const processed = await fileToBlob(file);
+      if (cancelled) return;
+      setBlob(processed);
+      if (source === "gallery") {
+        const [exif, fromName] = await Promise.all([
+          readExifDate(file),
+          Promise.resolve(dateFromFilename(file.name))
+        ]);
+        if (cancelled) return;
+        setExifDate(exif);
+        setFilenameDate(fromName);
+        if (exif) setSelectedMode("exif");
+        else if (fromName) setSelectedMode("filename");
+        else setSelectedMode("custom");
+      } else {
+        setSelectedMode("today");
+      }
+      setCustomDate((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+    })();
+    return () => {
+      cancelled = true;
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [open, file, source]);
+  const options = source === "camera" ? [
+    {
+      mode: "today",
+      label: `Aujourd'hui — ${format(/* @__PURE__ */ new Date(), "d MMMM yyyy", { locale: fr })}`,
+      date: (/* @__PURE__ */ new Date()).toISOString(),
+      available: true
+    }
+  ] : [
+    {
+      mode: "exif",
+      label: exifDate ? `Date de prise de vue (EXIF) — ${format(parseISO(exifDate), "d MMMM yyyy 'à' HH:mm", { locale: fr })}` : "Date de prise de vue d'origine (EXIF indisponible)",
+      date: exifDate,
+      available: !!exifDate
+    },
+    {
+      mode: "filename",
+      label: filenameDate ? `Date détectée dans le nom — ${format(parseISO(filenameDate), "d MMMM yyyy", { locale: fr })}` : "Aucune date détectée dans le nom du fichier",
+      date: filenameDate,
+      available: !!filenameDate
+    },
+    { mode: "custom", label: "Date personnalisée", date: void 0, available: true }
+  ];
+  const selectedDate = selectedMode === "today" ? (/* @__PURE__ */ new Date()).toISOString() : selectedMode === "custom" ? (/* @__PURE__ */ new Date(customDate + "T12:00:00")).toISOString() : options.find((o) => o.mode === selectedMode)?.date ?? (/* @__PURE__ */ new Date()).toISOString();
+  const submit = async () => {
+    if (!blob) return;
+    setBusy(true);
+    try {
+      await onConfirm({ blob, date: selectedDate, legende: legende.trim() });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "max-h-[92vh] overflow-y-auto sm:max-w-lg", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogTitle, { className: "flex items-center gap-2", children: [
+      source === "camera" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Camera, { className: "h-5 w-5" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "h-5 w-5" }),
+      source === "camera" ? "Photo prise à l'instant" : totalCount > 1 ? `Photo ${currentIndex + 1} / ${totalCount}` : "Importer une photo"
+    ] }) }),
+    preview && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "overflow-hidden rounded-2xl border border-border bg-card", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: preview, alt: "Aperçu", className: "max-h-64 w-full object-contain" }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Label, { className: "flex items-center gap-1.5 text-sm font-medium", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "h-4 w-4 text-muted-foreground" }),
+        "Date de la photo"
+      ] }),
+      source === "camera" ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "rounded-xl bg-secondary/50 px-3 py-2 text-sm text-muted-foreground", children: options[0].label }) : /* @__PURE__ */ jsxRuntimeExports.jsx(
+        RadioGroup,
+        {
+          value: selectedMode,
+          onValueChange: (v) => setSelectedMode(v),
+          className: "space-y-2",
+          children: options.map((opt) => {
+            const id = `date-opt-${opt.mode}`;
+            return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "div",
+              {
+                className: `flex items-center gap-3 rounded-xl border px-3 py-2.5 transition ${opt.available ? "border-border hover:border-accent/40" : "cursor-not-allowed border-border/40 opacity-50"}`,
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupItem, { value: opt.mode, id, disabled: !opt.available }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    Label,
+                    {
+                      htmlFor: id,
+                      className: `flex-1 text-sm ${opt.available ? "cursor-pointer" : ""}`,
+                      children: opt.label
+                    }
+                  )
+                ]
+              },
+              opt.mode
+            );
+          })
+        }
+      ),
+      selectedMode === "custom" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Input,
+        {
+          type: "date",
+          value: customDate,
+          onChange: (e) => setCustomDate(e.target.value),
+          className: "w-auto"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Label, { htmlFor: "legende", className: "flex items-center gap-1.5 text-sm font-medium", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-4 w-4 text-muted-foreground" }),
+        "Commentaire / Note"
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Textarea,
+        {
+          id: "legende",
+          value: legende,
+          onChange: (e) => setLegende(e.target.value),
+          rows: 2,
+          placeholder: "Décrivez le soin ou l'état de l'arbre à cet instant…"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => onOpenChange(false), disabled: busy, children: "Annuler" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: submit, disabled: !blob || busy, children: busy ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Loader, { className: "mr-1.5 h-4 w-4 animate-spin" }),
+        " Enregistrement…"
+      ] }) : "Enregistrer la photo" })
+    ] })
+  ] }) });
+}
+function useFileInput() {
+  const [file, setFile] = reactExports.useState(null);
+  const inputRef = reactExports.useRef(null);
+  const reset = () => {
+    setFile(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+  return { file, setFile, inputRef, reset };
+}
+const $$splitComponentImporter$a = () => import("./poteries-OBJ8BTU8.mjs");
 const Route$a = createFileRoute("/poteries")({
   head: () => ({
     meta: [{
@@ -858,6 +1232,9 @@ function PoterieForm({
   const navigate = useNavigate();
   const [file, setFile] = reactExports.useState(null);
   const [preview, setPreview] = reactExports.useState(null);
+  const [dialogOpen, setDialogOpen] = reactExports.useState(false);
+  const [dialogSource, setDialogSource] = reactExports.useState("gallery");
+  const [photoData, setPhotoData] = reactExports.useState(null);
   const [form, setForm] = reactExports.useState({
     nom: initial?.nom ?? "",
     longueurCm: initial?.longueurCm?.toString() ?? "",
@@ -881,7 +1258,7 @@ function PoterieForm({
       toast.error("Donnez un nom à la poterie");
       return;
     }
-    const photoBlob = file ? await fileToBlob(file) : void 0;
+    const photoBlob = photoData?.blob;
     const p = {
       id: initial?.id ?? uid(),
       nom: form.nom.trim(),
@@ -915,6 +1292,12 @@ function PoterieForm({
   const onFile = (f) => {
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setDialogSource("gallery");
+    setDialogOpen(true);
+  };
+  const handlePhotoConfirm = async (data) => {
+    setPhotoData(data);
+    setDialogOpen(false);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: submit, className: "mb-8 grid gap-6 rounded-3xl border border-border bg-card p-6 lg:grid-cols-[240px_1fr]", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "group relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-background transition hover:border-accent/60", children: [
@@ -942,7 +1325,8 @@ function PoterieForm({
         /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "button", variant: "outline", onClick: onClose, children: "Annuler" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", children: initial ? "Enregistrer" : "Ajouter la poterie" })
       ] })
-    ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AddPhotoDialog, { open: dialogOpen, onOpenChange: setDialogOpen, source: dialogSource, file, onConfirm: handlePhotoConfirm })
   ] });
 }
 function Field({
@@ -975,7 +1359,7 @@ function ExistingImage({
   const url = useBlobUrl(blob);
   return url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : null;
 }
-const $$splitComponentImporter$9 = () => import("./parametres-Cm9l7Mli.mjs");
+const $$splitComponentImporter$9 = () => import("./parametres-DUecTS-o.mjs");
 const Route$9 = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -996,7 +1380,7 @@ const Route$9 = createFileRoute("/parametres")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./journal-BTZRIDd8.mjs");
+const $$splitComponentImporter$8 = () => import("./journal-fEk7wyJr.mjs");
 const Route$8 = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -1017,7 +1401,7 @@ const Route$8 = createFileRoute("/journal")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./inscription-C8WkI_VV.mjs");
+const $$splitComponentImporter$7 = () => import("./inscription-BBtRxZS4.mjs");
 const Route$7 = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -1029,7 +1413,7 @@ const Route$7 = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
-const $$splitComponentImporter$6 = () => import("./connexion-CXpXklDA.mjs");
+const $$splitComponentImporter$6 = () => import("./connexion-CHKg1Eu9.mjs");
 const Route$6 = createFileRoute("/connexion")({
   head: () => ({
     meta: [{
@@ -1041,7 +1425,7 @@ const Route$6 = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component")
 });
-const $$splitComponentImporter$5 = () => import("./collection-BBCXDc3C.mjs");
+const $$splitComponentImporter$5 = () => import("./collection-BtBNrzzC.mjs");
 const Route$5 = createFileRoute("/collection")({
   head: () => ({
     meta: [{
@@ -1062,7 +1446,7 @@ const Route$5 = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./calendrier-Cehgvzpo.mjs");
+const $$splitComponentImporter$4 = () => import("./calendrier-CWXHmK7M.mjs");
 const Route$4 = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -1083,7 +1467,7 @@ const Route$4 = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-CPd7FPBN.mjs");
+const $$splitComponentImporter$3 = () => import("./index-RTngWD3U.mjs");
 const Route$3 = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -1104,7 +1488,7 @@ const Route$3 = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./poterie._id-BPj8A18G.mjs");
+const $$splitComponentImporter$2 = () => import("./poterie._id-COVqrwtX.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -1150,7 +1534,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-CIGq8mGP.mjs");
+const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-JBIHP3k3.mjs");
 const Route$1 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -1174,7 +1558,7 @@ const Route$1 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./bonsai._id-BnGbfmT5.mjs");
+const $$splitComponentImporter = () => import("./bonsai._id-D9pv2-cJ.mjs");
 const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
   loader: async ({
@@ -1326,17 +1710,21 @@ const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   getRouter
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  deleteBonsai as A,
+  AddPhotoDialog as A,
   Button as B,
-  updatePhotoDate as C,
-  updatePhotoLegende as D,
-  deletePhoto as E,
-  deleteJournal as F,
-  deleteRappel as G,
-  supabaseData as H,
+  Route as C,
+  Dialog as D,
+  deleteBonsai as E,
+  useFileInput as F,
+  updatePhotoDate as G,
+  updatePhotoLegende as H,
   Input as I,
-  router as J,
+  deletePhoto as J,
+  deleteJournal as K,
   Label as L,
+  deleteRappel as M,
+  supabaseData as N,
+  router as O,
   PoterieForm as P,
   Route$2 as R,
   Textarea as T,
@@ -1345,25 +1733,25 @@ export {
   listPhotos as c,
   listJournal as d,
   useBlobUrl as e,
-  fileToBlob as f,
+  useAuth as f,
   getPoteriePhoto as g,
-  useAuth as h,
-  saveBonsai as i,
-  savePhoto as j,
-  saveJournal as k,
+  saveBonsai as h,
+  savePhoto as i,
+  saveJournal as j,
+  saveRappel as k,
   listBonsais as l,
-  saveRappel as m,
-  saveEvenement as n,
-  exportSupabaseBackup as o,
-  importSupabaseBackup as p,
-  listEvenements as q,
-  cn as r,
+  saveEvenement as m,
+  exportSupabaseBackup as n,
+  importSupabaseBackup as o,
+  listEvenements as p,
+  cn as q,
+  deleteEvenement as r,
   savePoterie as s,
-  deleteEvenement as t,
+  getPoterie as t,
   uid as u,
-  getPoterie as v,
-  deletePoterie as w,
-  getBonsai as x,
-  getPhotoBlob as y,
-  Route as z
+  deletePoterie as v,
+  getBonsai as w,
+  getPhotoBlob as x,
+  DialogContent as y,
+  DialogTitle as z
 };

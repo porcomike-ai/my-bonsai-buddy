@@ -1,12 +1,12 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { B as Button, r as cn, L as Label, I as Input, T as Textarea, k as saveJournal, u as uid, m as saveRappel, n as saveEvenement, t as deleteEvenement, b as listRappels, l as listBonsais, q as listEvenements } from "./router-B7dkk4ae.mjs";
-import { A as AppShell, n as notificationStatus, r as requestNotificationPermission } from "./app-shell-DyFFU200.mjs";
+import { B as Button, q as cn, L as Label, I as Input, T as Textarea, j as saveJournal, u as uid, k as saveRappel, m as saveEvenement, r as deleteEvenement, b as listRappels, l as listBonsais, p as listEvenements } from "./router-B0pA28kv.mjs";
+import { A as AppShell, n as notificationStatus, r as requestNotificationPermission } from "./app-shell-BBLqqXTs.mjs";
 import { b as soinEmoji, c as soinLabel } from "./bonsai-meta-BJOj-HVV.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { s as startOfWeek, b as startOfMonth, e as endOfWeek, c as endOfMonth, g as eachDayOfInterval, f as format, p as parseISO, h as subMonths, i as addMonths, j as isSameMonth, k as isSameDay, a as fr, l as addDays } from "../_libs/date-fns.mjs";
-import { l as ChevronLeft, m as ChevronRight, n as Check, o as CalendarPlus, P as Plus, p as Bell, X, q as BellOff, r as BellRing } from "../_libs/lucide-react.mjs";
+import { o as ChevronLeft, p as ChevronRight, q as Check, r as CalendarPlus, P as Plus, s as Bell, X, t as BellOff, u as BellRing } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -38,6 +38,32 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-context.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
+import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
+import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-radio-group.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
+import "../_libs/radix-ui__react-direction.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
 function CalendrierPage() {
   const qc = useQueryClient();
   const [month, setMonth] = reactExports.useState(() => /* @__PURE__ */ new Date());
@@ -190,6 +216,7 @@ function EvenementsSection({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = reactExports.useState(false);
+  const [editingId, setEditingId] = reactExports.useState(null);
   const [titre, setTitre] = reactExports.useState("");
   const [description, setDescription] = reactExports.useState("");
   const [dateHeure, setDateHeure] = reactExports.useState(() => {
@@ -230,6 +257,39 @@ function EvenementsSection({
     setDescription("");
     toast.success("Évènement ajouté");
     if (notifStatus !== "granted" && notifStatus !== "unsupported") ask();
+  };
+  const edit = (e) => {
+    setEditingId(e.id);
+    setTitre(e.titre);
+    setDescription(e.description || "");
+    setDateHeure(formatLocal(new Date(e.dateHeure)));
+    setRappelMinutes(e.rappelMinutes?.toString() || "60");
+    setBonsaiId(e.bonsaiId || "");
+    setOpen(true);
+  };
+  const update = async () => {
+    if (!editingId || !titre.trim()) {
+      toast.error("Donnez un titre à l'évènement");
+      return;
+    }
+    const iso = new Date(dateHeure).toISOString();
+    await saveEvenement({
+      id: editingId,
+      titre: titre.trim(),
+      description: description.trim() || void 0,
+      dateHeure: iso,
+      rappelMinutes: rappelMinutes ? Number(rappelMinutes) : void 0,
+      bonsaiId: bonsaiId || void 0,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    qc.invalidateQueries({
+      queryKey: ["evenements"]
+    });
+    setOpen(false);
+    setEditingId(null);
+    setTitre("");
+    setDescription("");
+    toast.success("Évènement mis à jour");
   };
   const remove = async (id) => {
     if (!confirm("Supprimer cet évènement ?")) return;
@@ -285,17 +345,22 @@ function EvenementsSection({
         ] })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-end gap-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setOpen(false), children: "Annuler" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { onClick: add, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => {
+          setOpen(false);
+          setEditingId(null);
+          setTitre("");
+          setDescription("");
+        }, children: "Annuler" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: editingId ? update : add, children: editingId ? "Mettre à jour" : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "mr-1 h-4 w-4" }),
           " Ajouter"
-        ] })
+        ] }) })
       ] }),
       notifStatus !== "granted" && notifStatus !== "unsupported" && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-muted-foreground", children: "Pour recevoir une notification sur cet appareil, autorisez les notifications avec le bouton ci-dessus. L'application doit être ouverte (au moins en arrière-plan dans le navigateur) au moment du rappel." })
     ] }),
     upcoming.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Aucun évènement programmé." }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-2", children: upcoming.map((e) => {
       const b = e.bonsaiId ? bonsais.find((x) => x.id === e.bonsaiId) : void 0;
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-start gap-3 rounded-xl border border-border bg-card p-3", children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-start gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:bg-secondary/40 transition", onClick: () => edit(e), children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CalendarPlus, { className: "h-4 w-4" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-baseline justify-between gap-3", children: [
@@ -306,14 +371,17 @@ function EvenementsSection({
           ] }),
           b && /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/bonsai/$id", params: {
             id: b.id
-          }, className: "text-xs text-accent hover:underline", children: b.nom }),
+          }, className: "text-xs text-accent hover:underline", onClick: (event) => event.stopPropagation(), children: b.nom }),
           e.description && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 whitespace-pre-wrap text-sm text-muted-foreground", children: e.description }),
           e.rappelMinutes != null && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Bell, { className: "h-3 w-3" }),
             e.rappelMinutes === 0 ? "Rappel à l'heure" : `Rappel ${formatMinutes(e.rappelMinutes)} avant`
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", size: "icon", "aria-label": `Supprimer l'évènement ${e.titre}`, onClick: () => remove(e.id), className: "text-muted-foreground hover:text-destructive", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }) })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", size: "icon", "aria-label": `Supprimer l'évènement ${e.titre}`, onClick: (event) => {
+          event.stopPropagation();
+          remove(e.id);
+        }, className: "text-muted-foreground hover:text-destructive", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }) })
       ] }, e.id);
     }) })
   ] });

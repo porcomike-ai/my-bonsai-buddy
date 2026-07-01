@@ -150,7 +150,6 @@ export function AddPhotoDialog({
     setBusy(true);
     try {
       await onConfirm({ blob, date: selectedDate, legende: legende.trim() });
-      onOpenChange(false);
     } finally {
       setBusy(false);
     }

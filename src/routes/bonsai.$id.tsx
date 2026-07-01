@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   getBonsai,
   deleteBonsai,
@@ -376,7 +376,8 @@ function GalerieTab({
   const galleryInput = useFileInput();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogSource, setDialogSource] = useState<PhotoSource>("camera");
-  const [fileQueue, setFileQueue] = useState<File[]>([]);
+  // Use a ref for the queue so onConfirm always reads the latest values without stale closures.
+  const queueRef = useRef<File[]>([]);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [processedCount, setProcessedCount] = useState(0);
 
@@ -394,7 +395,7 @@ function GalerieTab({
     if (dialogSource === "gallery" && galleryInput.inputRef.current?.files) {
       const files = Array.from(galleryInput.inputRef.current.files);
       if (files.length > 0) {
-        setFileQueue(files);
+        queueRef.current = files;
         setProcessedCount(0);
         setCurrentFile(files[0]);
         setDialogOpen(true);
@@ -405,9 +406,9 @@ function GalerieTab({
   // Quand un fichier est sélectionné depuis l'appareil photo, on l'ouvre directement
   useEffect(() => {
     if (dialogSource === "camera" && cameraInput.file) {
-      setCurrentFile(cameraInput.file);
-      setFileQueue([cameraInput.file]);
+      queueRef.current = [cameraInput.file];
       setProcessedCount(0);
+      setCurrentFile(cameraInput.file);
       setDialogOpen(true);
     }
   }, [cameraInput.file, dialogSource]);
@@ -429,21 +430,23 @@ function GalerieTab({
       legende: legende || undefined,
     });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
-    
-    // Passer au fichier suivant s'il y en a
+
+    const queue = queueRef.current;
     const nextIndex = processedCount + 1;
-    if (nextIndex < fileQueue.length) {
-      setCurrentFile(fileQueue[nextIndex]);
+    if (nextIndex < queue.length) {
       setProcessedCount(nextIndex);
+      setCurrentFile(queue[nextIndex]);
     } else {
-      // Tous les fichiers traités
+      const total = queue.length;
       setDialogOpen(false);
-      setFileQueue([]);
       setCurrentFile(null);
       setProcessedCount(0);
+      queueRef.current = [];
       cameraInput.reset();
       galleryInput.reset();
-      toast.success(`${fileQueue.length} photo${fileQueue.length > 1 ? 's' : ''} ajoutée${fileQueue.length > 1 ? 's' : ''}`);
+      toast.success(
+        `${total} photo${total > 1 ? "s" : ""} ajoutée${total > 1 ? "s" : ""}`,
+      );
     }
   };
 
@@ -543,19 +546,25 @@ function GalerieTab({
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) {
+            const saved = processedCount;
             setDialogOpen(false);
-            setFileQueue([]);
             setCurrentFile(null);
             setProcessedCount(0);
+            queueRef.current = [];
             cameraInput.reset();
             galleryInput.reset();
+            if (saved > 0) {
+              toast.success(
+                `${saved} photo${saved > 1 ? "s" : ""} ajoutée${saved > 1 ? "s" : ""}`,
+              );
+            }
           }
         }}
         source={dialogSource}
         file={currentFile}
         onConfirm={onConfirm}
         currentIndex={processedCount}
-        totalCount={fileQueue.length}
+        totalCount={queueRef.current.length}
       />
       <PhotoLightbox
         photo={lightboxPhoto}
