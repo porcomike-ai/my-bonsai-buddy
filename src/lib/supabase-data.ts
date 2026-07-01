@@ -18,7 +18,7 @@ import type {
   JournalEntryRow,
   RappelRow,
   EvenementRow,
-} from "@/integrations/supabase/types";
+} from "@/integrations/supabase/domain-types";
 
 // Le `supabase` exporté est un Proxy paresseux qui efface le type générique
 // de createClient<Database>(). Les types `*Row` importés ci-dessus servent
@@ -31,14 +31,14 @@ const db = supabase as unknown as {
 
 // --- Types domaine (compatibles avec l'ancienne API db.ts) ---
 
-export type { BonsaiStyle, BonsaiEtape, SoinType } from "@/integrations/supabase/types";
+export type { BonsaiStyle, BonsaiEtape, SoinType } from "@/integrations/supabase/domain-types";
 
 export interface Bonsai {
   id: string;
   nom: string;
   espece: string;
-  style: import("@/integrations/supabase/types").BonsaiStyle;
-  etape?: import("@/integrations/supabase/types").BonsaiEtape;
+  style: import("@/integrations/supabase/domain-types").BonsaiStyle;
+  etape?: import("@/integrations/supabase/domain-types").BonsaiEtape;
   ageEstime?: number;
   dateAcquisition?: string;
   origine?: string;
@@ -66,7 +66,7 @@ export interface Photo {
 export interface JournalEntry {
   id: string;
   bonsaiId: string;
-  type: import("@/integrations/supabase/types").SoinType;
+  type: import("@/integrations/supabase/domain-types").SoinType;
   date: string;
   notes?: string;
   rappelId?: string;
@@ -75,7 +75,7 @@ export interface JournalEntry {
 export interface Rappel {
   id: string;
   bonsaiId: string;
-  type: import("@/integrations/supabase/types").SoinType;
+  type: import("@/integrations/supabase/domain-types").SoinType;
   prochaineDate: string;
   intervalleJours?: number;
   notes?: string;
