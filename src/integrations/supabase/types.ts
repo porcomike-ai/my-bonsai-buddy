@@ -14,7 +14,304 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bonsais: {
+        Row: {
+          age_estime: number | null
+          created_at: string
+          dans_collection: boolean
+          date_acquisition: string | null
+          espece: string
+          etape: string | null
+          favori: boolean
+          hauteur_cm: number | null
+          id: string
+          nom: string
+          notes: string | null
+          origine: string | null
+          photo_principale_path: string | null
+          poterie_id: string | null
+          prix_achat: number | null
+          style: string
+          updated_at: string
+          user_id: string
+          valeur_estimee: number | null
+        }
+        Insert: {
+          age_estime?: number | null
+          created_at?: string
+          dans_collection?: boolean
+          date_acquisition?: string | null
+          espece: string
+          etape?: string | null
+          favori?: boolean
+          hauteur_cm?: number | null
+          id?: string
+          nom: string
+          notes?: string | null
+          origine?: string | null
+          photo_principale_path?: string | null
+          poterie_id?: string | null
+          prix_achat?: number | null
+          style: string
+          updated_at?: string
+          user_id?: string
+          valeur_estimee?: number | null
+        }
+        Update: {
+          age_estime?: number | null
+          created_at?: string
+          dans_collection?: boolean
+          date_acquisition?: string | null
+          espece?: string
+          etape?: string | null
+          favori?: boolean
+          hauteur_cm?: number | null
+          id?: string
+          nom?: string
+          notes?: string | null
+          origine?: string | null
+          photo_principale_path?: string | null
+          poterie_id?: string | null
+          prix_achat?: number | null
+          style?: string
+          updated_at?: string
+          user_id?: string
+          valeur_estimee?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonsais_poterie_id_fkey"
+            columns: ["poterie_id"]
+            isOneToOne: false
+            referencedRelation: "poteries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evenements: {
+        Row: {
+          bonsai_id: string | null
+          created_at: string
+          date_heure: string
+          description: string | null
+          id: string
+          notified_at: string | null
+          rappel_minutes: number | null
+          titre: string
+          user_id: string
+        }
+        Insert: {
+          bonsai_id?: string | null
+          created_at?: string
+          date_heure: string
+          description?: string | null
+          id?: string
+          notified_at?: string | null
+          rappel_minutes?: number | null
+          titre: string
+          user_id?: string
+        }
+        Update: {
+          bonsai_id?: string | null
+          created_at?: string
+          date_heure?: string
+          description?: string | null
+          id?: string
+          notified_at?: string | null
+          rappel_minutes?: number | null
+          titre?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evenements_bonsai_id_fkey"
+            columns: ["bonsai_id"]
+            isOneToOne: false
+            referencedRelation: "bonsais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          bonsai_id: string
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          rappel_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          bonsai_id: string
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          rappel_id?: string | null
+          type: string
+          user_id?: string
+        }
+        Update: {
+          bonsai_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          rappel_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_bonsai_id_fkey"
+            columns: ["bonsai_id"]
+            isOneToOne: false
+            referencedRelation: "bonsais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photos: {
+        Row: {
+          bonsai_id: string
+          created_at: string
+          date: string
+          id: string
+          legende: string | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          bonsai_id: string
+          created_at?: string
+          date?: string
+          id?: string
+          legende?: string | null
+          storage_path: string
+          user_id?: string
+        }
+        Update: {
+          bonsai_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          legende?: string | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_bonsai_id_fkey"
+            columns: ["bonsai_id"]
+            isOneToOne: false
+            referencedRelation: "bonsais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poteries: {
+        Row: {
+          artisan: string | null
+          couleur: string | null
+          created_at: string
+          forme: string | null
+          hauteur_cm: number | null
+          id: string
+          largeur_cm: number | null
+          longueur_cm: number | null
+          matiere: string | null
+          nom: string
+          notes: string | null
+          origine: string | null
+          photo_path: string | null
+          prix: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artisan?: string | null
+          couleur?: string | null
+          created_at?: string
+          forme?: string | null
+          hauteur_cm?: number | null
+          id?: string
+          largeur_cm?: number | null
+          longueur_cm?: number | null
+          matiere?: string | null
+          nom: string
+          notes?: string | null
+          origine?: string | null
+          photo_path?: string | null
+          prix?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          artisan?: string | null
+          couleur?: string | null
+          created_at?: string
+          forme?: string | null
+          hauteur_cm?: number | null
+          id?: string
+          largeur_cm?: number | null
+          longueur_cm?: number | null
+          matiere?: string | null
+          nom?: string
+          notes?: string | null
+          origine?: string | null
+          photo_path?: string | null
+          prix?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rappels: {
+        Row: {
+          actif: boolean
+          bonsai_id: string
+          created_at: string
+          id: string
+          intervalle_jours: number | null
+          notes: string | null
+          prochaine_date: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actif?: boolean
+          bonsai_id: string
+          created_at?: string
+          id?: string
+          intervalle_jours?: number | null
+          notes?: string | null
+          prochaine_date: string
+          type: string
+          user_id?: string
+        }
+        Update: {
+          actif?: boolean
+          bonsai_id?: string
+          created_at?: string
+          id?: string
+          intervalle_jours?: number | null
+          notes?: string | null
+          prochaine_date?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rappels_bonsai_id_fkey"
+            columns: ["bonsai_id"]
+            isOneToOne: false
+            referencedRelation: "bonsais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
