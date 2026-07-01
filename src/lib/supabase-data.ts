@@ -18,7 +18,7 @@ import type {
   JournalEntryRow,
   RappelRow,
   EvenementRow,
-} from "@/integrations/supabase/types";
+} from "@/integrations/supabase/domain-types";
 
 // Le `supabase` exporté est un Proxy paresseux qui efface le type générique
 // de createClient<Database>(). Les types `*Row` importés ci-dessus servent
