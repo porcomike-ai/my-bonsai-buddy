@@ -1,8 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, T as Textarea, B as Button, A as AddPhotoDialog, u as uid, s as savePoterie, g as getPoteriePhoto, e as useBlobUrl, L as Label, a as listPoteries, l as listBonsais } from "./router-DayW0770.mjs";
-import { A as AppShell } from "./app-shell-BwtD_V5I.mjs";
+import { I as Input, T as Textarea, B as Button, A as AddPhotoDialog, u as uid, s as savePoterie, g as getPoteriePhoto, e as useBlobUrl, L as Label, a as listPoteries, l as listBonsais } from "./router-Co_Ro_jt.mjs";
+import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { I as ImagePlus, P as Plus, e as Container } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";

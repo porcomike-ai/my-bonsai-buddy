@@ -1,8 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { G as useFileInput, B as Button, A as AddPhotoDialog, I as Input, T as Textarea, H as updatePhotoDate, J as updatePhotoLegende, K as deletePhoto, i as savePhoto, u as uid, e as useBlobUrl, D as Dialog, E as DialogContent, F as DialogTitle, y as getPhotoBlob } from "./router-DayW0770.mjs";
-import { a as Camera, K as FolderOpen, b as Calendar, M as MessageSquarePlus, X, Z as ZoomOut, N as ZoomIn, R as RotateCcw } from "../_libs/lucide-react.mjs";
+import { H as useFileInput, B as Button, A as AddPhotoDialog, I as Input, T as Textarea, J as updatePhotoDate, K as updatePhotoLegende, M as deletePhoto, i as savePhoto, u as uid, e as useBlobUrl, E as Dialog, F as DialogContent, G as DialogTitle, y as getPhotoBlob } from "./router-Co_Ro_jt.mjs";
+import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
+import { a as Camera, M as FolderOpen, b as Calendar, N as MessageSquarePlus, X, Z as ZoomOut, O as ZoomIn, R as RotateCcw } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/react-dom.mjs";
@@ -62,6 +63,7 @@ import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.4;
@@ -93,7 +95,7 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
       return;
     }
     let cancelled = false;
-    import("./router-DayW0770.mjs").then((n) => n.O).then(({ getPhotoBlob: getPhotoBlob2 }) => getPhotoBlob2(photo)).then((b) => {
+    import("./router-Co_Ro_jt.mjs").then((n) => n.Q).then(({ getPhotoBlob: getPhotoBlob2 }) => getPhotoBlob2(photo)).then((b) => {
       if (!cancelled) setBlob(b);
     }).catch(() => {
       if (!cancelled) setBlob(void 0);
@@ -383,8 +385,14 @@ function GalerieTab({
     }
   };
   const [lightboxPhoto, setLightboxPhoto] = reactExports.useState(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const remove = async (pid) => {
-    if (!confirm("Supprimer cette photo ?")) return;
+    const confirmed = await confirm({
+      title: "Supprimer cette photo ?",
+      destructive: true,
+      confirmLabel: "Supprimer"
+    });
+    if (!confirmed) return;
     await deletePhoto(pid);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
@@ -510,7 +518,8 @@ function GalerieTab({
           if (!o) setLightboxPhoto(null);
         }
       }
-    )
+    ),
+    confirmDialog
   ] });
 }
 function usePhotoUrl(photo) {

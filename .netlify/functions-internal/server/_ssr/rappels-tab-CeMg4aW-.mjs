@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { B as Button, L as Label, I as Input, T as Textarea, j as saveJournal, u as uid, M as deleteJournal } from "./router-DayW0770.mjs";
+import { B as Button, L as Label, I as Input, k as saveRappel, u as uid, j as saveJournal, O as deleteRappel } from "./router-Co_Ro_jt.mjs";
 import { a as SOINS, b as soinEmoji, c as soinLabel } from "./bonsai-meta-BJOj-HVV.mjs";
-import { P as Plus, X } from "../_libs/lucide-react.mjs";
-import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
+import { P as Plus, b as Calendar, q as Check, X } from "../_libs/lucide-react.mjs";
+import { f as format, a as fr, p as parseISO, l as addDays } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/react-dom.mjs";
 import "util";
@@ -63,63 +63,60 @@ import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
-function JournalTab({
+function RappelsTab({
   bonsaiId,
-  entries
+  rappels
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = reactExports.useState(false);
-  const [editingId, setEditingId] = reactExports.useState(null);
   const [type, setType] = reactExports.useState("arrosage");
   const [date, setDate] = reactExports.useState((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
-  const [notes, setNotes] = reactExports.useState("");
+  const [intervalle, setIntervalle] = reactExports.useState("");
   const add = async () => {
-    await saveJournal({
+    await saveRappel({
       id: uid(),
       bonsaiId,
       type,
-      date: new Date(date).toISOString(),
-      notes: notes || void 0
+      prochaineDate: new Date(date).toISOString(),
+      intervalleJours: intervalle ? Number(intervalle) : void 0,
+      actif: true
     });
     qc.invalidateQueries();
     setOpen(false);
-    setNotes("");
-    toast.success("Entrée ajoutée");
+    setIntervalle("");
+    toast.success("Rappel créé");
   };
-  const remove = async (eid) => {
-    await deleteJournal(eid);
-    qc.invalidateQueries();
-  };
-  const edit = (e) => {
-    setEditingId(e.id);
-    setType(e.type);
-    setDate(e.date.slice(0, 10));
-    setNotes(e.notes || "");
-    setOpen(true);
-  };
-  const update = async () => {
-    if (!editingId) return;
+  const markDone = async (r) => {
     await saveJournal({
-      id: editingId,
+      id: uid(),
       bonsaiId,
-      type,
-      date: new Date(date).toISOString(),
-      notes: notes || void 0
+      type: r.type,
+      date: (/* @__PURE__ */ new Date()).toISOString(),
+      rappelId: r.id
     });
+    if (r.intervalleJours) {
+      await saveRappel({
+        ...r,
+        prochaineDate: addDays(/* @__PURE__ */ new Date(), r.intervalleJours).toISOString()
+      });
+    } else {
+      await saveRappel({ ...r, actif: false });
+    }
     qc.invalidateQueries();
-    setOpen(false);
-    setEditingId(null);
-    setNotes("");
-    toast.success("Entrée mise à jour");
+    toast.success("Soin effectué");
+  };
+  const remove = async (rid) => {
+    await deleteRappel(rid);
+    qc.invalidateQueries();
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
     !open ? /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { onClick: () => setOpen(true), className: "mb-5", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "mr-1.5 h-4 w-4" }),
-      " Nouvelle entrée"
+      " Nouveau rappel"
     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-5 space-y-3 rounded-2xl border border-border bg-card p-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-3 sm:grid-cols-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-3 sm:grid-cols-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Type de soin" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Type" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "select",
             {
@@ -135,72 +132,63 @@ function JournalTab({
           )
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Date" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Prochaine date" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "date", value: date, onChange: (e) => setDate(e.target.value) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Répéter tous les (jours)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Input,
+            {
+              type: "number",
+              min: 0,
+              placeholder: "ex. 2",
+              value: intervalle,
+              onChange: (e) => setIntervalle(e.target.value)
+            }
+          )
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Notes (facultatif)" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          Textarea,
-          {
-            value: notes,
-            onChange: (e) => setNotes(e.target.value),
-            rows: 3,
-            placeholder: "Observations, dosage, météo…"
-          }
-        )
-      ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-end gap-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          Button,
-          {
-            variant: "outline",
-            onClick: () => {
-              setOpen(false);
-              setEditingId(null);
-              setNotes("");
-            },
-            children: "Annuler"
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: editingId ? update : add, children: editingId ? "Mettre à jour" : "Enregistrer" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setOpen(false), children: "Annuler" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: add, children: "Créer le rappel" })
       ] })
     ] }),
-    entries.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Aucun entretien consigné. Notez votre prochain arrosage, taille ou rempotage." }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-2", children: entries.map((e) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    rappels.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Aucun rappel. Programmez par exemple un arrosage tous les 2 jours." }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-2", children: rappels.map((r) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "li",
       {
-        className: "flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition hover:bg-secondary/40",
-        onClick: () => edit(e),
+        className: `flex items-center gap-3 rounded-xl border bg-card p-3 ${r.actif ? "border-border" : "border-border/40 opacity-60"}`,
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-base", children: soinEmoji(e.type) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-base", children: soinEmoji(r.type) }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-baseline justify-between gap-3", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium", children: soinLabel(e.type) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-muted-foreground", children: format(parseISO(e.date), "d MMM yyyy", { locale: fr }) })
-            ] }),
-            e.notes && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 whitespace-pre-wrap text-sm text-muted-foreground", children: e.notes })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "font-medium", children: soinLabel(r.type) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-xs text-muted-foreground", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "mr-1 inline h-3 w-3" }),
+              format(parseISO(r.prochaineDate), "EEEE d MMMM yyyy", { locale: fr }),
+              r.intervalleJours ? ` · tous les ${r.intervalleJours} j` : ""
+            ] })
+          ] }),
+          r.actif && /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { variant: "outline", size: "sm", onClick: () => markDone(r), children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "mr-1 h-4 w-4" }),
+            " Fait"
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             Button,
             {
               variant: "ghost",
               size: "icon",
-              onClick: (event) => {
-                event.stopPropagation();
-                remove(e.id);
-              },
+              onClick: () => remove(r.id),
               className: "text-muted-foreground hover:text-destructive",
               children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
             }
           )
         ]
       },
-      e.id
+      r.id
     )) })
   ] });
 }
 export {
-  JournalTab,
-  JournalTab as default
+  RappelsTab,
+  RappelsTab as default
 };

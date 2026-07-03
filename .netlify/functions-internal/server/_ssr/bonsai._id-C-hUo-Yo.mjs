@@ -2,15 +2,16 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { z as Route, B as Button, h as saveBonsai, C as deleteBonsai, q as cn, x as getBonsai, v as getPoterie, d as listJournal, b as listRappels, c as listPhotos, y as getPhotoBlob } from "./router-DayW0770.mjs";
-import { A as AppShell } from "./app-shell-BwtD_V5I.mjs";
-import { B as BonsaiForm } from "./bonsai-form-S_l59ESg.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-D7bdanHc.mjs";
+import { z as Route, B as Button, h as saveBonsai, C as deleteBonsai, q as cn, x as getBonsai, v as getPoterie, d as listJournal, b as listRappels, c as listPhotos, y as getPhotoBlob } from "./router-Co_Ro_jt.mjs";
+import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
+import { B as BonsaiForm } from "./bonsai-form-G3pvEJai.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-2IG_G-Ig.mjs";
 import { s as styleLabel, e as etapeLabel, c as soinLabel } from "./bonsai-meta-BJOj-HVV.mjs";
 import { R as Root2$1, T as Trigger$1, P as Portal2, C as Content2, I as Item2, S as SubTrigger2, a as SubContent2, b as CheckboxItem2, c as ItemIndicator2, d as RadioItem2, L as Label2, e as Separator2 } from "../_libs/radix-ui__react-dropdown-menu.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
+import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
 import { R as Root2, L as List, T as Trigger, C as Content } from "../_libs/radix-ui__react-tabs.mjs";
-import { w as ArrowLeft, x as Pencil, y as Trash2, n as Star, z as Share2, G as Image$1, J as Images, p as ChevronRight, q as Check, C as Circle } from "../_libs/lucide-react.mjs";
+import { w as ArrowLeft, x as Pencil, y as Trash2, n as Star, z as LoaderCircle, G as Share2, J as Image$1, K as Images, p as ChevronRight, q as Check, C as Circle } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -96,6 +97,7 @@ import "../_libs/performance-now.mjs";
 import "../_libs/rgbcolor.mjs";
 import "../_libs/svg-pathdata.mjs";
 import "../_libs/stackblur-canvas.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
 const DropdownMenu = Root2$1;
 const DropdownMenuTrigger = Trigger$1;
 const DropdownMenuSubTrigger = reactExports.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -223,6 +225,8 @@ async function loadImage(dataUrl) {
 }
 async function generateBonsaiPdf(bonsaiId, options = {}) {
   const photosOpt = options.photos ?? "principale";
+  const onProgress = options.onProgress;
+  onProgress?.({ phase: "loading", current: 0, total: 1 });
   const b = await getBonsai(bonsaiId);
   if (!b) throw new Error("Bonsaï introuvable");
   const [poterie, journal, rappels, allPhotos] = await Promise.all([
@@ -232,6 +236,7 @@ async function generateBonsaiPdf(bonsaiId, options = {}) {
     photosOpt === "toutes" ? listPhotos(bonsaiId) : Promise.resolve([])
   ]);
   const principalBlob = b.photoPrincipale ? await getPhotoBlob({ storagePath: b.photoPrincipale }) : void 0;
+  onProgress?.({ phase: "generating", current: 0, total: allPhotos.length + 1 });
   const doc = new jspdf_node_minExports.jsPDF({ unit: "mm", format: "a4" });
   const W = 210;
   const margin = 16;
@@ -340,6 +345,7 @@ async function generateBonsaiPdf(bonsaiId, options = {}) {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
   doc.text("Bonsaï Studio — carnet de collection", W / 2, 290, { align: "center" });
+  onProgress?.({ phase: "generating", current: 1, total: allPhotos.length + 1 });
   if (photosOpt === "toutes" && allPhotos.length > 0) {
     const H = 297;
     const sorted = [...allPhotos].sort((a, b2) => b2.date.localeCompare(a.date));
@@ -349,6 +355,7 @@ async function generateBonsaiPdf(bonsaiId, options = {}) {
     const availW = W - margin * 2;
     const cellW = (availW - gap) / cols;
     const cellH = 110;
+    let photoIndex = 0;
     for (let i = 0; i < sorted.length; i += perPage) {
       doc.addPage();
       doc.setFillColor(135, 168, 120);
@@ -369,6 +376,8 @@ async function generateBonsaiPdf(bonsaiId, options = {}) {
       const slice = sorted.slice(i, i + perPage);
       for (let k = 0; k < slice.length; k++) {
         const p = slice[k];
+        photoIndex++;
+        onProgress?.({ phase: "photos", current: photoIndex, total: sorted.length });
         const col = k % cols;
         const row = Math.floor(k / cols);
         const x = margin + col * (cellW + gap);
@@ -433,22 +442,28 @@ function SharePdfButton({
   photosCount
 }) {
   const [busy, setBusy] = reactExports.useState(false);
+  const [progress, setProgress] = reactExports.useState(null);
   const run = async (photos) => {
     setBusy(true);
+    setProgress({ phase: "loading", current: 0, total: 1 });
     try {
-      const r = await shareBonsaiPdf(id, bonsai.nom, { photos });
+      const r = await shareBonsaiPdf(id, bonsai.nom, {
+        photos,
+        onProgress: setProgress
+      });
       toast.success(r === "shared" ? "Fiche partagée" : "Fiche téléchargée");
     } catch (e) {
       toast.error(e.message);
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   };
+  const progressLabel = progress?.phase === "loading" ? "Chargement…" : progress?.phase === "generating" ? "Génération…" : progress?.phase === "photos" ? `Photo ${progress.current}/${progress.total}` : null;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(DropdownMenu, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { className: "mt-2 w-full", disabled: busy, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "mr-1.5 h-4 w-4" }),
-      " ",
-      busy ? "Génération…" : "Partager la fiche"
+      busy ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "mr-1.5 h-4 w-4 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "mr-1.5 h-4 w-4" }),
+      busy && progressLabel ? progressLabel : busy ? "Génération…" : "Partager la fiche"
     ] }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(DropdownMenuContent, { align: "end", className: "w-64", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(DropdownMenuItem, { onClick: () => run("principale"), children: [
@@ -598,9 +613,9 @@ const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 TabsContent.displayName = Content.displayName;
-const GalerieTab = reactExports.lazy(() => import("./galerie-tab-D1_cl9N7.mjs"));
-const JournalTab = reactExports.lazy(() => import("./journal-tab-D8IS8Fai.mjs"));
-const RappelsTab = reactExports.lazy(() => import("./rappels-tab-Di_a4AdT.mjs"));
+const GalerieTab = reactExports.lazy(() => import("./galerie-tab-CPMWgIdZ.mjs"));
+const JournalTab = reactExports.lazy(() => import("./journal-tab-BMpxIOX7.mjs"));
+const RappelsTab = reactExports.lazy(() => import("./rappels-tab-CeMg4aW-.mjs"));
 function TabFallback() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "pt-4 text-sm text-muted-foreground", children: "Chargement…" });
 }
@@ -611,6 +626,10 @@ function BonsaiDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = reactExports.useState(false);
+  const {
+    confirm,
+    dialog: confirmDialog
+  } = useConfirm();
   const {
     data: b,
     isPending
@@ -649,7 +668,13 @@ function BonsaiDetail() {
     /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/collection", className: "text-accent", children: "Retour à la collection" })
   ] });
   const remove = async () => {
-    if (!confirm(`Supprimer définitivement « ${b.nom} » et toutes ses données ?`)) return;
+    const confirmed = await confirm({
+      title: "Supprimer ce bonsaï ?",
+      description: `« ${b.nom} » et toutes ses données (photos, journal, rappels) seront supprimés définitivement.`,
+      destructive: true,
+      confirmLabel: "Supprimer"
+    });
+    if (!confirmed) return;
     await deleteBonsai(id);
     await qc.invalidateQueries();
     toast.success("Bonsaï supprimé");
@@ -719,7 +744,8 @@ function BonsaiDetail() {
       /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "galerie", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(GalerieTab, { bonsaiId: id, photos, mainId: b.photoPrincipale, onSetMain: setMainPhoto }) }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "journal", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(JournalTab, { bonsaiId: id, entries }) }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "rappels", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(RappelsTab, { bonsaiId: id, rappels }) }) })
-    ] }) }) })
+    ] }) }) }),
+    confirmDialog
   ] });
 }
 export {

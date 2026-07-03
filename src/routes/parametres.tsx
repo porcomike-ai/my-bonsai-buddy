@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import {
   exportSupabaseBackup,
@@ -61,6 +62,7 @@ function ParametresPage() {
   const [busy, setBusy] = useState<Busy>(null);
   const [hasLocalData, setHasLocalData] = useState(false);
   const [checkingLocal, setCheckingLocal] = useState(true);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   // Détecte la présence d'anciennes données dans IndexedDB (côté client uniquement).
   // On utilise le module idb (IndexedDB) et son listBonsais — les données Supabase
@@ -130,8 +132,12 @@ function ParametresPage() {
   };
 
   const doLocalImport = async (file: File) => {
-    if (!confirm("Importer ce fichier remplacera les données Supabase actuelles. Continuer ?"))
-      return;
+    const confirmed = await confirm({
+      title: "Importer cette sauvegarde ?",
+      description: "Les données Supabase actuelles seront remplacées par le contenu du fichier.",
+      confirmLabel: "Importer",
+    });
+    if (!confirmed) return;
     setBusy("import");
     try {
       const buf = await file.arrayBuffer();
@@ -160,12 +166,12 @@ function ParametresPage() {
   // --- Migration IndexedDB → Supabase ---
   // Lit toutes les données locales (IndexedDB) et les uploade vers Supabase.
   const doMigrateLocal = async () => {
-    if (
-      !confirm(
-        "Importer toutes vos données locales (IndexedDB) vers Supabase ? Les doublons (même id) seront écrasés.",
-      )
-    )
-      return;
+    const confirmed = await confirm({
+      title: "Migrer les données locales vers Supabase ?",
+      description: "Toutes les données IndexedDB seront importées. Les doublons (même id) seront écrasés.",
+      confirmLabel: "Migrer",
+    });
+    if (!confirmed) return;
     setBusy("migrate");
     try {
       // 1. Lire toutes les données depuis IndexedDB via les fonctions de db.ts.
@@ -439,6 +445,7 @@ function ParametresPage() {
           </div>
         </div>
       </section>
+      {confirmDialog}
     </AppShell>
   );
 }

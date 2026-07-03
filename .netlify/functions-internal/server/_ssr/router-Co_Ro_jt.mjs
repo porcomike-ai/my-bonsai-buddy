@@ -9,7 +9,7 @@ import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { R as Root } from "../_libs/radix-ui__react-label.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
-import { D as DialogOverlay$1, a as DialogPortal$1, b as DialogContent$1, c as DialogClose, d as DialogTitle$1, e as DialogDescription$1, f as Dialog$1 } from "../_libs/radix-ui__react-dialog.mjs";
+import { g as DialogOverlay$1, a as DialogPortal$1, b as DialogContent$1, f as DialogClose, d as DialogTitle$1, e as DialogDescription$1, D as Dialog$1 } from "../_libs/radix-ui__react-dialog.mjs";
 import { R as RadioGroup$1, a as RadioGroupItem$1, b as RadioGroupIndicator } from "../_libs/radix-ui__react-radio-group.mjs";
 import { X, C as Circle, a as Camera, S as Sparkles, b as Calendar, F as FileText, L as Loader, I as ImagePlus } from "../_libs/lucide-react.mjs";
 import { f as format, p as parseISO, a as fr } from "../_libs/date-fns.mjs";
@@ -246,7 +246,7 @@ function AuthGate({ children }) {
   if (!user && !isAuthRoute) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$b = () => import("./statistiques-CnNdBUNw.mjs");
+const $$splitComponentImporter$b = () => import("./statistiques-DpWvvHcK.mjs");
 const Route$c = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -479,8 +479,8 @@ async function uploadPoteriePhoto(poterieId, blob) {
 async function deleteStorageObject(bucket, path) {
   await db.storage.from(bucket).remove([path]);
 }
-async function listBonsais() {
-  const { data, error } = await db.from("bonsais").select("*").order("created_at", { ascending: false });
+async function listBonsais(limit = 500) {
+  const { data, error } = await db.from("bonsais").select("*").order("created_at", { ascending: false }).limit(limit);
   if (error) throw error;
   return data.map(rowToBonsai);
 }
@@ -506,8 +506,8 @@ async function deleteBonsai(id) {
   const { error } = await db.from("bonsais").delete().eq("id", id);
   if (error) throw error;
 }
-async function listPhotos(bonsaiId) {
-  const { data, error } = await db.from("photos").select("*").eq("bonsai_id", bonsaiId).order("date", { ascending: false });
+async function listPhotos(bonsaiId, limit = 200) {
+  const { data, error } = await db.from("photos").select("*").eq("bonsai_id", bonsaiId).order("date", { ascending: false }).limit(limit);
   if (error) throw error;
   return data.map(rowToPhoto);
 }
@@ -549,10 +549,10 @@ async function updatePhotoDate(id, date) {
   const { error } = await db.from("photos").update({ date }).eq("id", id);
   if (error) throw error;
 }
-async function listJournal(bonsaiId) {
+async function listJournal(bonsaiId, limit = 500) {
   let query = db.from("journal_entries").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("date", { ascending: false });
+  const { data, error } = await query.order("date", { ascending: false }).limit(limit);
   if (error) throw error;
   return data.map(rowToJournal);
 }
@@ -573,10 +573,10 @@ async function deleteJournal(id) {
   const { error } = await db.from("journal_entries").delete().eq("id", id);
   if (error) throw error;
 }
-async function listRappels(bonsaiId) {
+async function listRappels(bonsaiId, limit = 200) {
   let query = db.from("rappels").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("prochaine_date", { ascending: true });
+  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(limit);
   if (error) throw error;
   return data.map(rowToRappel);
 }
@@ -598,8 +598,8 @@ async function deleteRappel(id) {
   const { error } = await db.from("rappels").delete().eq("id", id);
   if (error) throw error;
 }
-async function listPoteries() {
-  const { data, error } = await db.from("poteries").select("*").order("created_at", { ascending: false });
+async function listPoteries(limit = 200) {
+  const { data, error } = await db.from("poteries").select("*").order("created_at", { ascending: false }).limit(limit);
   if (error) throw error;
   return data.map(rowToPoterie);
 }
@@ -627,8 +627,8 @@ async function deletePoterie(id) {
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 }
-async function listEvenements() {
-  const { data, error } = await db.from("evenements").select("*").order("date_heure", { ascending: true });
+async function listEvenements(limit = 100) {
+  const { data, error } = await db.from("evenements").select("*").order("date_heure", { ascending: true }).limit(limit);
   if (error) throw error;
   return data.map(rowToEvenement);
 }
@@ -1216,7 +1216,7 @@ function useFileInput() {
   };
   return { file, setFile, inputRef, reset };
 }
-const $$splitComponentImporter$a = () => import("./poteries-BCNGZlNI.mjs");
+const $$splitComponentImporter$a = () => import("./poteries-_8Zi2uJn.mjs");
 const Route$a = createFileRoute("/poteries")({
   head: () => ({
     meta: [{
@@ -1372,7 +1372,7 @@ function ExistingImage({
   const url = useBlobUrl(blob);
   return url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : null;
 }
-const $$splitComponentImporter$9 = () => import("./parametres-B_wf2dw7.mjs");
+const $$splitComponentImporter$9 = () => import("./parametres-BY0fA3iv.mjs");
 const Route$9 = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -1393,7 +1393,7 @@ const Route$9 = createFileRoute("/parametres")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./journal-DJPyrsBD.mjs");
+const $$splitComponentImporter$8 = () => import("./journal-CcsFn8OQ.mjs");
 const Route$8 = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -1414,7 +1414,7 @@ const Route$8 = createFileRoute("/journal")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./inscription-BKtEawV5.mjs");
+const $$splitComponentImporter$7 = () => import("./inscription-npiNY8IT.mjs");
 const Route$7 = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -1426,7 +1426,7 @@ const Route$7 = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
-const $$splitComponentImporter$6 = () => import("./connexion-Cg6BJU4z.mjs");
+const $$splitComponentImporter$6 = () => import("./connexion-CTLdoQGb.mjs");
 const Route$6 = createFileRoute("/connexion")({
   validateSearch: (s) => ({
     redirect: typeof s.redirect === "string" && s.redirect.startsWith("/") ? s.redirect : void 0
@@ -1441,7 +1441,7 @@ const Route$6 = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component")
 });
-const $$splitComponentImporter$5 = () => import("./collection-BaSZ5gdE.mjs");
+const $$splitComponentImporter$5 = () => import("./collection-DbRa8dV8.mjs");
 const Route$5 = createFileRoute("/collection")({
   head: () => ({
     meta: [{
@@ -1462,7 +1462,7 @@ const Route$5 = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./calendrier-BbcumWZA.mjs");
+const $$splitComponentImporter$4 = () => import("./calendrier-B8UaRYo4.mjs");
 const Route$4 = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -1483,7 +1483,7 @@ const Route$4 = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-C9I5142P.mjs");
+const $$splitComponentImporter$3 = () => import("./index-B4N8_IBl.mjs");
 const Route$3 = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -1504,7 +1504,7 @@ const Route$3 = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./poterie._id-D4us82wx.mjs");
+const $$splitComponentImporter$2 = () => import("./poterie._id-jI0YxyBC.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -1550,7 +1550,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-D8KHwlpj.mjs");
+const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-DFUb_QRQ.mjs");
 const Route$1 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -1574,7 +1574,7 @@ const Route$1 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./bonsai._id-gZyIUx01.mjs");
+const $$splitComponentImporter = () => import("./bonsai._id-C-hUo-Yo.mjs");
 const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
   loader: async ({
@@ -1729,21 +1729,22 @@ export {
   AddPhotoDialog as A,
   Button as B,
   deleteBonsai as C,
-  Dialog as D,
-  DialogContent as E,
-  DialogTitle as F,
-  useFileInput as G,
-  updatePhotoDate as H,
+  buttonVariants as D,
+  Dialog as E,
+  DialogContent as F,
+  DialogTitle as G,
+  useFileInput as H,
   Input as I,
-  updatePhotoLegende as J,
-  deletePhoto as K,
+  updatePhotoDate as J,
+  updatePhotoLegende as K,
   Label as L,
-  deleteJournal as M,
-  deleteRappel as N,
-  supabaseData as O,
+  deletePhoto as M,
+  deleteJournal as N,
+  deleteRappel as O,
   PoterieForm as P,
-  router as Q,
+  supabaseData as Q,
   Route$6 as R,
+  router as S,
   Textarea as T,
   listPoteries as a,
   listRappels as b,

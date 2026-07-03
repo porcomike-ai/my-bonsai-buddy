@@ -1,9 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { B as Button, q as cn, L as Label, I as Input, T as Textarea, j as saveJournal, u as uid, k as saveRappel, m as saveEvenement, r as deleteEvenement, b as listRappels, l as listBonsais, p as listEvenements } from "./router-DayW0770.mjs";
-import { A as AppShell, n as notificationStatus, r as requestNotificationPermission } from "./app-shell-BwtD_V5I.mjs";
+import { B as Button, q as cn, L as Label, I as Input, T as Textarea, j as saveJournal, u as uid, k as saveRappel, m as saveEvenement, r as deleteEvenement, b as listRappels, l as listBonsais, p as listEvenements } from "./router-Co_Ro_jt.mjs";
+import { A as AppShell, n as notificationStatus, r as requestNotificationPermission } from "./app-shell-Cm49G3QP.mjs";
 import { b as soinEmoji, c as soinLabel } from "./bonsai-meta-BJOj-HVV.mjs";
+import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { s as startOfWeek, b as startOfMonth, e as endOfWeek, c as endOfMonth, g as eachDayOfInterval, f as format, p as parseISO, h as subMonths, i as addMonths, j as isSameMonth, k as isSameDay, a as fr, l as addDays } from "../_libs/date-fns.mjs";
 import { o as ChevronLeft, p as ChevronRight, q as Check, r as CalendarPlus, P as Plus, s as Bell, X, t as BellOff, u as BellRing } from "../_libs/lucide-react.mjs";
@@ -64,6 +65,7 @@ import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
 function CalendrierPage() {
   const qc = useQueryClient();
   const [month, setMonth] = reactExports.useState(() => /* @__PURE__ */ new Date());
@@ -219,6 +221,10 @@ function EvenementsSection({
   const [editingId, setEditingId] = reactExports.useState(null);
   const [titre, setTitre] = reactExports.useState("");
   const [description, setDescription] = reactExports.useState("");
+  const {
+    confirm,
+    dialog: confirmDialog
+  } = useConfirm();
   const [dateHeure, setDateHeure] = reactExports.useState(() => {
     const d = /* @__PURE__ */ new Date();
     d.setMinutes(0, 0, 0);
@@ -292,7 +298,12 @@ function EvenementsSection({
     toast.success("Évènement mis à jour");
   };
   const remove = async (id) => {
-    if (!confirm("Supprimer cet évènement ?")) return;
+    const confirmed = await confirm({
+      title: "Supprimer cet évènement ?",
+      destructive: true,
+      confirmLabel: "Supprimer"
+    });
+    if (!confirmed) return;
     await deleteEvenement(id);
     qc.invalidateQueries({
       queryKey: ["evenements"]
@@ -383,7 +394,8 @@ function EvenementsSection({
           remove(e.id);
         }, className: "text-muted-foreground hover:text-destructive", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }) })
       ] }, e.id);
-    }) })
+    }) }),
+    confirmDialog
   ] });
 }
 function NotifBadge({

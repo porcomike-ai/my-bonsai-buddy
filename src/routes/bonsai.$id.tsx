@@ -16,6 +16,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { BonsaiForm } from "@/components/bonsai-form";
 import { BonsaiHeader } from "@/components/bonsai-detail/header";
+import { useConfirm } from "@/components/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Chargement paresseux des onglets — chaque onglet est bundle-splitté
@@ -59,6 +60,7 @@ function BonsaiDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: b, isPending } = useQuery({
     queryKey: ["bonsai", id],
@@ -99,7 +101,13 @@ function BonsaiDetail() {
     );
 
   const remove = async () => {
-    if (!confirm(`Supprimer définitivement « ${b.nom} » et toutes ses données ?`)) return;
+    const confirmed = await confirm({
+      title: "Supprimer ce bonsaï ?",
+      description: `« ${b.nom} » et toutes ses données (photos, journal, rappels) seront supprimés définitivement.`,
+      destructive: true,
+      confirmLabel: "Supprimer",
+    });
+    if (!confirmed) return;
     await deleteBonsai(id);
     await qc.invalidateQueries();
     toast.success("Bonsaï supprimé");
@@ -192,6 +200,7 @@ function BonsaiDetail() {
           </Tabs>
         </BonsaiHeader>
       </div>
+      {confirmDialog}
     </AppShell>
   );
 }

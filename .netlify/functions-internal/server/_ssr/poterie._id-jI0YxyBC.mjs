@@ -1,8 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, w as deletePoterie, v as getPoterie, l as listBonsais } from "./router-DayW0770.mjs";
-import { A as AppShell } from "./app-shell-BwtD_V5I.mjs";
+import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, w as deletePoterie, v as getPoterie, l as listBonsais } from "./router-Co_Ro_jt.mjs";
+import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
+import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { w as ArrowLeft, e as Container, x as Pencil, y as Trash2 } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -63,6 +64,7 @@ import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
 import "../_libs/date-fns.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
 function PoterieDetail() {
   const {
     id
@@ -70,6 +72,10 @@ function PoterieDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = reactExports.useState(false);
+  const {
+    confirm,
+    dialog: confirmDialog
+  } = useConfirm();
   const {
     data: p,
     isPending
@@ -107,7 +113,13 @@ function PoterieDetail() {
   ] });
   const planted = bonsais.find((b) => b.poterieId === p.id);
   const remove = async () => {
-    if (!confirm(`Supprimer « ${p.nom} » ?`)) return;
+    const confirmed = await confirm({
+      title: "Supprimer cette poterie ?",
+      description: `« ${p.nom} » sera supprimée définitivement.`,
+      destructive: true,
+      confirmLabel: "Supprimer"
+    });
+    if (!confirmed) return;
     await deletePoterie(id);
     await qc.invalidateQueries();
     toast.success("Poterie supprimée");
@@ -159,7 +171,8 @@ function PoterieDetail() {
           ] })
         ] })
       ] })
-    ] })
+    ] }),
+    confirmDialog
   ] });
 }
 function Stat({

@@ -1,7 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
-import { A as AppShell } from "./app-shell-BwtD_V5I.mjs";
-import { f as useAuth, B as Button, h as saveBonsai, i as savePhoto, j as saveJournal, k as saveRappel, s as savePoterie, m as saveEvenement, n as exportSupabaseBackup, o as importSupabaseBackup } from "./router-DayW0770.mjs";
+import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
+import { f as useAuth, B as Button, h as saveBonsai, i as savePhoto, j as saveJournal, k as saveRappel, s as savePoterie, m as saveEvenement, n as exportSupabaseBackup, o as importSupabaseBackup } from "./router-Co_Ro_jt.mjs";
+import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { o as openDB } from "../_libs/idb.mjs";
 import { i as LogOut, D as Database, j as CloudUpload, H as HardDriveDownload, k as HardDriveUpload, W as Wand, l as Info } from "../_libs/lucide-react.mjs";
@@ -64,6 +65,7 @@ import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
 let dbPromise = null;
 function getDB() {
   if (typeof window === "undefined") {
@@ -131,6 +133,10 @@ function ParametresPage() {
   const [busy, setBusy] = reactExports.useState(null);
   const [hasLocalData, setHasLocalData] = reactExports.useState(false);
   const [checkingLocal, setCheckingLocal] = reactExports.useState(true);
+  const {
+    confirm,
+    dialog: confirmDialog
+  } = useConfirm();
   reactExports.useEffect(() => {
     if (typeof window === "undefined") {
       setCheckingLocal(false);
@@ -191,7 +197,12 @@ function ParametresPage() {
     }
   };
   const doLocalImport = async (file) => {
-    if (!confirm("Importer ce fichier remplacera les données Supabase actuelles. Continuer ?")) return;
+    const confirmed = await confirm({
+      title: "Importer cette sauvegarde ?",
+      description: "Les données Supabase actuelles seront remplacées par le contenu du fichier.",
+      confirmLabel: "Importer"
+    });
+    if (!confirmed) return;
     setBusy("import");
     try {
       const buf = await file.arrayBuffer();
@@ -215,7 +226,12 @@ function ParametresPage() {
     }
   };
   const doMigrateLocal = async () => {
-    if (!confirm("Importer toutes vos données locales (IndexedDB) vers Supabase ? Les doublons (même id) seront écrasés.")) return;
+    const confirmed = await confirm({
+      title: "Migrer les données locales vers Supabase ?",
+      description: "Toutes les données IndexedDB seront importées. Les doublons (même id) seront écrasés.",
+      confirmLabel: "Migrer"
+    });
+    if (!confirmed) return;
     setBusy("migrate");
     try {
       const [bonsais, poteries, journal, rappels, evenements] = await Promise.all([listBonsais(), listPoteries(), listJournal(), listRappels(), listEvenements().catch(() => [])]);
@@ -399,7 +415,8 @@ function ParametresPage() {
           })
         ] })
       ] })
-    ] }) })
+    ] }) }),
+    confirmDialog
   ] });
 }
 export {

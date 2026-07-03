@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share2, Image as ImageIcon, Images } from "lucide-react";
+import { Share2, Image as ImageIcon, Images, Loader as Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { shareBonsaiPdf } from "@/lib/share-pdf";
+import { shareBonsaiPdf, type PdfProgress } from "@/lib/share-pdf";
 
 export function SharePdfButton({
   id,
@@ -20,22 +20,44 @@ export function SharePdfButton({
   photosCount: number;
 }) {
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<PdfProgress | null>(null);
+
   const run = async (photos: "principale" | "toutes") => {
     setBusy(true);
+    setProgress({ phase: "loading", current: 0, total: 1 });
     try {
-      const r = await shareBonsaiPdf(id, bonsai.nom, { photos });
+      const r = await shareBonsaiPdf(id, bonsai.nom, {
+        photos,
+        onProgress: setProgress,
+      });
       toast.success(r === "shared" ? "Fiche partagée" : "Fiche téléchargée");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   };
+
+  const progressLabel =
+    progress?.phase === "loading"
+      ? "Chargement…"
+      : progress?.phase === "generating"
+        ? "Génération…"
+        : progress?.phase === "photos"
+          ? `Photo ${progress.current}/${progress.total}`
+          : null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button className="mt-2 w-full" disabled={busy}>
-          <Share2 className="mr-1.5 h-4 w-4" /> {busy ? "Génération…" : "Partager la fiche"}
+          {busy ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Share2 className="mr-1.5 h-4 w-4" />
+          )}
+          {busy && progressLabel ? progressLabel : busy ? "Génération…" : "Partager la fiche"}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">

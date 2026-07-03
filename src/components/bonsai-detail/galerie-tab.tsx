@@ -16,6 +16,7 @@ import { PhotoLightbox } from "@/components/photo-lightbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/components/confirm-dialog";
 import { useBlobUrl } from "@/lib/blob-url";
 import {
   deletePhoto,
@@ -117,9 +118,15 @@ export function GalerieTab({
   };
 
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const remove = async (pid: string) => {
-    if (!confirm("Supprimer cette photo ?")) return;
+    const confirmed = await confirm({
+      title: "Supprimer cette photo ?",
+      destructive: true,
+      confirmLabel: "Supprimer",
+    });
+    if (!confirmed) return;
     await deletePhoto(pid);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
@@ -237,6 +244,7 @@ export function GalerieTab({
           if (!o) setLightboxPhoto(null);
         }}
       />
+      {confirmDialog}
     </div>
   );
 }

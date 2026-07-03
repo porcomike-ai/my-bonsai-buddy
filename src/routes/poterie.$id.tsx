@@ -5,6 +5,7 @@ import { getPoterie, listBonsais, deletePoterie, getPoteriePhoto } from "@/lib/s
 import { useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/confirm-dialog";
 import { PoterieForm } from "./poteries";
 import { ArrowLeft, Container, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ function PoterieDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: p, isPending } = useQuery({
     queryKey: ["poterie", id],
@@ -95,7 +97,13 @@ function PoterieDetail() {
   const planted = bonsais.find((b) => b.poterieId === p.id);
 
   const remove = async () => {
-    if (!confirm(`Supprimer « ${p.nom} » ?`)) return;
+    const confirmed = await confirm({
+      title: "Supprimer cette poterie ?",
+      description: `« ${p.nom} » sera supprimée définitivement.`,
+      destructive: true,
+      confirmLabel: "Supprimer",
+    });
+    if (!confirmed) return;
     await deletePoterie(id);
     await qc.invalidateQueries();
     toast.success("Poterie supprimée");
@@ -190,6 +198,7 @@ function PoterieDetail() {
           </div>
         </div>
       )}
+      {confirmDialog}
     </AppShell>
   );
 }
