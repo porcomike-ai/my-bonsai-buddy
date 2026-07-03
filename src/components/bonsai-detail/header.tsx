@@ -114,6 +114,8 @@ export function BonsaiHeader({
             <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed">{b.notes}</p>
           </div>
         )}
+
+        {children}
       </div>
     </>
   );
