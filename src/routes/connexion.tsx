@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Leaf } from "lucide-react";
 import { toast } from "sonner";
 
+type ConnexionSearch = { redirect?: string };
+
 export const Route = createFileRoute("/connexion")({
+  validateSearch: (s: Record<string, unknown>): ConnexionSearch => ({
+    redirect: typeof s.redirect === "string" && s.redirect.startsWith("/") ? s.redirect : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Connexion — Bonsaï Studio" },
@@ -22,11 +27,19 @@ export const Route = createFileRoute("/connexion")({
 });
 
 function ConnexionPage() {
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Déjà connecté → on quitte la page d'auth
+  useEffect(() => {
+    if (!loading && user) {
+      navigate({ to: redirect ?? "/", replace: true });
+    }
+  }, [user, loading, redirect, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +47,7 @@ function ConnexionPage() {
     try {
       await signIn(email.trim(), password);
       toast.success("Connexion réussie");
-      navigate({ to: "/" });
+      navigate({ to: redirect ?? "/", replace: true });
     } catch (err) {
       toast.error("Connexion impossible : " + (err as Error).message);
     } finally {
