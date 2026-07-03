@@ -789,6 +789,13 @@ function useRouterState(opts) {
     return state;
   }
 }
+function useLocation(opts) {
+  const router = useRouter();
+  {
+    const location = router.stores.location.get();
+    return opts?.select ? opts.select(location) : location;
+  }
+}
 var noopScriptHandler = () => {
 };
 function setScriptAttrs(script, attrs) {
@@ -1186,7 +1193,8 @@ export {
   createFileRoute as b,
   createRouter as c,
   useNavigate as d,
-  useRouterState as e,
+  useLocation as e,
+  useRouterState as f,
   lazyRouteComponent as l,
   renderRouterToStream as r,
   useRouter as u

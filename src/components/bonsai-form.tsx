@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
@@ -88,6 +88,13 @@ export function BonsaiForm({
     return (localStorage.getItem("bonsai.espece.lang") as "latin" | "fr") ?? "latin";
   });
 
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -120,7 +127,10 @@ export function BonsaiForm({
 
   const onFile = (f: File) => {
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
     setDialogSource("gallery");
     setDialogOpen(true);
   };

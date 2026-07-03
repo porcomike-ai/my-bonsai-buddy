@@ -423,6 +423,7 @@ export async function listJournal(bonsaiId?: string): Promise<JournalEntry[]> {
 }
 
 export async function saveJournal(e: JournalEntry): Promise<void> {
+  const uidStr = await currentUserId();
   const { error } = await db.from("journal_entries").upsert({
     id: e.id,
     bonsai_id: e.bonsaiId,
@@ -430,6 +431,7 @@ export async function saveJournal(e: JournalEntry): Promise<void> {
     date: e.date,
     notes: e.notes ?? null,
     rappel_id: e.rappelId ?? null,
+    user_id: uidStr,
   });
   if (error) throw error;
 }
@@ -450,6 +452,7 @@ export async function listRappels(bonsaiId?: string): Promise<Rappel[]> {
 }
 
 export async function saveRappel(r: Rappel): Promise<void> {
+  const uidStr = await currentUserId();
   const { error } = await db.from("rappels").upsert({
     id: r.id,
     bonsai_id: r.bonsaiId,
@@ -458,6 +461,7 @@ export async function saveRappel(r: Rappel): Promise<void> {
     intervalle_jours: r.intervalleJours ?? null,
     notes: r.notes ?? null,
     actif: r.actif,
+    user_id: uidStr,
   });
   if (error) throw error;
 }
@@ -486,12 +490,13 @@ export async function getPoterie(id: string): Promise<Poterie | undefined> {
 
 /** Sauvegarde une poterie. Si `photoBlob` est fourni, l'upload vers Storage. */
 export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<void> {
+  const uidStr = await currentUserId();
   let photoPath = p.photoPath;
   if (p.photoBlob) {
     photoPath = await uploadPoteriePhoto(p.id, p.photoBlob);
   }
   const row = poterieToRow({ ...p, photoPath });
-  const { error } = await db.from("poteries").upsert(row);
+  const { error } = await db.from("poteries").upsert({ ...row, user_id: uidStr });
   if (error) {
     if (p.photoBlob && photoPath) await deleteStorageObject(POTERIE_BUCKET, photoPath);
     throw error;
@@ -517,6 +522,7 @@ export async function listEvenements(): Promise<Evenement[]> {
 }
 
 export async function saveEvenement(e: Evenement): Promise<void> {
+  const uidStr = await currentUserId();
   const { error } = await db.from("evenements").upsert({
     id: e.id,
     titre: e.titre,
@@ -525,6 +531,7 @@ export async function saveEvenement(e: Evenement): Promise<void> {
     rappel_minutes: e.rappelMinutes ?? null,
     notified_at: e.notifiedAt ?? null,
     bonsai_id: e.bonsaiId ?? null,
+    user_id: uidStr,
   });
   if (error) throw error;
 }

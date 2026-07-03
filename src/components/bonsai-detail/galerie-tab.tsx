@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -44,7 +44,8 @@ export function GalerieTab({
   const galleryInput = useFileInput();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogSource, setDialogSource] = useState<PhotoSource>("camera");
-  const [fileQueue, setFileQueue] = useState<File[]>([]);
+  // Use a ref for the queue so onConfirm always reads the latest values without stale closures.
+  const queueRef = useRef<File[]>([]);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [processedCount, setProcessedCount] = useState(0);
 
@@ -61,7 +62,7 @@ export function GalerieTab({
     if (dialogSource === "gallery" && galleryInput.inputRef.current?.files) {
       const files = Array.from(galleryInput.inputRef.current.files);
       if (files.length > 0) {
-        setFileQueue(files);
+        queueRef.current = files;
         setProcessedCount(0);
         setCurrentFile(files[0]);
         setDialogOpen(true);
@@ -71,9 +72,9 @@ export function GalerieTab({
 
   useEffect(() => {
     if (dialogSource === "camera" && cameraInput.file) {
-      setCurrentFile(cameraInput.file);
-      setFileQueue([cameraInput.file]);
+      queueRef.current = [cameraInput.file];
       setProcessedCount(0);
+      setCurrentFile(cameraInput.file);
       setDialogOpen(true);
     }
   }, [cameraInput.file, dialogSource]);
@@ -96,19 +97,21 @@ export function GalerieTab({
     });
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
 
+    const queue = queueRef.current;
     const nextIndex = processedCount + 1;
-    if (nextIndex < fileQueue.length) {
-      setCurrentFile(fileQueue[nextIndex]);
+    if (nextIndex < queue.length) {
+      setCurrentFile(queue[nextIndex]);
       setProcessedCount(nextIndex);
     } else {
+      const total = queue.length;
       setDialogOpen(false);
-      setFileQueue([]);
       setCurrentFile(null);
       setProcessedCount(0);
+      queueRef.current = [];
       cameraInput.reset();
       galleryInput.reset();
       toast.success(
-        `${fileQueue.length} photo${fileQueue.length > 1 ? "s" : ""} ajoutée${fileQueue.length > 1 ? "s" : ""}`,
+        `${total} photo${total > 1 ? "s" : ""} ajoutée${total > 1 ? "s" : ""}`,
       );
     }
   };
@@ -207,19 +210,25 @@ export function GalerieTab({
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) {
+            const saved = processedCount;
             setDialogOpen(false);
-            setFileQueue([]);
             setCurrentFile(null);
             setProcessedCount(0);
+            queueRef.current = [];
             cameraInput.reset();
             galleryInput.reset();
+            if (saved > 0) {
+              toast.success(
+                `${saved} photo${saved > 1 ? "s" : ""} ajoutée${saved > 1 ? "s" : ""}`,
+              );
+            }
           }
         }}
         source={dialogSource}
         file={currentFile}
         onConfirm={onConfirm}
         currentIndex={processedCount}
-        totalCount={fileQueue.length}
+        totalCount={queueRef.current.length}
       />
       <PhotoLightbox
         photo={lightboxPhoto}
@@ -234,13 +243,14 @@ export function GalerieTab({
 
 function usePhotoUrl(photo: Photo): string | undefined {
   const [blob, setBlob] = useState<Blob | undefined>(undefined);
+  const storagePath = photo?.storagePath;
   useEffect(() => {
     let cancelled = false;
-    if (!photo) {
+    if (!storagePath) {
       setBlob(undefined);
       return;
     }
-    getPhotoBlob(photo)
+    getPhotoBlob({ storagePath })
       .then((b) => {
         if (!cancelled) setBlob(b);
       })
@@ -250,7 +260,7 @@ function usePhotoUrl(photo: Photo): string | undefined {
     return () => {
       cancelled = true;
     };
-  }, [photo]);
+  }, [storagePath]);
   return useBlobUrl(blob);
 }
 

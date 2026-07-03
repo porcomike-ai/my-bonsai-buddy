@@ -1,8 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { h as useAuth, L as Label, I as Input, B as Button } from "./router-B7dkk4ae.mjs";
+import { f as useAuth, R as Route$6, L as Label, I as Input, B as Button } from "./router-DayW0770.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { L as Leaf } from "../_libs/lucide-react.mjs";
+import { f as Leaf } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -35,14 +35,54 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-context.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
+import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
+import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-radio-group.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
+import "../_libs/radix-ui__react-direction.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/date-fns.mjs";
 function ConnexionPage() {
   const {
-    signIn
+    signIn,
+    user,
+    loading
   } = useAuth();
   const navigate = useNavigate();
+  const {
+    redirect
+  } = Route$6.useSearch();
   const [email, setEmail] = reactExports.useState("");
   const [password, setPassword] = reactExports.useState("");
   const [busy, setBusy] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    if (!loading && user) {
+      navigate({
+        to: redirect ?? "/",
+        replace: true
+      });
+    }
+  }, [user, loading, redirect, navigate]);
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -50,7 +90,8 @@ function ConnexionPage() {
       await signIn(email.trim(), password);
       toast.success("Connexion réussie");
       navigate({
-        to: "/"
+        to: redirect ?? "/",
+        replace: true
       });
     } catch (err) {
       toast.error("Connexion impossible : " + err.message);

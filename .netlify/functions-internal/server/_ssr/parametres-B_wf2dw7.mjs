@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
-import { A as AppShell } from "./app-shell-DyFFU200.mjs";
-import { h as useAuth, B as Button, i as saveBonsai, j as savePhoto, k as saveJournal, m as saveRappel, s as savePoterie, n as saveEvenement, o as exportSupabaseBackup, p as importSupabaseBackup } from "./router-B7dkk4ae.mjs";
+import { A as AppShell } from "./app-shell-BwtD_V5I.mjs";
+import { f as useAuth, B as Button, h as saveBonsai, i as savePhoto, j as saveJournal, k as saveRappel, s as savePoterie, m as saveEvenement, n as exportSupabaseBackup, o as importSupabaseBackup } from "./router-DayW0770.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { o as openDB } from "../_libs/idb.mjs";
-import { f as LogOut, D as Database, g as CloudUpload, H as HardDriveDownload, h as HardDriveUpload, W as Wand, i as Info } from "../_libs/lucide-react.mjs";
+import { i as LogOut, D as Database, j as CloudUpload, H as HardDriveDownload, k as HardDriveUpload, W as Wand, l as Info } from "../_libs/lucide-react.mjs";
 import { f as format, p as parseISO, a as fr } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-router.mjs";
@@ -38,6 +38,32 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-context.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
+import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
+import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-radio-group.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
+import "../_libs/radix-ui__react-direction.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
 let dbPromise = null;
 function getDB() {
   if (typeof window === "undefined") {
@@ -94,8 +120,8 @@ async function listEvenements() {
   const all = await db.getAll("evenements");
   return all.sort((a, b) => a.dateHeure.localeCompare(b.dateHeure));
 }
-const APP_VERSION = "1.5.0";
-const APP_VERSION_DATE = "2026-06-05";
+const APP_VERSION = "1.13.0";
+const APP_VERSION_DATE = "2026-06-30";
 function ParametresPage() {
   const qc = useQueryClient();
   const {

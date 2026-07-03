@@ -4,7 +4,7 @@ import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-que
 import { u as useForm, C as Controller } from "../_libs/react-hook-form.mjs";
 import { u } from "../_libs/hookform__resolvers.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { u as uid, f as fileToBlob, j as savePhoto, i as saveBonsai, L as Label, I as Input, T as Textarea, B as Button, r as cn, a as listPoteries } from "./router-B7dkk4ae.mjs";
+import { f as useAuth, u as uid, h as saveBonsai, i as savePhoto, L as Label, I as Input, T as Textarea, B as Button, A as AddPhotoDialog, q as cn, a as listPoteries } from "./router-DayW0770.mjs";
 import { g as getAllEspeces, d as addCustomEspece, S as STYLES, E as ETAPES } from "./bonsai-meta-BJOj-HVV.mjs";
 import { S as Switch$1, a as SwitchThumb } from "../_libs/radix-ui__react-switch.mjs";
 import { I as ImagePlus } from "../_libs/lucide-react.mjs";
@@ -74,13 +74,22 @@ function BonsaiForm({
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
   const [file, setFile] = reactExports.useState(null);
   const [preview, setPreview] = reactExports.useState(null);
+  const [dialogOpen, setDialogOpen] = reactExports.useState(false);
+  const [dialogSource, setDialogSource] = reactExports.useState("gallery");
+  const [photoData, setPhotoData] = reactExports.useState(null);
   const [especeLang, setEspeceLang] = reactExports.useState(() => {
     if (typeof window === "undefined") return "latin";
     return localStorage.getItem("bonsai.espece.lang") ?? "latin";
   });
+  reactExports.useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
   const form = useForm({
     resolver: u(schema),
     defaultValues: {
@@ -110,45 +119,64 @@ function BonsaiForm({
   };
   const onFile = (f) => {
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
+    setDialogSource("gallery");
+    setDialogOpen(true);
+  };
+  const handlePhotoConfirm = async (data) => {
+    setPhotoData(data);
+    setDialogOpen(false);
   };
   const submit = form.handleSubmit(async (values) => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour ajouter un bonsaï à votre collection");
+      navigate({ to: "/connexion" });
+      return;
+    }
     const id = initial?.id ?? uid();
     let photoId = initial?.photoPrincipale;
     addCustomEspece(values.espece);
-    if (file) {
-      const blob = await fileToBlob(file);
-      photoId = await savePhoto({
-        id: uid(),
-        bonsaiId: id,
-        blob,
-        date: (/* @__PURE__ */ new Date()).toISOString(),
-        legende: "Photo principale"
-      });
+    try {
+      const b = {
+        id,
+        nom: values.nom.trim(),
+        espece: values.espece.trim(),
+        style: values.style,
+        etape: values.etape,
+        ageEstime: values.ageEstime ? Number(values.ageEstime) : void 0,
+        hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : void 0,
+        prixAchat: values.prixAchat ? Number(values.prixAchat) : void 0,
+        valeurEstimee: values.valeurEstimee ? Number(values.valeurEstimee) : void 0,
+        dateAcquisition: values.dateAcquisition || void 0,
+        origine: values.origine?.trim() || void 0,
+        poterieId: values.poterieId || void 0,
+        notes: values.notes?.trim() || void 0,
+        photoPrincipale: photoId,
+        dansCollection: values.dansCollection,
+        createdAt: initial?.createdAt ?? (/* @__PURE__ */ new Date()).toISOString()
+      };
+      await saveBonsai(b);
+      if (photoData) {
+        photoId = await savePhoto({
+          id: uid(),
+          bonsaiId: id,
+          blob: photoData.blob,
+          date: photoData.date,
+          legende: photoData.legende || "Photo principale"
+        });
+        b.photoPrincipale = photoId;
+        await saveBonsai(b);
+      }
+      await qc.invalidateQueries();
+      toast.success(initial ? "Bonsaï mis à jour" : "Bonsaï ajouté à votre collection");
+      if (onSaved) onSaved(b);
+      else navigate({ to: "/bonsai/$id", params: { id } });
+    } catch (error) {
+      toast.error("Erreur lors de l'enregistrement: " + error.message);
     }
-    const b = {
-      id,
-      nom: values.nom.trim(),
-      espece: values.espece.trim(),
-      style: values.style,
-      etape: values.etape,
-      ageEstime: values.ageEstime ? Number(values.ageEstime) : void 0,
-      hauteurCm: values.hauteurCm ? Number(values.hauteurCm) : void 0,
-      prixAchat: values.prixAchat ? Number(values.prixAchat) : void 0,
-      valeurEstimee: values.valeurEstimee ? Number(values.valeurEstimee) : void 0,
-      dateAcquisition: values.dateAcquisition || void 0,
-      origine: values.origine?.trim() || void 0,
-      poterieId: values.poterieId || void 0,
-      notes: values.notes?.trim() || void 0,
-      photoPrincipale: photoId,
-      dansCollection: values.dansCollection,
-      createdAt: initial?.createdAt ?? (/* @__PURE__ */ new Date()).toISOString()
-    };
-    await saveBonsai(b);
-    await qc.invalidateQueries();
-    toast.success(initial ? "Bonsaï mis à jour" : "Bonsaï ajouté à votre collection");
-    if (onSaved) onSaved(b);
-    else navigate({ to: "/bonsai/$id", params: { id } });
   });
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: submit, className: "grid gap-8 lg:grid-cols-[280px_1fr]", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -282,7 +310,17 @@ function BonsaiForm({
         /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "button", variant: "outline", onClick: () => navigate({ to: "/collection" }), children: "Annuler" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", disabled: form.formState.isSubmitting, children: initial ? "Enregistrer" : "Ajouter à la collection" })
       ] })
-    ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      AddPhotoDialog,
+      {
+        open: dialogOpen,
+        onOpenChange: setDialogOpen,
+        source: dialogSource,
+        file,
+        onConfirm: handlePhotoConfirm
+      }
+    )
   ] });
 }
 function Field({
