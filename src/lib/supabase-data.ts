@@ -341,11 +341,15 @@ export async function saveBonsai(b: Bonsai): Promise<void> {
 }
 
 export async function deleteBonsai(id: string): Promise<void> {
+  // Les photos sont supprimées en cascade en BDD ; on nettoie d'abord le Storage
+  // pour éviter les fichiers orphelins.
   const { data: photos } = await db.from("photos").select("storage_path").eq("bonsai_id", id);
   if (photos && photos.length > 0) {
     const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
     await db.storage.from(BONSAI_BUCKET).remove(paths);
   }
+  // La suppression du bonsaï déclenche ON DELETE CASCADE sur photos / journal / rappels
+  // et ON DELETE SET NULL sur evenements.
   const { error } = await db.from("bonsais").delete().eq("id", id);
   if (error) throw error;
 }
