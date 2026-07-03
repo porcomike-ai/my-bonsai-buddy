@@ -159,10 +159,8 @@ function BonsaiDetail() {
           onEdit={() => setEditing(true)}
           onDelete={remove}
           onToggleFavori={toggleFavori}
-        />
-
-        <div className="lg:col-start-2">
-          <Tabs defaultValue="galerie" className="mt-2">
+        >
+          <Tabs defaultValue="galerie" className="mt-10">
             <TabsList className="bg-secondary/60">
               <TabsTrigger value="galerie">Galerie ({photos.length})</TabsTrigger>
               <TabsTrigger value="journal">Journal ({entries.length})</TabsTrigger>
@@ -192,7 +190,7 @@ function BonsaiDetail() {
               </Suspense>
             </TabsContent>
           </Tabs>
-        </div>
+        </BonsaiHeader>
       </div>
     </AppShell>
   );
