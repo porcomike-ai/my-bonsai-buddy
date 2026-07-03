@@ -19,6 +19,7 @@ export function BonsaiHeader({
   onEdit,
   onDelete,
   onToggleFavori,
+  children,
 }: {
   bonsai: Bonsai;
   poterie: Poterie | null | undefined;
@@ -26,6 +27,7 @@ export function BonsaiHeader({
   onEdit: () => void;
   onDelete: () => void;
   onToggleFavori: () => void;
+  children?: ReactNode;
 }) {
   return (
     <>
