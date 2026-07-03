@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/supabase-auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,19 @@ export const Route = createFileRoute("/inscription")({
 });
 
 function InscriptionPage() {
-  const { signUp } = useAuth();
+  const { signUp, user, loading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate({ to: "/", replace: true });
+    }
+  }, [user, loading, navigate]);
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
