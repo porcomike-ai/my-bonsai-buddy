@@ -210,6 +210,17 @@ function PoterieDetail() {
           </div>
         </div>
       )}
+
+      {!editing && (
+        <section className="mt-12">
+          <h2 className="mb-4 font-display text-2xl font-semibold">Galerie</h2>
+          <Suspense
+            fallback={<p className="text-sm text-muted-foreground">Chargement…</p>}
+          >
+            <PoterieGalerieTab poterieId={id} photos={photos} />
+          </Suspense>
+        </section>
+      )}
       {confirmDialog}
     </AppShell>
   );
