@@ -1,7 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { getPoterie, listBonsais, deletePoterie, getPoteriePhoto } from "@/lib/supabase-data";
+import { lazy, Suspense, useEffect, useState } from "react";
+import {
+  getPoterie,
+  listBonsais,
+  listPoteriePhotos,
+  deletePoterie,
+  getPoteriePhoto,
+} from "@/lib/supabase-data";
 import { useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -9,6 +15,8 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { PoterieForm } from "./poteries";
 import { ArrowLeft, Container, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+const PoterieGalerieTab = lazy(() => import("@/components/poterie-detail/galerie-tab"));
 
 export const Route = createFileRoute("/poterie/$id")({
   ssr: false,
