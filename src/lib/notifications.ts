@@ -17,8 +17,10 @@ export function notificationStatus(): NotificationPermission | "unsupported" {
   return Notification.permission;
 }
 
-function triggerTimeFor(e: Evenement): number {
+export function triggerTimeFor(e: Evenement): number {
   const ts = new Date(e.dateHeure).getTime();
+  // Ajout d'une sécurité : si la date est invalide, on retourne une valeur très éloignée
+  if (isNaN(ts)) return Infinity; 
   const minutesBefore = e.rappelMinutes ?? 0;
   return ts - minutesBefore * 60_000;
 }
@@ -26,11 +28,13 @@ function triggerTimeFor(e: Evenement): number {
 async function fireNotification(e: Evenement) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
+  
   try {
     const eventDate = new Date(e.dateHeure);
     const body = e.description
       ? `${eventDate.toLocaleString("fr-FR")} — ${e.description}`
       : eventDate.toLocaleString("fr-FR");
+      
     new Notification(`🌱 ${e.titre}`, {
       body,
       tag: `evenement-${e.id}`,
@@ -39,7 +43,13 @@ async function fireNotification(e: Evenement) {
   } catch {
     // ignore
   }
-  await saveEvenement({ ...e, notifiedAt: new Date().toISOString() });
+
+  // On attend la sauvegarde pour marquer comme notifié
+  try {
+    await saveEvenement({ ...e, notifiedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error("Erreur lors de la sauvegarde du statut de notification", err);
+  }
 }
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -48,10 +58,18 @@ async function check() {
   try {
     const now = Date.now();
     const evs = await listEvenements();
+    
     for (const e of evs) {
+      // 1. Déjà notifié ? On ignore
       if (e.notifiedAt) continue;
+      
       const trigger = triggerTimeFor(e);
-      if (trigger <= now && new Date(e.dateHeure).getTime() + 24 * 3600_000 > now) {
+      const eventTime = new Date(e.dateHeure).getTime();
+      
+      // 2. Conditions :
+      // - Le moment du rappel est passé (trigger <= now)
+      // - L'événement n'a pas plus de 24h (pour éviter les vieilles notifs au démarrage)
+      if (trigger <= now && eventTime + 24 * 3600_000 > now) {
         await fireNotification(e);
       }
     }
@@ -63,10 +81,17 @@ async function check() {
 export function startNotificationScheduler() {
   if (typeof window === "undefined") return;
   if (intervalId) return;
-  // Check shortly after load, then every 30s while the app is open.
+  
+  // Exécution initiale après 2 secondes
   setTimeout(check, 2000);
+  
+  // Exécution récurrente
   intervalId = setInterval(check, 30_000);
-  document.addEventListener("visibilitychange", () => {
+  
+  // Rafraîchissement au retour sur l'onglet
+  const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") check();
-  });
+  };
+  
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 }

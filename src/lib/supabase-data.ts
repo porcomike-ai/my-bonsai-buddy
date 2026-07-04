@@ -118,7 +118,7 @@ export function uid() {
 
 // --- Mappers snake_case ↔ camelCase ---
 
-function rowToBonsai(r: BonsaiRow): Bonsai {
+export function rowToBonsai(r: BonsaiRow): Bonsai {
   return {
     id: r.id,
     nom: r.nom,
@@ -140,7 +140,7 @@ function rowToBonsai(r: BonsaiRow): Bonsai {
   };
 }
 
-function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
+export function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
   const row: Record<string, unknown> = {};
   if (b.id !== undefined) row.id = b.id;
   if (b.nom !== undefined) row.nom = b.nom;
@@ -161,41 +161,7 @@ function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
   return row;
 }
 
-function rowToPhoto(r: PhotoRow): Photo {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id ?? undefined,
-    poterieId: r.poterie_id ?? undefined,
-    storagePath: r.storage_path,
-    date: r.date,
-    legende: r.legende ?? undefined,
-  };
-}
-
-function rowToJournal(r: JournalEntryRow): JournalEntry {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id,
-    type: r.type,
-    date: r.date,
-    notes: r.notes ?? undefined,
-    rappelId: r.rappel_id ?? undefined,
-  };
-}
-
-function rowToRappel(r: RappelRow): Rappel {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id,
-    type: r.type,
-    prochaineDate: r.prochaine_date,
-    intervalleJours: r.intervalle_jours ?? undefined,
-    notes: r.notes ?? undefined,
-    actif: r.actif,
-  };
-}
-
-function rowToPoterie(r: PoterieRow): Poterie {
+export function rowToPoterie(r: PoterieRow): Poterie {
   return {
     id: r.id,
     nom: r.nom,
@@ -214,7 +180,7 @@ function rowToPoterie(r: PoterieRow): Poterie {
   };
 }
 
-function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
+export function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
   const row: Record<string, unknown> = {};
   if (p.id !== undefined) row.id = p.id;
   if (p.nom !== undefined) row.nom = p.nom;
@@ -634,7 +600,7 @@ export interface SupabaseBackupPayload {
   evenements?: Evenement[];
 }
 
-async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
+export async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
   const buf = new Uint8Array(await blob.arrayBuffer());
   let bin = "";
   const chunk = 0x8000;
@@ -644,7 +610,7 @@ async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }>
   return { data: btoa(bin), type: blob.type || "application/octet-stream" };
 }
 
-function base64ToBlob(data: string, type: string): Blob {
+export function base64ToBlob(data: string, type: string): Blob {
   const bin = atob(data);
   const buf = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
