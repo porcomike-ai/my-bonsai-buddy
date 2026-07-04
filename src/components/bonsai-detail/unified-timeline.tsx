@@ -435,13 +435,47 @@ export function UnifiedTimeline({
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setJournalModalOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={saveJournalEntry}>
-              {editingEntry ? "Mettre à jour" : "Enregistrer"}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+            {editingEntry ? (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    const confirmed = await confirm({
+                      title: "Supprimer cette entrée ?",
+                      description: "Cette action est irréversible.",
+                      destructive: true,
+                      confirmLabel: "Supprimer",
+                    });
+                    if (confirmed) {
+                      await deleteJournal(editingEntry.id);
+                      qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
+                      setJournalModalOpen(false);
+                      setEditingEntry(null);
+                      toast.success("Entrée supprimée");
+                    }
+                  }}
+                >
+                  Supprimer
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setJournalModalOpen(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={saveJournalEntry}>Mettre à jour</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div />
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setJournalModalOpen(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={saveJournalEntry}>Enregistrer</Button>
+                </div>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

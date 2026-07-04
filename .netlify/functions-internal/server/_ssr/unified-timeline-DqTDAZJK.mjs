@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { F as useFileInput, B as Button, A as AddPhotoDialog, M as Dialog, N as DialogContent, O as DialogHeader, Q as DialogTitle, L as Label, I as Input, T as Textarea, S as DialogFooter, U as deleteJournal, G as updatePhotoDate, H as updatePhotoLegende, J as deletePhoto, i as savePhoto, u as uid, j as saveJournal, z as getPhotoBlob, e as useBlobUrl } from "./router-CdX15gXw.mjs";
-import { P as PhotoLightbox } from "./photo-lightbox-DeD9erm-.mjs";
-import { u as useConfirm } from "./confirm-dialog-DfQ2UWSk.mjs";
+import { F as useFileInput, B as Button, A as AddPhotoDialog, M as Dialog, N as DialogContent, O as DialogHeader, Q as DialogTitle, L as Label, I as Input, T as Textarea, S as DialogFooter, U as deleteJournal, G as updatePhotoDate, H as updatePhotoLegende, J as deletePhoto, i as savePhoto, u as uid, j as saveJournal, z as getPhotoBlob, e as useBlobUrl } from "./router-C3eaBvs2.mjs";
+import { P as PhotoLightbox } from "./photo-lightbox-BaKb4vg0.mjs";
+import { u as useConfirm } from "./confirm-dialog-_odOmEnW.mjs";
 import { a as SOINS, b as soinEmoji, c as soinLabel } from "./bonsai-meta-gq8SRzvW.mjs";
 import { a as Camera, K as FolderOpen, P as Plus, O as ArrowUpDown, b as Calendar, X, M as MessageSquarePlus } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
@@ -405,10 +405,40 @@ function UnifiedTimeline({
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setJournalModalOpen(false), children: "Annuler" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: saveJournalEntry, children: editingEntry ? "Mettre à jour" : "Enregistrer" })
-      ] })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(DialogFooter, { className: "flex-col gap-2 sm:flex-row sm:justify-between", children: editingEntry ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Button,
+          {
+            variant: "destructive",
+            onClick: async () => {
+              const confirmed = await confirm({
+                title: "Supprimer cette entrée ?",
+                description: "Cette action est irréversible.",
+                destructive: true,
+                confirmLabel: "Supprimer"
+              });
+              if (confirmed) {
+                await deleteJournal(editingEntry.id);
+                qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
+                setJournalModalOpen(false);
+                setEditingEntry(null);
+                toast.success("Entrée supprimée");
+              }
+            },
+            children: "Supprimer"
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setJournalModalOpen(false), children: "Annuler" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: saveJournalEntry, children: "Mettre à jour" })
+        ] })
+      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setJournalModalOpen(false), children: "Annuler" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: saveJournalEntry, children: "Enregistrer" })
+        ] })
+      ] }) })
     ] }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       PhotoLightbox,
