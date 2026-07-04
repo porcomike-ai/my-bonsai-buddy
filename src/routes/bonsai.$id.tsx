@@ -20,8 +20,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Chargement paresseux des onglets — chaque onglet est bundle-splitté
-const GalerieTab = lazy(() => import("@/components/bonsai-detail/galerie-tab"));
-const JournalTab = lazy(() => import("@/components/bonsai-detail/journal-tab"));
+const UnifiedTimeline = lazy(() => import("@/components/bonsai-detail/unified-timeline"));
 const RappelsTab = lazy(() => import("@/components/bonsai-detail/rappels-tab"));
 
 export const Route = createFileRoute("/bonsai/$id")({
@@ -168,28 +167,25 @@ function BonsaiDetail() {
           onDelete={remove}
           onToggleFavori={toggleFavori}
         >
-          <Tabs defaultValue="galerie" className="mt-10">
+          <Tabs defaultValue="timeline" className="mt-10">
             <TabsList className="bg-secondary/60">
-              <TabsTrigger value="galerie">Galerie ({photos.length})</TabsTrigger>
-              <TabsTrigger value="journal">Journal ({entries.length})</TabsTrigger>
+              <TabsTrigger value="timeline">
+                Timeline ({photos.length + entries.length})
+              </TabsTrigger>
               <TabsTrigger value="rappels">
                 Rappels ({rappels.filter((r) => r.actif).length})
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="galerie" className="pt-6">
+            <TabsContent value="timeline" className="pt-6">
               <Suspense fallback={<TabFallback />}>
-                <GalerieTab
+                <UnifiedTimeline
                   bonsaiId={id}
                   photos={photos}
+                  entries={entries}
                   mainId={b.photoPrincipale}
                   onSetMain={setMainPhoto}
                 />
-              </Suspense>
-            </TabsContent>
-            <TabsContent value="journal" className="pt-6">
-              <Suspense fallback={<TabFallback />}>
-                <JournalTab bonsaiId={id} entries={entries} />
               </Suspense>
             </TabsContent>
             <TabsContent value="rappels" className="pt-6">

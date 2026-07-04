@@ -2,16 +2,16 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { z as Route, B as Button, h as saveBonsai, C as deleteBonsai, q as cn, x as getBonsai, v as getPoterie, d as listJournal, b as listRappels, c as listPhotos, y as getPhotoBlob } from "./router-Co_Ro_jt.mjs";
-import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
-import { B as BonsaiForm } from "./bonsai-form-G3pvEJai.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-2IG_G-Ig.mjs";
-import { s as styleLabel, e as etapeLabel, c as soinLabel } from "./bonsai-meta-BJOj-HVV.mjs";
+import { C as Route, B as Button, h as saveBonsai, D as deleteBonsai, q as cn, y as getBonsai, v as getPoterie, d as listJournal, b as listRappels, c as listPhotos, z as getPhotoBlob } from "./router-BnsSyFa6.mjs";
+import { A as AppShell } from "./app-shell-CNnIx-e5.mjs";
+import { B as BonsaiForm } from "./bonsai-form-CtlLEooF.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-BQR5Xj6i.mjs";
+import { s as styleLabel, e as etapeLabel, c as soinLabel } from "./bonsai-meta-gq8SRzvW.mjs";
 import { R as Root2$1, T as Trigger$1, P as Portal2, C as Content2, I as Item2, S as SubTrigger2, a as SubContent2, b as CheckboxItem2, c as ItemIndicator2, d as RadioItem2, L as Label2, e as Separator2 } from "../_libs/radix-ui__react-dropdown-menu.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
-import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
+import { u as useConfirm } from "./confirm-dialog-CJ5numlD.mjs";
 import { R as Root2, L as List, T as Trigger, C as Content } from "../_libs/radix-ui__react-tabs.mjs";
-import { w as ArrowLeft, x as Pencil, y as Trash2, n as Star, z as LoaderCircle, G as Share2, J as Image$1, K as Images, p as ChevronRight, q as Check, C as Circle } from "../_libs/lucide-react.mjs";
+import { w as ArrowLeft, x as Pencil, y as Trash2, n as Star, L as Loader, z as Share2, G as Image$1, J as Images, p as ChevronRight, q as Check, C as Circle } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -462,7 +462,7 @@ function SharePdfButton({
   const progressLabel = progress?.phase === "loading" ? "Chargement…" : progress?.phase === "generating" ? "Génération…" : progress?.phase === "photos" ? `Photo ${progress.current}/${progress.total}` : null;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(DropdownMenu, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { className: "mt-2 w-full", disabled: busy, children: [
-      busy ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "mr-1.5 h-4 w-4 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "mr-1.5 h-4 w-4" }),
+      busy ? /* @__PURE__ */ jsxRuntimeExports.jsx(Loader, { className: "mr-1.5 h-4 w-4 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "mr-1.5 h-4 w-4" }),
       busy && progressLabel ? progressLabel : busy ? "Génération…" : "Partager la fiche"
     ] }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(DropdownMenuContent, { align: "end", className: "w-64", children: [
@@ -613,9 +613,8 @@ const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 TabsContent.displayName = Content.displayName;
-const GalerieTab = reactExports.lazy(() => import("./galerie-tab-CPMWgIdZ.mjs"));
-const JournalTab = reactExports.lazy(() => import("./journal-tab-BMpxIOX7.mjs"));
-const RappelsTab = reactExports.lazy(() => import("./rappels-tab-CeMg4aW-.mjs"));
+const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-LsXgo76f.mjs"));
+const RappelsTab = reactExports.lazy(() => import("./rappels-tab-BZhRFJRa.mjs"));
 function TabFallback() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "pt-4 text-sm text-muted-foreground", children: "Chargement…" });
 }
@@ -723,16 +722,11 @@ function BonsaiDetail() {
       /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4" }),
       " Collection"
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-8 lg:grid-cols-[380px_1fr]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiHeader, { bonsai: b, poterie, photosCount: photos.length, onEdit: () => setEditing(true), onDelete: remove, onToggleFavori: toggleFavori, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tabs, { defaultValue: "galerie", className: "mt-10", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-8 lg:grid-cols-[380px_1fr]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiHeader, { bonsai: b, poterie, photosCount: photos.length, onEdit: () => setEditing(true), onDelete: remove, onToggleFavori: toggleFavori, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tabs, { defaultValue: "timeline", className: "mt-10", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsList, { className: "bg-secondary/60", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsTrigger, { value: "galerie", children: [
-          "Galerie (",
-          photos.length,
-          ")"
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsTrigger, { value: "journal", children: [
-          "Journal (",
-          entries.length,
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsTrigger, { value: "timeline", children: [
+          "Timeline (",
+          photos.length + entries.length,
           ")"
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsTrigger, { value: "rappels", children: [
@@ -741,8 +735,7 @@ function BonsaiDetail() {
           ")"
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "galerie", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(GalerieTab, { bonsaiId: id, photos, mainId: b.photoPrincipale, onSetMain: setMainPhoto }) }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "journal", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(JournalTab, { bonsaiId: id, entries }) }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "timeline", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(UnifiedTimeline, { bonsaiId: id, photos, entries, mainId: b.photoPrincipale, onSetMain: setMainPhoto }) }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "rappels", className: "pt-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx(TabFallback, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(RappelsTab, { bonsaiId: id, rappels }) }) })
     ] }) }) }),
     confirmDialog

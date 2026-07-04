@@ -10,7 +10,7 @@ export type BonsaiEtape = "culture" | "pre-bonsai" | "bonsai";
 
 export type SoinType =
   | "arrosage" | "taille" | "rempotage" | "fertilisation"
-  | "traitement" | "ligature" | "autre";
+  | "traitement" | "ligature" | "don_vente" | "mort" | "autre";
 
 export interface BonsaiRow {
   id: string;

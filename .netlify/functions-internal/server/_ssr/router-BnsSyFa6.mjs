@@ -61,7 +61,7 @@ import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
-const appCss = "/assets/styles-DpAUzwZu.css";
+const appCss = "/assets/styles-bvR82aS1.css";
 const Toaster = ({ ...props }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Toaster$1,
@@ -246,7 +246,7 @@ function AuthGate({ children }) {
   if (!user && !isAuthRoute) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$b = () => import("./statistiques-DpWvvHcK.mjs");
+const $$splitComponentImporter$b = () => import("./statistiques-BzqiKcMm.mjs");
 const Route$c = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -353,7 +353,8 @@ function bonsaiToRow(b) {
 function rowToPhoto(r) {
   return {
     id: r.id,
-    bonsaiId: r.bonsai_id,
+    bonsaiId: r.bonsai_id ?? void 0,
+    poterieId: r.poterie_id ?? void 0,
     storagePath: r.storage_path,
     date: r.date,
     legende: r.legende ?? void 0
@@ -444,7 +445,8 @@ function poteriePhotoPath(uidStr, poterieId) {
 }
 async function getPhotoBlob(photo) {
   if (!photo.storagePath) return void 0;
-  const { data, error } = await db.storage.from(BONSAI_BUCKET).download(photo.storagePath);
+  const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+  const { data, error } = await db.storage.from(bucket).download(photo.storagePath);
   if (error) {
     const msg = String(error.message ?? "").toLowerCase();
     if (msg.includes("not found") || msg.includes("does not exist")) return void 0;
@@ -476,11 +478,18 @@ async function uploadPoteriePhoto(poterieId, blob) {
   if (error) throw error;
   return path;
 }
+async function uploadPoterieGalleryPhoto(photoId, poterieId, blob) {
+  const uidStr = await currentUserId();
+  const path = `${uidStr}/${poterieId}/${photoId}.jpg`;
+  const { error } = await db.storage.from(POTERIE_BUCKET).upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
+  if (error) throw error;
+  return path;
+}
 async function deleteStorageObject(bucket, path) {
   await db.storage.from(bucket).remove([path]);
 }
-async function listBonsais(limit = 500) {
-  const { data, error } = await db.from("bonsais").select("*").order("created_at", { ascending: false }).limit(limit);
+async function listBonsais() {
+  const { data, error } = await db.from("bonsais").select("*").order("created_at", { ascending: false }).limit(500);
   if (error) throw error;
   return data.map(rowToBonsai);
 }
@@ -506,8 +515,8 @@ async function deleteBonsai(id) {
   const { error } = await db.from("bonsais").delete().eq("id", id);
   if (error) throw error;
 }
-async function listPhotos(bonsaiId, limit = 200) {
-  const { data, error } = await db.from("photos").select("*").eq("bonsai_id", bonsaiId).order("date", { ascending: false }).limit(limit);
+async function listPhotos(bonsaiId) {
+  const { data, error } = await db.from("photos").select("*").eq("bonsai_id", bonsaiId).order("date", { ascending: false }).limit(200);
   if (error) throw error;
   return data.map(rowToPhoto);
 }
@@ -518,6 +527,7 @@ async function getPhoto(id) {
 }
 async function savePhoto(photo) {
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
+  if (!photo.bonsaiId) throw new Error("savePhoto: bonsaiId manquant");
   const uidStr = await currentUserId();
   const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
@@ -537,7 +547,10 @@ async function savePhoto(photo) {
 async function deletePhoto(id) {
   const photo = await getPhoto(id);
   if (!photo) return;
-  if (photo.storagePath) await deleteStorageObject(BONSAI_BUCKET, photo.storagePath);
+  if (photo.storagePath) {
+    const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+    await deleteStorageObject(bucket, photo.storagePath);
+  }
   const { error } = await db.from("photos").delete().eq("id", id);
   if (error) throw error;
 }
@@ -549,10 +562,10 @@ async function updatePhotoDate(id, date) {
   const { error } = await db.from("photos").update({ date }).eq("id", id);
   if (error) throw error;
 }
-async function listJournal(bonsaiId, limit = 500) {
+async function listJournal(bonsaiId) {
   let query = db.from("journal_entries").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("date", { ascending: false }).limit(limit);
+  const { data, error } = await query.order("date", { ascending: false }).limit(500);
   if (error) throw error;
   return data.map(rowToJournal);
 }
@@ -573,10 +586,10 @@ async function deleteJournal(id) {
   const { error } = await db.from("journal_entries").delete().eq("id", id);
   if (error) throw error;
 }
-async function listRappels(bonsaiId, limit = 200) {
+async function listRappels(bonsaiId) {
   let query = db.from("rappels").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(limit);
+  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(200);
   if (error) throw error;
   return data.map(rowToRappel);
 }
@@ -598,8 +611,8 @@ async function deleteRappel(id) {
   const { error } = await db.from("rappels").delete().eq("id", id);
   if (error) throw error;
 }
-async function listPoteries(limit = 200) {
-  const { data, error } = await db.from("poteries").select("*").order("created_at", { ascending: false }).limit(limit);
+async function listPoteries() {
+  const { data, error } = await db.from("poteries").select("*").order("created_at", { ascending: false }).limit(200);
   if (error) throw error;
   return data.map(rowToPoterie);
 }
@@ -624,11 +637,41 @@ async function savePoterie(p) {
 async function deletePoterie(id) {
   const poterie = await getPoterie(id);
   if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
+  const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
+  if (photos && photos.length > 0) {
+    const paths = photos.map((p) => p.storage_path);
+    await db.storage.from(POTERIE_BUCKET).remove(paths);
+  }
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 }
-async function listEvenements(limit = 100) {
-  const { data, error } = await db.from("evenements").select("*").order("date_heure", { ascending: true }).limit(limit);
+async function listPoteriePhotos(poterieId) {
+  const { data, error } = await db.from("photos").select("*").eq("poterie_id", poterieId).order("date", { ascending: false }).limit(200);
+  if (error) throw error;
+  return data.map(rowToPhoto);
+}
+async function savePoterieGalleryPhoto(photo) {
+  if (!photo.blob) throw new Error("savePoterieGalleryPhoto: blob manquant");
+  if (!photo.poterieId) throw new Error("savePoterieGalleryPhoto: poterieId manquant");
+  const uidStr = await currentUserId();
+  const path = await uploadPoterieGalleryPhoto(photo.id, photo.poterieId, photo.blob);
+  const { error } = await db.from("photos").upsert({
+    id: photo.id,
+    poterie_id: photo.poterieId,
+    bonsai_id: null,
+    storage_path: path,
+    date: photo.date,
+    legende: photo.legende ?? null,
+    user_id: uidStr
+  });
+  if (error) {
+    await deleteStorageObject(POTERIE_BUCKET, path);
+    throw error;
+  }
+  return path;
+}
+async function listEvenements() {
+  const { data, error } = await db.from("evenements").select("*").order("date_heure", { ascending: true }).limit(100);
   if (error) throw error;
   return data.map(rowToEvenement);
 }
@@ -743,6 +786,7 @@ const supabaseData = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.define
   listEvenements,
   listJournal,
   listPhotos,
+  listPoteriePhotos,
   listPoteries,
   listRappels,
   saveBonsai,
@@ -750,6 +794,7 @@ const supabaseData = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.define
   saveJournal,
   savePhoto,
   savePoterie,
+  savePoterieGalleryPhoto,
   saveRappel,
   uid,
   updatePhotoDate,
@@ -1127,7 +1172,9 @@ function AddPhotoDialog({
     setBusy(true);
     try {
       await onConfirm({ blob, date: selectedDate, legende: legende.trim() });
-      onOpenChange(false);
+      setLegende("");
+      setBlob(null);
+      setPreview(void 0);
     } finally {
       setBusy(false);
     }
@@ -1216,7 +1263,7 @@ function useFileInput() {
   };
   return { file, setFile, inputRef, reset };
 }
-const $$splitComponentImporter$a = () => import("./poteries-_8Zi2uJn.mjs");
+const $$splitComponentImporter$a = () => import("./poteries-CjdcXWLs.mjs");
 const Route$a = createFileRoute("/poteries")({
   head: () => ({
     meta: [{
@@ -1372,7 +1419,7 @@ function ExistingImage({
   const url = useBlobUrl(blob);
   return url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : null;
 }
-const $$splitComponentImporter$9 = () => import("./parametres-BY0fA3iv.mjs");
+const $$splitComponentImporter$9 = () => import("./parametres-2cYbBEVC.mjs");
 const Route$9 = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -1393,7 +1440,7 @@ const Route$9 = createFileRoute("/parametres")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./journal-CcsFn8OQ.mjs");
+const $$splitComponentImporter$8 = () => import("./journal-C4sa6fes.mjs");
 const Route$8 = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -1414,7 +1461,7 @@ const Route$8 = createFileRoute("/journal")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./inscription-npiNY8IT.mjs");
+const $$splitComponentImporter$7 = () => import("./inscription-DGqg07TA.mjs");
 const Route$7 = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -1426,7 +1473,7 @@ const Route$7 = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
-const $$splitComponentImporter$6 = () => import("./connexion-CTLdoQGb.mjs");
+const $$splitComponentImporter$6 = () => import("./connexion-ob0hiZ-I.mjs");
 const Route$6 = createFileRoute("/connexion")({
   validateSearch: (s) => ({
     redirect: typeof s.redirect === "string" && s.redirect.startsWith("/") ? s.redirect : void 0
@@ -1441,7 +1488,7 @@ const Route$6 = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component")
 });
-const $$splitComponentImporter$5 = () => import("./collection-DbRa8dV8.mjs");
+const $$splitComponentImporter$5 = () => import("./collection-DzShhl-o.mjs");
 const Route$5 = createFileRoute("/collection")({
   head: () => ({
     meta: [{
@@ -1462,7 +1509,7 @@ const Route$5 = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./calendrier-B8UaRYo4.mjs");
+const $$splitComponentImporter$4 = () => import("./calendrier-C51y7iXp.mjs");
 const Route$4 = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -1483,7 +1530,7 @@ const Route$4 = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-B4N8_IBl.mjs");
+const $$splitComponentImporter$3 = () => import("./index--FAiM_-I.mjs");
 const Route$3 = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -1504,7 +1551,7 @@ const Route$3 = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./poterie._id-jI0YxyBC.mjs");
+const $$splitComponentImporter$2 = () => import("./poterie._id-DVWS2p2j.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -1550,7 +1597,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-DFUb_QRQ.mjs");
+const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-0i9MLJ8k.mjs");
 const Route$1 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -1574,7 +1621,7 @@ const Route$1 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./bonsai._id-C-hUo-Yo.mjs");
+const $$splitComponentImporter = () => import("./bonsai._id-DtYYJecX.mjs");
 const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
   loader: async ({
@@ -1728,24 +1775,28 @@ const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
 export {
   AddPhotoDialog as A,
   Button as B,
-  deleteBonsai as C,
-  buttonVariants as D,
-  Dialog as E,
-  DialogContent as F,
-  DialogTitle as G,
-  useFileInput as H,
+  Route as C,
+  deleteBonsai as D,
+  buttonVariants as E,
+  useFileInput as F,
+  updatePhotoDate as G,
+  updatePhotoLegende as H,
   Input as I,
-  updatePhotoDate as J,
-  updatePhotoLegende as K,
+  deletePhoto as J,
+  savePoterieGalleryPhoto as K,
   Label as L,
-  deletePhoto as M,
-  deleteJournal as N,
-  deleteRappel as O,
+  Dialog as M,
+  DialogContent as N,
+  DialogHeader as O,
   PoterieForm as P,
-  supabaseData as Q,
+  DialogTitle as Q,
   Route$6 as R,
-  router as S,
+  DialogFooter as S,
   Textarea as T,
+  deleteJournal as U,
+  deleteRappel as V,
+  supabaseData as W,
+  router as X,
   listPoteries as a,
   listRappels as b,
   listPhotos as c,
@@ -1768,8 +1819,8 @@ export {
   Route$2 as t,
   uid as u,
   getPoterie as v,
-  deletePoterie as w,
-  getBonsai as x,
-  getPhotoBlob as y,
-  Route as z
+  listPoteriePhotos as w,
+  deletePoterie as x,
+  getBonsai as y,
+  getPhotoBlob as z
 };

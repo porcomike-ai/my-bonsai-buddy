@@ -1,7 +1,7 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
-import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
-import { B as BonsaiForm } from "./bonsai-form-G3pvEJai.mjs";
+import { A as AppShell } from "./app-shell-CNnIx-e5.mjs";
+import { B as BonsaiForm } from "./bonsai-form-CtlLEooF.mjs";
 import "../_libs/sonner.mjs";
 import { w as ArrowLeft } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -17,7 +17,7 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "./router-Co_Ro_jt.mjs";
+import "./router-BnsSyFa6.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
 import "./client-CWZp_xfH.mjs";
@@ -67,7 +67,7 @@ import "../_libs/date-fns.mjs";
 import "../_libs/react-hook-form.mjs";
 import "../_libs/hookform__resolvers.mjs";
 import "../_libs/zod.mjs";
-import "./bonsai-meta-BJOj-HVV.mjs";
+import "./bonsai-meta-gq8SRzvW.mjs";
 import "../_libs/radix-ui__react-switch.mjs";
 function NewBonsaiPage() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [

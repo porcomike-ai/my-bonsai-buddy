@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, w as deletePoterie, v as getPoterie, l as listBonsais } from "./router-Co_Ro_jt.mjs";
-import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
-import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
+import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, x as deletePoterie, v as getPoterie, l as listBonsais, w as listPoteriePhotos } from "./router-BnsSyFa6.mjs";
+import { A as AppShell } from "./app-shell-CNnIx-e5.mjs";
+import { u as useConfirm } from "./confirm-dialog-CJ5numlD.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { w as ArrowLeft, e as Container, x as Pencil, y as Trash2 } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -65,6 +65,7 @@ import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
 import "../_libs/date-fns.mjs";
 import "../_libs/radix-ui__react-alert-dialog.mjs";
+const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-CV3yl0CV.mjs"));
 function PoterieDetail() {
   const {
     id
@@ -88,6 +89,12 @@ function PoterieDetail() {
   } = useQuery({
     queryKey: ["bonsais"],
     queryFn: listBonsais
+  });
+  const {
+    data: photos = []
+  } = useQuery({
+    queryKey: ["poterie-photos", id],
+    queryFn: () => listPoteriePhotos(id)
   });
   const [blob, setBlob] = reactExports.useState(void 0);
   reactExports.useEffect(() => {
@@ -171,6 +178,10 @@ function PoterieDetail() {
           ] })
         ] })
       ] })
+    ] }),
+    !editing && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "mt-12", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mb-4 font-display text-2xl font-semibold", children: "Galerie" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Chargement…" }), children: /* @__PURE__ */ jsxRuntimeExports.jsx(PoterieGalerieTab, { poterieId: id, photos }) })
     ] }),
     confirmDialog
   ] });

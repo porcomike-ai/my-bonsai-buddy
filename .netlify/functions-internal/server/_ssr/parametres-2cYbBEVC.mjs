@@ -1,8 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
-import { A as AppShell } from "./app-shell-Cm49G3QP.mjs";
-import { f as useAuth, B as Button, h as saveBonsai, i as savePhoto, j as saveJournal, k as saveRappel, s as savePoterie, m as saveEvenement, n as exportSupabaseBackup, o as importSupabaseBackup } from "./router-Co_Ro_jt.mjs";
-import { u as useConfirm } from "./confirm-dialog-BmGw0xi8.mjs";
+import { A as AppShell } from "./app-shell-CNnIx-e5.mjs";
+import { f as useAuth, B as Button, h as saveBonsai, i as savePhoto, j as saveJournal, k as saveRappel, s as savePoterie, m as saveEvenement, n as exportSupabaseBackup, o as importSupabaseBackup } from "./router-BnsSyFa6.mjs";
+import { u as useConfirm } from "./confirm-dialog-CJ5numlD.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { o as openDB } from "../_libs/idb.mjs";
 import { i as LogOut, D as Database, j as CloudUpload, H as HardDriveDownload, k as HardDriveUpload, W as Wand, l as Info } from "../_libs/lucide-react.mjs";
@@ -122,8 +122,8 @@ async function listEvenements() {
   const all = await db.getAll("evenements");
   return all.sort((a, b) => a.dateHeure.localeCompare(b.dateHeure));
 }
-const APP_VERSION = "1.13.0";
-const APP_VERSION_DATE = "2026-06-30";
+const APP_VERSION = "1.13.1";
+const APP_VERSION_DATE = "2026-07-03";
 function ParametresPage() {
   const qc = useQueryClient();
   const {

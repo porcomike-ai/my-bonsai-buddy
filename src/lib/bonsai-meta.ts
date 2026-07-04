@@ -44,6 +44,8 @@ export const SOINS: { value: SoinType; label: string; emoji: string }[] = [
   { value: "fertilisation", label: "Fertilisation", emoji: "🌱" },
   { value: "traitement", label: "Traitement", emoji: "🧪" },
   { value: "ligature", label: "Ligature", emoji: "🧵" },
+  { value: "don_vente", label: "Don / Vente", emoji: "🎁" },
+  { value: "mort", label: "Mort", emoji: "🪦" },
   { value: "autre", label: "Autre", emoji: "•" },
 ];
 
