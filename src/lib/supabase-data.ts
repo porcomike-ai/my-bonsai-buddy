@@ -533,9 +533,53 @@ export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<vo
 export async function deletePoterie(id: string): Promise<void> {
   const poterie = await getPoterie(id);
   if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
+  // Supprime aussi tous les fichiers de la galerie de la poterie.
+  const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
+  if (photos && photos.length > 0) {
+    const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
+    await db.storage.from(POTERIE_BUCKET).remove(paths);
+  }
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 }
+
+// --- Photos de poteries (galerie) ---
+
+export async function listPoteriePhotos(poterieId: string): Promise<Photo[]> {
+  const { data, error } = await db
+    .from("photos")
+    .select("*")
+    .eq("poterie_id", poterieId)
+    .order("date", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data as PhotoRow[]).map(rowToPhoto);
+}
+
+/** Sauvegarde une photo de galerie pour une poterie. Retourne le storage_path. */
+export async function savePoterieGalleryPhoto(
+  photo: Photo & { blob?: Blob },
+): Promise<string> {
+  if (!photo.blob) throw new Error("savePoterieGalleryPhoto: blob manquant");
+  if (!photo.poterieId) throw new Error("savePoterieGalleryPhoto: poterieId manquant");
+  const uidStr = await currentUserId();
+  const path = await uploadPoterieGalleryPhoto(photo.id, photo.poterieId, photo.blob);
+  const { error } = await db.from("photos").upsert({
+    id: photo.id,
+    poterie_id: photo.poterieId,
+    bonsai_id: null,
+    storage_path: path,
+    date: photo.date,
+    legende: photo.legende ?? null,
+    user_id: uidStr,
+  });
+  if (error) {
+    await deleteStorageObject(POTERIE_BUCKET, path);
+    throw error;
+  }
+  return path;
+}
+
 
 // --- Évènements ---
 
