@@ -56,7 +56,8 @@ export interface Bonsai {
 
 export interface Photo {
   id: string;
-  bonsaiId: string;
+  bonsaiId?: string;
+  poterieId?: string;
   /** Chemin Storage. Ignoré à l'insert si un blob est fourni (généré côté serveur). */
   storagePath?: string;
   date: string;
@@ -163,7 +164,8 @@ function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
 function rowToPhoto(r: PhotoRow): Photo {
   return {
     id: r.id,
-    bonsaiId: r.bonsai_id,
+    bonsaiId: r.bonsai_id ?? undefined,
+    poterieId: r.poterie_id ?? undefined,
     storagePath: r.storage_path,
     date: r.date,
     legende: r.legende ?? undefined,
@@ -264,10 +266,13 @@ function poteriePhotoPath(uidStr: string, poterieId: string): string {
   return `${uidStr}/${poterieId}.jpg`;
 }
 
-/** Récupère le blob d'une photo bonsaï depuis Storage. */
-export async function getPhotoBlob(photo: Pick<Photo, "storagePath">): Promise<Blob | undefined> {
+/** Récupère le blob d'une photo (bonsaï ou poterie) depuis Storage. */
+export async function getPhotoBlob(
+  photo: Pick<Photo, "storagePath" | "poterieId">,
+): Promise<Blob | undefined> {
   if (!photo.storagePath) return undefined;
-  const { data, error } = await db.storage.from(BONSAI_BUCKET).download(photo.storagePath);
+  const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+  const { data, error } = await db.storage.from(bucket).download(photo.storagePath);
   if (error) {
     const msg = String(error.message ?? "").toLowerCase();
     if (msg.includes("not found") || msg.includes("does not exist")) return undefined;
@@ -303,6 +308,21 @@ async function uploadBonsaiPhoto(photoId: string, bonsaiId: string, blob: Blob):
 async function uploadPoteriePhoto(poterieId: string, blob: Blob): Promise<string> {
   const uidStr = await currentUserId();
   const path = poteriePhotoPath(uidStr, poterieId);
+  const { error } = await db.storage
+    .from(POTERIE_BUCKET)
+    .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
+  if (error) throw error;
+  return path;
+}
+
+/** Upload d'une photo de galerie pour une poterie (chemin distinct du photo_path principal). */
+async function uploadPoterieGalleryPhoto(
+  photoId: string,
+  poterieId: string,
+  blob: Blob,
+): Promise<string> {
+  const uidStr = await currentUserId();
+  const path = `${uidStr}/${poterieId}/${photoId}.jpg`;
   const { error } = await db.storage
     .from(POTERIE_BUCKET)
     .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
@@ -374,9 +394,10 @@ export async function getPhoto(id: string): Promise<Photo | undefined> {
   return data ? rowToPhoto(data as PhotoRow) : undefined;
 }
 
-/** Sauvegarde une photo : upload Storage + insert ligne. Retourne le storage_path. */
+/** Sauvegarde une photo de bonsaï : upload Storage + insert ligne. Retourne le storage_path. */
 export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string> {
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
+  if (!photo.bonsaiId) throw new Error("savePhoto: bonsaiId manquant");
   const uidStr = await currentUserId();
   const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
@@ -397,7 +418,10 @@ export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string>
 export async function deletePhoto(id: string): Promise<void> {
   const photo = await getPhoto(id);
   if (!photo) return;
-  if (photo.storagePath) await deleteStorageObject(BONSAI_BUCKET, photo.storagePath);
+  if (photo.storagePath) {
+    const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+    await deleteStorageObject(bucket, photo.storagePath);
+  }
   const { error } = await db.from("photos").delete().eq("id", id);
   if (error) throw error;
 }
@@ -509,9 +533,53 @@ export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<vo
 export async function deletePoterie(id: string): Promise<void> {
   const poterie = await getPoterie(id);
   if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
+  // Supprime aussi tous les fichiers de la galerie de la poterie.
+  const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
+  if (photos && photos.length > 0) {
+    const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
+    await db.storage.from(POTERIE_BUCKET).remove(paths);
+  }
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 }
+
+// --- Photos de poteries (galerie) ---
+
+export async function listPoteriePhotos(poterieId: string): Promise<Photo[]> {
+  const { data, error } = await db
+    .from("photos")
+    .select("*")
+    .eq("poterie_id", poterieId)
+    .order("date", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data as PhotoRow[]).map(rowToPhoto);
+}
+
+/** Sauvegarde une photo de galerie pour une poterie. Retourne le storage_path. */
+export async function savePoterieGalleryPhoto(
+  photo: Photo & { blob?: Blob },
+): Promise<string> {
+  if (!photo.blob) throw new Error("savePoterieGalleryPhoto: blob manquant");
+  if (!photo.poterieId) throw new Error("savePoterieGalleryPhoto: poterieId manquant");
+  const uidStr = await currentUserId();
+  const path = await uploadPoterieGalleryPhoto(photo.id, photo.poterieId, photo.blob);
+  const { error } = await db.from("photos").upsert({
+    id: photo.id,
+    poterie_id: photo.poterieId,
+    bonsai_id: null,
+    storage_path: path,
+    date: photo.date,
+    legende: photo.legende ?? null,
+    user_id: uidStr,
+  });
+  if (error) {
+    await deleteStorageObject(POTERIE_BUCKET, path);
+    throw error;
+  }
+  return path;
+}
+
 
 // --- Évènements ---
 

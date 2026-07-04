@@ -175,29 +175,32 @@ export type Database = {
       }
       photos: {
         Row: {
-          bonsai_id: string
+          bonsai_id: string | null
           created_at: string
           date: string
           id: string
           legende: string | null
+          poterie_id: string | null
           storage_path: string
           user_id: string
         }
         Insert: {
-          bonsai_id: string
+          bonsai_id?: string | null
           created_at?: string
           date?: string
           id?: string
           legende?: string | null
+          poterie_id?: string | null
           storage_path: string
           user_id?: string
         }
         Update: {
-          bonsai_id?: string
+          bonsai_id?: string | null
           created_at?: string
           date?: string
           id?: string
           legende?: string | null
+          poterie_id?: string | null
           storage_path?: string
           user_id?: string
         }
@@ -207,6 +210,13 @@ export type Database = {
             columns: ["bonsai_id"]
             isOneToOne: false
             referencedRelation: "bonsais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_poterie_id_fkey"
+            columns: ["poterie_id"]
+            isOneToOne: false
+            referencedRelation: "poteries"
             referencedColumns: ["id"]
           },
         ]

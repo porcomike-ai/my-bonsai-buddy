@@ -56,7 +56,8 @@ export interface PoterieRow {
 export interface PhotoRow {
   id: string;
   user_id: string;
-  bonsai_id: string;
+  bonsai_id: string | null;
+  poterie_id: string | null;
   storage_path: string;
   date: string;
   legende: string | null;
