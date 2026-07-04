@@ -5,6 +5,7 @@ import {
   createRootRouteWithContext,
   useRouter,
   useNavigate,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -149,14 +150,19 @@ function RootComponent() {
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const pathname = useLocation({ select: (l) => l.pathname });
+
+  const isAuthRoute = pathname === "/connexion" || pathname === "/inscription";
 
   useEffect(() => {
-    const isAuthRoute = pathname === "/connexion" || pathname === "/inscription";
     if (!loading && !user && !isAuthRoute) {
-      navigate({ to: "/connexion" });
+      navigate({
+        to: "/connexion",
+        search: { redirect: pathname },
+        replace: true,
+      });
     }
-  }, [user, loading, pathname, navigate]);
+  }, [user, loading, pathname, isAuthRoute, navigate]);
 
   if (loading) {
     return (
@@ -165,5 +171,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  if (!user && !isAuthRoute) return null;
   return <>{children}</>;
 }

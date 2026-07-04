@@ -44,6 +44,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/components/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { notificationStatus, requestNotificationPermission } from "@/lib/notifications";
@@ -275,6 +276,7 @@ function EvenementsSection({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [dateHeure, setDateHeure] = useState(() => {
     const d = new Date();
     d.setMinutes(0, 0, 0);
@@ -352,7 +354,12 @@ function EvenementsSection({
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer cet évènement ?")) return;
+    const confirmed = await confirm({
+      title: "Supprimer cet évènement ?",
+      destructive: true,
+      confirmLabel: "Supprimer",
+    });
+    if (!confirmed) return;
     await deleteEvenement(id);
     qc.invalidateQueries({ queryKey: ["evenements"] });
   };
@@ -538,6 +545,7 @@ function EvenementsSection({
           })}
         </ul>
       )}
+      {confirmDialog}
     </section>
   );
 }

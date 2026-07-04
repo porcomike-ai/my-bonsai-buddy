@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ImagePlus } from "lucide-react";
+import { AddPhotoDialog, useFileInput, type PhotoSource } from "@/components/add-photo-dialog";
 
 const schema = z.object({
   nom: z.string().min(1, "Donnez un nom à votre bonsaï"),
@@ -78,11 +79,21 @@ export function BonsaiForm({
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogSource, setDialogSource] = useState<PhotoSource>("gallery");
+  const [photoData, setPhotoData] = useState<{ blob: Blob; date: string; legende: string } | null>(null);
 
   const [especeLang, setEspeceLang] = useState<"latin" | "fr">(() => {
     if (typeof window === "undefined") return "latin";
     return (localStorage.getItem("bonsai.espece.lang") as "latin" | "fr") ?? "latin";
   });
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -116,7 +127,17 @@ export function BonsaiForm({
 
   const onFile = (f: File) => {
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
+    setDialogSource("gallery");
+    setDialogOpen(true);
+  };
+
+  const handlePhotoConfirm = async (data: { blob: Blob; date: string; legende: string }) => {
+    setPhotoData(data);
+    setDialogOpen(false);
   };
 
   const submit = form.handleSubmit(async (values) => {
@@ -152,14 +173,13 @@ export function BonsaiForm({
 
       await saveBonsai(b);
 
-      if (file) {
-        const blob = await fileToBlob(file);
+      if (photoData) {
         photoId = await savePhoto({
           id: uid(),
           bonsaiId: id,
-          blob,
-          date: new Date().toISOString(),
-          legende: "Photo principale",
+          blob: photoData.blob,
+          date: photoData.date,
+          legende: photoData.legende || "Photo principale",
         });
         b.photoPrincipale = photoId;
         await saveBonsai(b);
@@ -336,6 +356,14 @@ export function BonsaiForm({
           </Button>
         </div>
       </div>
+
+      <AddPhotoDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        source={dialogSource}
+        file={file}
+        onConfirm={handlePhotoConfirm}
+      />
     </form>
   );
 }

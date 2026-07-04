@@ -33,11 +33,19 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
 
 export type PdfPhotosOption = "principale" | "toutes";
 
+export interface PdfProgress {
+  phase: "loading" | "generating" | "photos";
+  current: number;
+  total: number;
+}
+
 export async function generateBonsaiPdf(
   bonsaiId: string,
-  options: { photos?: PdfPhotosOption } = {},
+  options: { photos?: PdfPhotosOption; onProgress?: (p: PdfProgress) => void } = {},
 ): Promise<Blob> {
   const photosOpt = options.photos ?? "principale";
+  const onProgress = options.onProgress;
+  onProgress?.({ phase: "loading", current: 0, total: 1 });
   const b = await getBonsai(bonsaiId);
   if (!b) throw new Error("Bonsaï introuvable");
   const [poterie, journal, rappels, allPhotos] = await Promise.all([
@@ -49,6 +57,8 @@ export async function generateBonsaiPdf(
   const principalBlob = b.photoPrincipale
     ? await getPhotoBlob({ storagePath: b.photoPrincipale })
     : undefined;
+
+  onProgress?.({ phase: "generating", current: 0, total: allPhotos.length + 1 });
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210;
@@ -181,6 +191,8 @@ export async function generateBonsaiPdf(
   doc.setTextColor(150, 150, 150);
   doc.text("Bonsaï Studio — carnet de collection", W / 2, 290, { align: "center" });
 
+  onProgress?.({ phase: "generating", current: 1, total: allPhotos.length + 1 });
+
   // Pages galerie (option « toutes les photos »)
   if (photosOpt === "toutes" && allPhotos.length > 0) {
     const H = 297;
@@ -192,6 +204,7 @@ export async function generateBonsaiPdf(
     const cellW = (availW - gap) / cols;
     const cellH = 110;
 
+    let photoIndex = 0;
     for (let i = 0; i < sorted.length; i += perPage) {
       doc.addPage();
       // En-tête galerie
@@ -214,6 +227,8 @@ export async function generateBonsaiPdf(
       const slice = sorted.slice(i, i + perPage);
       for (let k = 0; k < slice.length; k++) {
         const p = slice[k];
+        photoIndex++;
+        onProgress?.({ phase: "photos", current: photoIndex, total: sorted.length });
         const col = k % cols;
         const row = Math.floor(k / cols);
         const x = margin + col * (cellW + gap);
@@ -254,7 +269,7 @@ function safeFileName(s: string): string {
 export async function shareBonsaiPdf(
   bonsaiId: string,
   bonsaiName: string,
-  options: { photos?: PdfPhotosOption } = {},
+  options: { photos?: PdfPhotosOption; onProgress?: (p: PdfProgress) => void } = {},
 ): Promise<"shared" | "downloaded"> {
   const blob = await generateBonsaiPdf(bonsaiId, options);
   const fileName = `bonsai-${safeFileName(bonsaiName)}.pdf`;

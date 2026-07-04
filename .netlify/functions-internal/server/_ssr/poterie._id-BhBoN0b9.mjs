@@ -1,10 +1,11 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { R as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, w as deletePoterie, v as getPoterie, l as listBonsais } from "./router-B7dkk4ae.mjs";
-import { A as AppShell } from "./app-shell-DyFFU200.mjs";
+import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, x as deletePoterie, v as getPoterie, l as listBonsais, w as listPoteriePhotos } from "./router-C3eaBvs2.mjs";
+import { A as AppShell } from "./app-shell-OBpQ-DwG.mjs";
+import { u as useConfirm } from "./confirm-dialog-_odOmEnW.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { t as ArrowLeft, a as Container, u as Pencil, v as Trash2 } from "../_libs/lucide-react.mjs";
+import { w as ArrowLeft, e as Container, x as Pencil, y as Trash2 } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -36,6 +37,35 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-context.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
+import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
+import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-radio-group.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
+import "../_libs/radix-ui__react-direction.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/date-fns.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
+const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-BZh79VYY.mjs"));
 function PoterieDetail() {
   const {
     id
@@ -43,6 +73,10 @@ function PoterieDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = reactExports.useState(false);
+  const {
+    confirm,
+    dialog: confirmDialog
+  } = useConfirm();
   const {
     data: p,
     isPending
@@ -55,6 +89,12 @@ function PoterieDetail() {
   } = useQuery({
     queryKey: ["bonsais"],
     queryFn: listBonsais
+  });
+  const {
+    data: photos = []
+  } = useQuery({
+    queryKey: ["poterie-photos", id],
+    queryFn: () => listPoteriePhotos(id)
   });
   const [blob, setBlob] = reactExports.useState(void 0);
   reactExports.useEffect(() => {
@@ -80,7 +120,13 @@ function PoterieDetail() {
   ] });
   const planted = bonsais.find((b) => b.poterieId === p.id);
   const remove = async () => {
-    if (!confirm(`Supprimer « ${p.nom} » ?`)) return;
+    const confirmed = await confirm({
+      title: "Supprimer cette poterie ?",
+      description: `« ${p.nom} » sera supprimée définitivement.`,
+      destructive: true,
+      confirmLabel: "Supprimer"
+    });
+    if (!confirmed) return;
     await deletePoterie(id);
     await qc.invalidateQueries();
     toast.success("Poterie supprimée");
@@ -132,7 +178,12 @@ function PoterieDetail() {
           ] })
         ] })
       ] })
-    ] })
+    ] }),
+    !editing && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "mt-12", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mb-4 font-display text-2xl font-semibold", children: "Galerie" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Chargement…" }), children: /* @__PURE__ */ jsxRuntimeExports.jsx(PoterieGalerieTab, { poterieId: id, photos }) })
+    ] }),
+    confirmDialog
   ] });
 }
 function Stat({

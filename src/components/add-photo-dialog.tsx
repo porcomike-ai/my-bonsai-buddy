@@ -25,6 +25,8 @@ interface AddPhotoDialogProps {
   source: PhotoSource;
   file: File | null;
   onConfirm: (data: { blob: Blob; date: string; legende: string }) => Promise<void>;
+  currentIndex?: number;
+  totalCount?: number;
 }
 
 type DateMode = "exif" | "filename" | "custom" | "today";
@@ -42,6 +44,8 @@ export function AddPhotoDialog({
   source,
   file,
   onConfirm,
+  currentIndex = 0,
+  totalCount = 1,
 }: AddPhotoDialogProps) {
   const [preview, setPreview] = useState<string | undefined>(undefined);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -146,7 +150,10 @@ export function AddPhotoDialog({
     setBusy(true);
     try {
       await onConfirm({ blob, date: selectedDate, legende: legende.trim() });
-      onOpenChange(false);
+      // Reset local state so next queued photo starts fresh; parent controls open/close.
+      setLegende("");
+      setBlob(null);
+      setPreview(undefined);
     } finally {
       setBusy(false);
     }
@@ -162,7 +169,11 @@ export function AddPhotoDialog({
             ) : (
               <Sparkles className="h-5 w-5" />
             )}
-            {source === "camera" ? "Photo prise à l'instant" : "Importer une photo"}
+            {source === "camera" 
+              ? "Photo prise à l'instant" 
+              : totalCount > 1 
+                ? `Photo ${currentIndex + 1} / ${totalCount}` 
+                : "Importer une photo"}
           </DialogTitle>
         </DialogHeader>
 

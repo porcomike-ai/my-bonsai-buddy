@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, T as Textarea, B as Button, f as fileToBlob, u as uid, s as savePoterie, g as getPoteriePhoto, e as useBlobUrl, L as Label, a as listPoteries, l as listBonsais } from "./router-B7dkk4ae.mjs";
-import { A as AppShell } from "./app-shell-DyFFU200.mjs";
+import { I as Input, T as Textarea, B as Button, A as AddPhotoDialog, u as uid, s as savePoterie, g as getPoteriePhoto, e as useBlobUrl, L as Label, a as listPoteries, l as listBonsais } from "./router-C3eaBvs2.mjs";
+import { A as AppShell } from "./app-shell-OBpQ-DwG.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { I as ImagePlus, P as Plus, a as Container } from "../_libs/lucide-react.mjs";
+import { I as ImagePlus, P as Plus, e as Container } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -36,6 +36,33 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-context.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
+import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
+import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-radio-group.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
+import "../_libs/radix-ui__react-direction.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/date-fns.mjs";
 function PoteriesPage() {
   const {
     data: poteries = []
@@ -125,6 +152,9 @@ function PoterieForm({
   const navigate = useNavigate();
   const [file, setFile] = reactExports.useState(null);
   const [preview, setPreview] = reactExports.useState(null);
+  const [dialogOpen, setDialogOpen] = reactExports.useState(false);
+  const [dialogSource, setDialogSource] = reactExports.useState("gallery");
+  const [photoData, setPhotoData] = reactExports.useState(null);
   const [form, setForm] = reactExports.useState({
     nom: initial?.nom ?? "",
     longueurCm: initial?.longueurCm?.toString() ?? "",
@@ -148,7 +178,7 @@ function PoterieForm({
       toast.error("Donnez un nom à la poterie");
       return;
     }
-    const photoBlob = file ? await fileToBlob(file) : void 0;
+    const photoBlob = photoData?.blob;
     const p = {
       id: initial?.id ?? uid(),
       nom: form.nom.trim(),
@@ -182,6 +212,12 @@ function PoterieForm({
   const onFile = (f) => {
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setDialogSource("gallery");
+    setDialogOpen(true);
+  };
+  const handlePhotoConfirm = async (data) => {
+    setPhotoData(data);
+    setDialogOpen(false);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: submit, className: "mb-8 grid gap-6 rounded-3xl border border-border bg-card p-6 lg:grid-cols-[240px_1fr]", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "group relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-background transition hover:border-accent/60", children: [
@@ -209,7 +245,8 @@ function PoterieForm({
         /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "button", variant: "outline", onClick: onClose, children: "Annuler" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", children: initial ? "Enregistrer" : "Ajouter la poterie" })
       ] })
-    ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AddPhotoDialog, { open: dialogOpen, onOpenChange: setDialogOpen, source: dialogSource, file, onConfirm: handlePhotoConfirm })
   ] });
 }
 function Field({

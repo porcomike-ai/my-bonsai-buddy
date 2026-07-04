@@ -18,7 +18,7 @@ import type {
   JournalEntryRow,
   RappelRow,
   EvenementRow,
-} from "@/integrations/supabase/types";
+} from "@/integrations/supabase/domain-types";
 
 // Le `supabase` exporté est un Proxy paresseux qui efface le type générique
 // de createClient<Database>(). Les types `*Row` importés ci-dessus servent
@@ -31,14 +31,14 @@ const db = supabase as unknown as {
 
 // --- Types domaine (compatibles avec l'ancienne API db.ts) ---
 
-export type { BonsaiStyle, BonsaiEtape, SoinType } from "@/integrations/supabase/types";
+export type { BonsaiStyle, BonsaiEtape, SoinType } from "@/integrations/supabase/domain-types";
 
 export interface Bonsai {
   id: string;
   nom: string;
   espece: string;
-  style: import("@/integrations/supabase/types").BonsaiStyle;
-  etape?: import("@/integrations/supabase/types").BonsaiEtape;
+  style: import("@/integrations/supabase/domain-types").BonsaiStyle;
+  etape?: import("@/integrations/supabase/domain-types").BonsaiEtape;
   ageEstime?: number;
   dateAcquisition?: string;
   origine?: string;
@@ -56,7 +56,8 @@ export interface Bonsai {
 
 export interface Photo {
   id: string;
-  bonsaiId: string;
+  bonsaiId?: string;
+  poterieId?: string;
   /** Chemin Storage. Ignoré à l'insert si un blob est fourni (généré côté serveur). */
   storagePath?: string;
   date: string;
@@ -66,7 +67,7 @@ export interface Photo {
 export interface JournalEntry {
   id: string;
   bonsaiId: string;
-  type: import("@/integrations/supabase/types").SoinType;
+  type: import("@/integrations/supabase/domain-types").SoinType;
   date: string;
   notes?: string;
   rappelId?: string;
@@ -75,7 +76,7 @@ export interface JournalEntry {
 export interface Rappel {
   id: string;
   bonsaiId: string;
-  type: import("@/integrations/supabase/types").SoinType;
+  type: import("@/integrations/supabase/domain-types").SoinType;
   prochaineDate: string;
   intervalleJours?: number;
   notes?: string;
@@ -163,7 +164,8 @@ function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
 function rowToPhoto(r: PhotoRow): Photo {
   return {
     id: r.id,
-    bonsaiId: r.bonsai_id,
+    bonsaiId: r.bonsai_id ?? undefined,
+    poterieId: r.poterie_id ?? undefined,
     storagePath: r.storage_path,
     date: r.date,
     legende: r.legende ?? undefined,
@@ -264,10 +266,13 @@ function poteriePhotoPath(uidStr: string, poterieId: string): string {
   return `${uidStr}/${poterieId}.jpg`;
 }
 
-/** Récupère le blob d'une photo bonsaï depuis Storage. */
-export async function getPhotoBlob(photo: Pick<Photo, "storagePath">): Promise<Blob | undefined> {
+/** Récupère le blob d'une photo (bonsaï ou poterie) depuis Storage. */
+export async function getPhotoBlob(
+  photo: Pick<Photo, "storagePath" | "poterieId">,
+): Promise<Blob | undefined> {
   if (!photo.storagePath) return undefined;
-  const { data, error } = await db.storage.from(BONSAI_BUCKET).download(photo.storagePath);
+  const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+  const { data, error } = await db.storage.from(bucket).download(photo.storagePath);
   if (error) {
     const msg = String(error.message ?? "").toLowerCase();
     if (msg.includes("not found") || msg.includes("does not exist")) return undefined;
@@ -310,6 +315,21 @@ async function uploadPoteriePhoto(poterieId: string, blob: Blob): Promise<string
   return path;
 }
 
+/** Upload d'une photo de galerie pour une poterie (chemin distinct du photo_path principal). */
+async function uploadPoterieGalleryPhoto(
+  photoId: string,
+  poterieId: string,
+  blob: Blob,
+): Promise<string> {
+  const uidStr = await currentUserId();
+  const path = `${uidStr}/${poterieId}/${photoId}.jpg`;
+  const { error } = await db.storage
+    .from(POTERIE_BUCKET)
+    .upload(path, blob, { upsert: true, contentType: blob.type || "image/jpeg" });
+  if (error) throw error;
+  return path;
+}
+
 async function deleteStorageObject(bucket: string, path: string): Promise<void> {
   await db.storage.from(bucket).remove([path]);
 }
@@ -320,7 +340,8 @@ export async function listBonsais(): Promise<Bonsai[]> {
   const { data, error } = await db
     .from("bonsais")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
   if (error) throw error;
   return (data as BonsaiRow[]).map(rowToBonsai);
 }
@@ -341,11 +362,15 @@ export async function saveBonsai(b: Bonsai): Promise<void> {
 }
 
 export async function deleteBonsai(id: string): Promise<void> {
+  // Les photos sont supprimées en cascade en BDD ; on nettoie d'abord le Storage
+  // pour éviter les fichiers orphelins.
   const { data: photos } = await db.from("photos").select("storage_path").eq("bonsai_id", id);
   if (photos && photos.length > 0) {
     const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
     await db.storage.from(BONSAI_BUCKET).remove(paths);
   }
+  // La suppression du bonsaï déclenche ON DELETE CASCADE sur photos / journal / rappels
+  // et ON DELETE SET NULL sur evenements.
   const { error } = await db.from("bonsais").delete().eq("id", id);
   if (error) throw error;
 }
@@ -357,7 +382,8 @@ export async function listPhotos(bonsaiId: string): Promise<Photo[]> {
     .from("photos")
     .select("*")
     .eq("bonsai_id", bonsaiId)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(200);
   if (error) throw error;
   return (data as PhotoRow[]).map(rowToPhoto);
 }
@@ -368,9 +394,10 @@ export async function getPhoto(id: string): Promise<Photo | undefined> {
   return data ? rowToPhoto(data as PhotoRow) : undefined;
 }
 
-/** Sauvegarde une photo : upload Storage + insert ligne. Retourne le storage_path. */
+/** Sauvegarde une photo de bonsaï : upload Storage + insert ligne. Retourne le storage_path. */
 export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string> {
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
+  if (!photo.bonsaiId) throw new Error("savePhoto: bonsaiId manquant");
   const uidStr = await currentUserId();
   const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
@@ -391,7 +418,10 @@ export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string>
 export async function deletePhoto(id: string): Promise<void> {
   const photo = await getPhoto(id);
   if (!photo) return;
-  if (photo.storagePath) await deleteStorageObject(BONSAI_BUCKET, photo.storagePath);
+  if (photo.storagePath) {
+    const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+    await deleteStorageObject(bucket, photo.storagePath);
+  }
   const { error } = await db.from("photos").delete().eq("id", id);
   if (error) throw error;
 }
@@ -413,12 +443,13 @@ export async function updatePhotoDate(id: string, date: string): Promise<void> {
 export async function listJournal(bonsaiId?: string): Promise<JournalEntry[]> {
   let query = db.from("journal_entries").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("date", { ascending: false });
+  const { data, error } = await query.order("date", { ascending: false }).limit(500);
   if (error) throw error;
   return (data as JournalEntryRow[]).map(rowToJournal);
 }
 
 export async function saveJournal(e: JournalEntry): Promise<void> {
+  const uidStr = await currentUserId();
   const { error } = await db.from("journal_entries").upsert({
     id: e.id,
     bonsai_id: e.bonsaiId,
@@ -426,6 +457,7 @@ export async function saveJournal(e: JournalEntry): Promise<void> {
     date: e.date,
     notes: e.notes ?? null,
     rappel_id: e.rappelId ?? null,
+    user_id: uidStr,
   });
   if (error) throw error;
 }
@@ -440,12 +472,13 @@ export async function deleteJournal(id: string): Promise<void> {
 export async function listRappels(bonsaiId?: string): Promise<Rappel[]> {
   let query = db.from("rappels").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("prochaine_date", { ascending: true });
+  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(200);
   if (error) throw error;
   return (data as RappelRow[]).map(rowToRappel);
 }
 
 export async function saveRappel(r: Rappel): Promise<void> {
+  const uidStr = await currentUserId();
   const { error } = await db.from("rappels").upsert({
     id: r.id,
     bonsai_id: r.bonsaiId,
@@ -454,6 +487,7 @@ export async function saveRappel(r: Rappel): Promise<void> {
     intervalle_jours: r.intervalleJours ?? null,
     notes: r.notes ?? null,
     actif: r.actif,
+    user_id: uidStr,
   });
   if (error) throw error;
 }
@@ -469,7 +503,8 @@ export async function listPoteries(): Promise<Poterie[]> {
   const { data, error } = await db
     .from("poteries")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(200);
   if (error) throw error;
   return (data as PoterieRow[]).map(rowToPoterie);
 }
@@ -482,12 +517,13 @@ export async function getPoterie(id: string): Promise<Poterie | undefined> {
 
 /** Sauvegarde une poterie. Si `photoBlob` est fourni, l'upload vers Storage. */
 export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<void> {
+  const uidStr = await currentUserId();
   let photoPath = p.photoPath;
   if (p.photoBlob) {
     photoPath = await uploadPoteriePhoto(p.id, p.photoBlob);
   }
   const row = poterieToRow({ ...p, photoPath });
-  const { error } = await db.from("poteries").upsert(row);
+  const { error } = await db.from("poteries").upsert({ ...row, user_id: uidStr });
   if (error) {
     if (p.photoBlob && photoPath) await deleteStorageObject(POTERIE_BUCKET, photoPath);
     throw error;
@@ -497,9 +533,53 @@ export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<vo
 export async function deletePoterie(id: string): Promise<void> {
   const poterie = await getPoterie(id);
   if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
+  // Supprime aussi tous les fichiers de la galerie de la poterie.
+  const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
+  if (photos && photos.length > 0) {
+    const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
+    await db.storage.from(POTERIE_BUCKET).remove(paths);
+  }
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 }
+
+// --- Photos de poteries (galerie) ---
+
+export async function listPoteriePhotos(poterieId: string): Promise<Photo[]> {
+  const { data, error } = await db
+    .from("photos")
+    .select("*")
+    .eq("poterie_id", poterieId)
+    .order("date", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data as PhotoRow[]).map(rowToPhoto);
+}
+
+/** Sauvegarde une photo de galerie pour une poterie. Retourne le storage_path. */
+export async function savePoterieGalleryPhoto(
+  photo: Photo & { blob?: Blob },
+): Promise<string> {
+  if (!photo.blob) throw new Error("savePoterieGalleryPhoto: blob manquant");
+  if (!photo.poterieId) throw new Error("savePoterieGalleryPhoto: poterieId manquant");
+  const uidStr = await currentUserId();
+  const path = await uploadPoterieGalleryPhoto(photo.id, photo.poterieId, photo.blob);
+  const { error } = await db.from("photos").upsert({
+    id: photo.id,
+    poterie_id: photo.poterieId,
+    bonsai_id: null,
+    storage_path: path,
+    date: photo.date,
+    legende: photo.legende ?? null,
+    user_id: uidStr,
+  });
+  if (error) {
+    await deleteStorageObject(POTERIE_BUCKET, path);
+    throw error;
+  }
+  return path;
+}
+
 
 // --- Évènements ---
 
@@ -507,12 +587,14 @@ export async function listEvenements(): Promise<Evenement[]> {
   const { data, error } = await db
     .from("evenements")
     .select("*")
-    .order("date_heure", { ascending: true });
+    .order("date_heure", { ascending: true })
+    .limit(100);
   if (error) throw error;
   return (data as EvenementRow[]).map(rowToEvenement);
 }
 
 export async function saveEvenement(e: Evenement): Promise<void> {
+  const uidStr = await currentUserId();
   const { error } = await db.from("evenements").upsert({
     id: e.id,
     titre: e.titre,
@@ -521,6 +603,7 @@ export async function saveEvenement(e: Evenement): Promise<void> {
     rappel_minutes: e.rappelMinutes ?? null,
     notified_at: e.notifiedAt ?? null,
     bonsai_id: e.bonsaiId ?? null,
+    user_id: uidStr,
   });
   if (error) throw error;
 }

@@ -1,13 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { getPoterie, listBonsais, deletePoterie, getPoteriePhoto } from "@/lib/supabase-data";
+import { lazy, Suspense, useEffect, useState } from "react";
+import {
+  getPoterie,
+  listBonsais,
+  listPoteriePhotos,
+  deletePoterie,
+  getPoteriePhoto,
+} from "@/lib/supabase-data";
 import { useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/confirm-dialog";
 import { PoterieForm } from "./poteries";
 import { ArrowLeft, Container, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+const PoterieGalerieTab = lazy(() => import("@/components/poterie-detail/galerie-tab"));
 
 export const Route = createFileRoute("/poterie/$id")({
   ssr: false,
@@ -49,12 +58,17 @@ function PoterieDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: p, isPending } = useQuery({
     queryKey: ["poterie", id],
     queryFn: () => getPoterie(id),
   });
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
+  const { data: photos = [] } = useQuery({
+    queryKey: ["poterie-photos", id],
+    queryFn: () => listPoteriePhotos(id),
+  });
 
   const [blob, setBlob] = useState<Blob | undefined>(undefined);
   useEffect(() => {
@@ -95,7 +109,13 @@ function PoterieDetail() {
   const planted = bonsais.find((b) => b.poterieId === p.id);
 
   const remove = async () => {
-    if (!confirm(`Supprimer « ${p.nom} » ?`)) return;
+    const confirmed = await confirm({
+      title: "Supprimer cette poterie ?",
+      description: `« ${p.nom} » sera supprimée définitivement.`,
+      destructive: true,
+      confirmLabel: "Supprimer",
+    });
+    if (!confirmed) return;
     await deletePoterie(id);
     await qc.invalidateQueries();
     toast.success("Poterie supprimée");
@@ -190,6 +210,18 @@ function PoterieDetail() {
           </div>
         </div>
       )}
+
+      {!editing && (
+        <section className="mt-12">
+          <h2 className="mb-4 font-display text-2xl font-semibold">Galerie</h2>
+          <Suspense
+            fallback={<p className="text-sm text-muted-foreground">Chargement…</p>}
+          >
+            <PoterieGalerieTab poterieId={id} photos={photos} />
+          </Suspense>
+        </section>
+      )}
+      {confirmDialog}
     </AppShell>
   );
 }

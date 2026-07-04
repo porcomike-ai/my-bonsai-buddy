@@ -14,7 +14,7 @@ import { R as ReactRemoveScroll } from "./react-remove-scroll.mjs";
 import { h as hideOthers } from "./aria-hidden.mjs";
 import { c as createSlot } from "./radix-ui__react-slot.mjs";
 var DIALOG_NAME = "Dialog";
-var [createDialogContext] = createContextScope(DIALOG_NAME);
+var [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
 var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
 var Dialog = (props) => {
   const {
@@ -272,8 +272,10 @@ export {
   Dialog as D,
   DialogPortal as a,
   DialogContent as b,
-  DialogClose as c,
+  createDialogScope as c,
   DialogTitle as d,
-  DialogOverlay as e,
-  DialogDescription as f
+  DialogDescription as e,
+  DialogClose as f,
+  DialogOverlay as g,
+  DialogTrigger as h
 };

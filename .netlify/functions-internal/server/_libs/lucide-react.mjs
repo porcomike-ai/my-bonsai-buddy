@@ -75,16 +75,23 @@ const createLucideIcon = (iconName, iconNode) => {
   Component.displayName = toPascalCase(iconName);
   return Component;
 };
-const __iconNode$K = [
+const __iconNode$L = [
   ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
   ["path", { d: "M19 12H5", key: "x3x0zl" }]
 ];
-const ArrowLeft = createLucideIcon("arrow-left", __iconNode$K);
-const __iconNode$J = [
+const ArrowLeft = createLucideIcon("arrow-left", __iconNode$L);
+const __iconNode$K = [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
 ];
-const ArrowRight = createLucideIcon("arrow-right", __iconNode$J);
+const ArrowRight = createLucideIcon("arrow-right", __iconNode$K);
+const __iconNode$J = [
+  ["path", { d: "m21 16-4 4-4-4", key: "f6ql7i" }],
+  ["path", { d: "M17 20V4", key: "1ejh1v" }],
+  ["path", { d: "m3 8 4-4 4 4", key: "11wl7u" }],
+  ["path", { d: "M7 4v16", key: "1glfcx" }]
+];
+const ArrowUpDown = createLucideIcon("arrow-up-down", __iconNode$J);
 const __iconNode$I = [
   ["path", { d: "M10.268 21a2 2 0 0 0 3.464 0", key: "vwvbt9" }],
   [
@@ -466,49 +473,50 @@ const ZoomOut = createLucideIcon("zoom-out", __iconNode);
 export {
   ArrowRight as A,
   BookOpen as B,
-  ChartBar as C,
+  Circle as C,
   Database as D,
   Euro as E,
-  FolderOpen as F,
-  FileText as G,
+  FileText as F,
+  Image as G,
   HardDriveDownload as H,
   ImagePlus as I,
-  Loader as J,
-  ZoomIn as K,
-  Leaf as L,
+  Images as J,
+  FolderOpen as K,
+  Loader as L,
   MessageSquarePlus as M,
-  Circle as N,
+  ZoomIn as N,
+  ArrowUpDown as O,
   Plus as P,
   RotateCcw as R,
-  Sprout as S,
+  Sparkles as S,
   TrendingUp as T,
   Wand as W,
   X,
   ZoomOut as Z,
-  Container as a,
-  Camera as b,
-  Calendar as c,
-  LayoutDashboard as d,
-  Settings as e,
-  LogOut as f,
-  CloudUpload as g,
-  HardDriveUpload as h,
-  Info as i,
-  Search as j,
-  Star as k,
-  ChevronLeft as l,
-  ChevronRight as m,
-  Check as n,
-  CalendarPlus as o,
-  Bell as p,
-  BellOff as q,
-  BellRing as r,
-  CalendarDays as s,
-  ArrowLeft as t,
-  Pencil as u,
-  Trash2 as v,
-  Share2 as w,
-  Image as x,
-  Images as y,
-  Sparkles as z
+  Camera as a,
+  Calendar as b,
+  ChartBar as c,
+  Sprout as d,
+  Container as e,
+  Leaf as f,
+  LayoutDashboard as g,
+  Settings as h,
+  LogOut as i,
+  CloudUpload as j,
+  HardDriveUpload as k,
+  Info as l,
+  Search as m,
+  Star as n,
+  ChevronLeft as o,
+  ChevronRight as p,
+  Check as q,
+  CalendarPlus as r,
+  Bell as s,
+  BellOff as t,
+  BellRing as u,
+  CalendarDays as v,
+  ArrowLeft as w,
+  Pencil as x,
+  Trash2 as y,
+  Share2 as z
 };
