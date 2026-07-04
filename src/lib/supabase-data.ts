@@ -198,6 +198,40 @@ export function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
   return row;
 }
 
+export function rowToPhoto(r: PhotoRow): Photo {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id ?? undefined,
+    poterieId: r.poterie_id ?? undefined,
+    storagePath: r.storage_path,
+    date: r.date,
+    legende: r.legende ?? undefined,
+  };
+}
+
+export function rowToJournal(r: JournalEntryRow): JournalEntry {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id,
+    type: r.type,
+    date: r.date,
+    notes: r.notes ?? undefined,
+    rappelId: r.rappel_id ?? undefined,
+  };
+}
+
+export function rowToRappel(r: RappelRow): Rappel {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id,
+    type: r.type,
+    prochaineDate: r.prochaine_date,
+    intervalleJours: r.intervalle_jours ?? undefined,
+    notes: r.notes ?? undefined,
+    actif: r.actif,
+  };
+}
+
 function rowToEvenement(r: EvenementRow): Evenement {
   return {
     id: r.id,
