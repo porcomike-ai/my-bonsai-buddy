@@ -150,7 +150,10 @@ export function AddPhotoDialog({
     setBusy(true);
     try {
       await onConfirm({ blob, date: selectedDate, legende: legende.trim() });
-      onOpenChange(false);
+      // Reset local state so next queued photo starts fresh; parent controls open/close.
+      setLegende("");
+      setBlob(null);
+      setPreview(undefined);
     } finally {
       setBusy(false);
     }
