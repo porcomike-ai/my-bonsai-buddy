@@ -376,9 +376,10 @@ export async function getPhoto(id: string): Promise<Photo | undefined> {
   return data ? rowToPhoto(data as PhotoRow) : undefined;
 }
 
-/** Sauvegarde une photo : upload Storage + insert ligne. Retourne le storage_path. */
+/** Sauvegarde une photo de bonsaï : upload Storage + insert ligne. Retourne le storage_path. */
 export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string> {
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
+  if (!photo.bonsaiId) throw new Error("savePhoto: bonsaiId manquant");
   const uidStr = await currentUserId();
   const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
@@ -399,7 +400,10 @@ export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string>
 export async function deletePhoto(id: string): Promise<void> {
   const photo = await getPhoto(id);
   if (!photo) return;
-  if (photo.storagePath) await deleteStorageObject(BONSAI_BUCKET, photo.storagePath);
+  if (photo.storagePath) {
+    const bucket = photo.poterieId ? POTERIE_BUCKET : BONSAI_BUCKET;
+    await deleteStorageObject(bucket, photo.storagePath);
+  }
   const { error } = await db.from("photos").delete().eq("id", id);
   if (error) throw error;
 }
