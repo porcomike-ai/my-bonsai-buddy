@@ -316,12 +316,12 @@ async function deleteStorageObject(bucket: string, path: string): Promise<void> 
 
 // --- Bonsais ---
 
-export async function listBonsais(limit = 500): Promise<Bonsai[]> {
+export async function listBonsais(): Promise<Bonsai[]> {
   const { data, error } = await db
     .from("bonsais")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(500);
   if (error) throw error;
   return (data as BonsaiRow[]).map(rowToBonsai);
 }
@@ -357,13 +357,13 @@ export async function deleteBonsai(id: string): Promise<void> {
 
 // --- Photos ---
 
-export async function listPhotos(bonsaiId: string, limit = 200): Promise<Photo[]> {
+export async function listPhotos(bonsaiId: string): Promise<Photo[]> {
   const { data, error } = await db
     .from("photos")
     .select("*")
     .eq("bonsai_id", bonsaiId)
     .order("date", { ascending: false })
-    .limit(limit);
+    .limit(200);
   if (error) throw error;
   return (data as PhotoRow[]).map(rowToPhoto);
 }
@@ -416,10 +416,10 @@ export async function updatePhotoDate(id: string, date: string): Promise<void> {
 
 // --- Journal ---
 
-export async function listJournal(bonsaiId?: string, limit = 500): Promise<JournalEntry[]> {
+export async function listJournal(bonsaiId?: string): Promise<JournalEntry[]> {
   let query = db.from("journal_entries").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("date", { ascending: false }).limit(limit);
+  const { data, error } = await query.order("date", { ascending: false }).limit(500);
   if (error) throw error;
   return (data as JournalEntryRow[]).map(rowToJournal);
 }
@@ -445,10 +445,10 @@ export async function deleteJournal(id: string): Promise<void> {
 
 // --- Rappels ---
 
-export async function listRappels(bonsaiId?: string, limit = 200): Promise<Rappel[]> {
+export async function listRappels(bonsaiId?: string): Promise<Rappel[]> {
   let query = db.from("rappels").select("*");
   if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(limit);
+  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(200);
   if (error) throw error;
   return (data as RappelRow[]).map(rowToRappel);
 }
@@ -475,12 +475,12 @@ export async function deleteRappel(id: string): Promise<void> {
 
 // --- Poteries ---
 
-export async function listPoteries(limit = 200): Promise<Poterie[]> {
+export async function listPoteries(): Promise<Poterie[]> {
   const { data, error } = await db
     .from("poteries")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(200);
   if (error) throw error;
   return (data as PoterieRow[]).map(rowToPoterie);
 }
@@ -515,12 +515,12 @@ export async function deletePoterie(id: string): Promise<void> {
 
 // --- Évènements ---
 
-export async function listEvenements(limit = 100): Promise<Evenement[]> {
+export async function listEvenements(): Promise<Evenement[]> {
   const { data, error } = await db
     .from("evenements")
     .select("*")
     .order("date_heure", { ascending: true })
-    .limit(limit);
+    .limit(100);
   if (error) throw error;
   return (data as EvenementRow[]).map(rowToEvenement);
 }
