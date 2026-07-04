@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { F as useFileInput, B as Button, A as AddPhotoDialog, M as Dialog, N as DialogContent, O as DialogHeader, Q as DialogTitle, L as Label, I as Input, T as Textarea, S as DialogFooter, U as deleteJournal, G as updatePhotoDate, H as updatePhotoLegende, J as deletePhoto, i as savePhoto, u as uid, j as saveJournal, z as getPhotoBlob, e as useBlobUrl } from "./router-BnsSyFa6.mjs";
-import { P as PhotoLightbox } from "./photo-lightbox-DSJ6sDbL.mjs";
-import { u as useConfirm } from "./confirm-dialog-CJ5numlD.mjs";
+import { F as useFileInput, B as Button, A as AddPhotoDialog, M as Dialog, N as DialogContent, O as DialogHeader, Q as DialogTitle, L as Label, I as Input, T as Textarea, S as DialogFooter, U as deleteJournal, G as updatePhotoDate, H as updatePhotoLegende, J as deletePhoto, i as savePhoto, u as uid, j as saveJournal, z as getPhotoBlob, e as useBlobUrl } from "./router-CdX15gXw.mjs";
+import { P as PhotoLightbox } from "./photo-lightbox-DeD9erm-.mjs";
+import { u as useConfirm } from "./confirm-dialog-DfQ2UWSk.mjs";
 import { a as SOINS, b as soinEmoji, c as soinLabel } from "./bonsai-meta-gq8SRzvW.mjs";
 import { a as Camera, K as FolderOpen, P as Plus, O as ArrowUpDown, b as Calendar, X, M as MessageSquarePlus } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
@@ -71,10 +71,12 @@ function getDateKey(isoDate) {
 }
 function UnifiedTimeline({
   bonsaiId,
+  bonsai,
   photos,
   entries,
   mainId,
-  onSetMain
+  onSetMain,
+  onUpdateBonsai
 }) {
   const qc = useQueryClient();
   const [sortDesc, setSortDesc] = reactExports.useState(true);
@@ -182,6 +184,18 @@ function UnifiedTimeline({
     setJournalModalOpen(true);
   };
   const saveJournalEntry = async () => {
+    const isCollectionExit = journalType === "don_vente" || journalType === "mort";
+    let shouldUpdateStatus = false;
+    if (isCollectionExit && bonsai.dansCollection !== false) {
+      const confirmed = await confirm({
+        title: "Cet arbre ne fait plus partie de votre collection ?",
+        description: journalType === "mort" ? "Marquer cet arbre comme décédé le retirera de votre collection active." : "Ce bonsaï a été donné ou vendu. Voulez-vous le retirer de votre collection active ?",
+        confirmLabel: "Oui, retirer",
+        cancelLabel: "Non, garder",
+        destructive: journalType === "mort"
+      });
+      shouldUpdateStatus = confirmed;
+    }
     if (editingEntry) {
       await saveJournal({
         id: editingEntry.id,
@@ -200,6 +214,10 @@ function UnifiedTimeline({
         notes: journalNotes || void 0
       });
       toast.success("Entrée ajoutée");
+    }
+    if (shouldUpdateStatus) {
+      await onUpdateBonsai({ ...bonsai, dansCollection: false });
+      toast.info("Arbre retiré de la collection");
     }
     qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
     setJournalModalOpen(false);

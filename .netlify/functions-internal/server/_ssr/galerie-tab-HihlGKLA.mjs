@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { F as useFileInput, B as Button, A as AddPhotoDialog, I as Input, T as Textarea, G as updatePhotoDate, H as updatePhotoLegende, J as deletePhoto, K as savePoterieGalleryPhoto, u as uid, z as getPhotoBlob, e as useBlobUrl } from "./router-BnsSyFa6.mjs";
-import { P as PhotoLightbox } from "./photo-lightbox-DSJ6sDbL.mjs";
-import { u as useConfirm } from "./confirm-dialog-CJ5numlD.mjs";
+import { F as useFileInput, B as Button, A as AddPhotoDialog, I as Input, T as Textarea, G as updatePhotoDate, H as updatePhotoLegende, J as deletePhoto, K as savePoterieGalleryPhoto, u as uid, z as getPhotoBlob, e as useBlobUrl } from "./router-CdX15gXw.mjs";
+import { P as PhotoLightbox } from "./photo-lightbox-DeD9erm-.mjs";
+import { u as useConfirm } from "./confirm-dialog-DfQ2UWSk.mjs";
 import { a as Camera, K as FolderOpen, b as Calendar, M as MessageSquarePlus, X } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";

@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, x as deletePoterie, v as getPoterie, l as listBonsais, w as listPoteriePhotos } from "./router-BnsSyFa6.mjs";
-import { A as AppShell } from "./app-shell-CNnIx-e5.mjs";
-import { u as useConfirm } from "./confirm-dialog-CJ5numlD.mjs";
+import { t as Route$2, g as getPoteriePhoto, e as useBlobUrl, P as PoterieForm, B as Button, x as deletePoterie, v as getPoterie, l as listBonsais, w as listPoteriePhotos } from "./router-CdX15gXw.mjs";
+import { A as AppShell } from "./app-shell-Cd3H8-LH.mjs";
+import { u as useConfirm } from "./confirm-dialog-DfQ2UWSk.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { w as ArrowLeft, e as Container, x as Pencil, y as Trash2 } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -65,7 +65,7 @@ import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-use-previous.mjs";
 import "../_libs/date-fns.mjs";
 import "../_libs/radix-ui__react-alert-dialog.mjs";
-const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-CV3yl0CV.mjs"));
+const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-HihlGKLA.mjs"));
 function PoterieDetail() {
   const {
     id

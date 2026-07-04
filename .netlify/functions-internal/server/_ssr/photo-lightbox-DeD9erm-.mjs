@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { e as useBlobUrl, M as Dialog, N as DialogContent, Q as DialogTitle, B as Button } from "./router-BnsSyFa6.mjs";
+import { e as useBlobUrl, M as Dialog, N as DialogContent, Q as DialogTitle, B as Button } from "./router-CdX15gXw.mjs";
 import { X, Z as ZoomOut, N as ZoomIn, R as RotateCcw } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 const MIN_ZOOM = 1;
@@ -33,7 +33,7 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
       return;
     }
     let cancelled = false;
-    import("./router-BnsSyFa6.mjs").then((n) => n.W).then(({ getPhotoBlob }) => getPhotoBlob(photo)).then((b) => {
+    import("./router-CdX15gXw.mjs").then((n) => n.W).then(({ getPhotoBlob }) => getPhotoBlob(photo)).then((b) => {
       if (!cancelled) setBlob(b);
     }).catch(() => {
       if (!cancelled) setBlob(void 0);

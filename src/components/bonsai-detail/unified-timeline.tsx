@@ -40,6 +40,7 @@ import {
   type Photo,
   type JournalEntry,
   type SoinType,
+  type Bonsai,
 } from "@/lib/supabase-data";
 import { SOINS, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 
@@ -53,16 +54,20 @@ function getDateKey(isoDate: string): string {
 
 export function UnifiedTimeline({
   bonsaiId,
+  bonsai,
   photos,
   entries,
   mainId,
   onSetMain,
+  onUpdateBonsai,
 }: {
   bonsaiId: string;
+  bonsai: Bonsai;
   photos: Photo[];
   entries: JournalEntry[];
   mainId?: string;
   onSetMain: (id: string) => void;
+  onUpdateBonsai: (b: Bonsai) => void;
 }) {
   const qc = useQueryClient();
   const [sortDesc, setSortDesc] = useState(true);
@@ -200,6 +205,24 @@ export function UnifiedTimeline({
   };
 
   const saveJournalEntry = async () => {
+    const isCollectionExit = journalType === "don_vente" || journalType === "mort";
+    let shouldUpdateStatus = false;
+
+    // Si l'événement indique une sortie de collection, demander confirmation
+    if (isCollectionExit && bonsai.dansCollection !== false) {
+      const confirmed = await confirm({
+        title: "Cet arbre ne fait plus partie de votre collection ?",
+        description:
+          journalType === "mort"
+            ? "Marquer cet arbre comme décédé le retirera de votre collection active."
+            : "Ce bonsaï a été donné ou vendu. Voulez-vous le retirer de votre collection active ?",
+        confirmLabel: "Oui, retirer",
+        cancelLabel: "Non, garder",
+        destructive: journalType === "mort",
+      });
+      shouldUpdateStatus = confirmed;
+    }
+
     if (editingEntry) {
       await saveJournal({
         id: editingEntry.id,
@@ -219,6 +242,13 @@ export function UnifiedTimeline({
       });
       toast.success("Entrée ajoutée");
     }
+
+    // Mettre à jour le statut de l'arbre si confirmé
+    if (shouldUpdateStatus) {
+      await onUpdateBonsai({ ...bonsai, dansCollection: false });
+      toast.info("Arbre retiré de la collection");
+    }
+
     qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
     setJournalModalOpen(false);
     setEditingEntry(null);

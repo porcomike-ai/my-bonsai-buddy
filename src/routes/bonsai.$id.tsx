@@ -126,6 +126,11 @@ function BonsaiDetail() {
     qc.invalidateQueries({ queryKey: ["bonsai", id] });
   };
 
+  const updateBonsai = async (updated: typeof b) => {
+    await saveBonsai(updated);
+    qc.invalidateQueries({ queryKey: ["bonsai", id] });
+  };
+
   if (editing) {
     return (
       <AppShell>
@@ -181,10 +186,12 @@ function BonsaiDetail() {
               <Suspense fallback={<TabFallback />}>
                 <UnifiedTimeline
                   bonsaiId={id}
+                  bonsai={b}
                   photos={photos}
                   entries={entries}
                   mainId={b.photoPrincipale}
                   onSetMain={setMainPhoto}
+                  onUpdateBonsai={updateBonsai}
                 />
               </Suspense>
             </TabsContent>
