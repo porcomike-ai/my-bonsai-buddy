@@ -65,6 +65,10 @@ function PoterieDetail() {
     queryFn: () => getPoterie(id),
   });
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
+  const { data: photos = [] } = useQuery({
+    queryKey: ["poterie-photos", id],
+    queryFn: () => listPoteriePhotos(id),
+  });
 
   const [blob, setBlob] = useState<Blob | undefined>(undefined);
   useEffect(() => {
