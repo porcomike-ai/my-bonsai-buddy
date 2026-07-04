@@ -56,7 +56,8 @@ export interface Bonsai {
 
 export interface Photo {
   id: string;
-  bonsaiId: string;
+  bonsaiId?: string;
+  poterieId?: string;
   /** Chemin Storage. Ignoré à l'insert si un blob est fourni (généré côté serveur). */
   storagePath?: string;
   date: string;
@@ -163,7 +164,8 @@ function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
 function rowToPhoto(r: PhotoRow): Photo {
   return {
     id: r.id,
-    bonsaiId: r.bonsai_id,
+    bonsaiId: r.bonsai_id ?? undefined,
+    poterieId: r.poterie_id ?? undefined,
     storagePath: r.storage_path,
     date: r.date,
     legende: r.legende ?? undefined,
