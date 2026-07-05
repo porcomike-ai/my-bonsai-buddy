@@ -25,8 +25,13 @@ const RappelsTab = lazy(() => import("@/components/bonsai-detail/rappels-tab"));
 
 export const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
-  loader: async ({ params }) => {
-    const b = await getBonsai(params.id);
+  loader: async ({ params, context }) => {
+    // Même queryKey que le `useQuery` de BonsaiDetail ci-dessous : évite un 2e
+    // appel réseau `getBonsai` redondant juste après la navigation.
+    const b = await context.queryClient.ensureQueryData({
+      queryKey: ["bonsai", params.id],
+      queryFn: () => getBonsai(params.id),
+    });
     return b ? { nom: b.nom, espece: b.espece } : null;
   },
   head: ({ loaderData, params }) => {
