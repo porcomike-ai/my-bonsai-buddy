@@ -6,7 +6,23 @@ import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { STYLES, styleLabel } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, Sprout, Star } from "lucide-react";
+
+type SortOption =
+  | "nom-asc"
+  | "nom-desc"
+  | "espece-asc"
+  | "acquisition-desc"
+  | "acquisition-asc"
+  | "valeur-desc";
 
 export const Route = createFileRoute("/collection")({
   head: () => ({
