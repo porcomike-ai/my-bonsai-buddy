@@ -413,6 +413,22 @@ export async function listPhotos(bonsaiId: string): Promise<Photo[]> {
   return (data as PhotoRow[]).map(rowToPhoto);
 }
 
+/**
+ * Récupère toutes les photos de bonsaïs de l'utilisateur en une seule requête
+ * (au lieu d'une requête par bonsaï). RLS filtre automatiquement sur le bon
+ * utilisateur, pas besoin de préciser bonsai_id ici.
+ */
+export async function listAllPhotos(): Promise<Photo[]> {
+  const { data, error } = await db
+    .from("photos")
+    .select("*")
+    .not("bonsai_id", "is", null)
+    .order("date", { ascending: false })
+    .limit(2000);
+  if (error) throw error;
+  return (data as PhotoRow[]).map(rowToPhoto);
+}
+
 export async function getPhoto(id: string): Promise<Photo | undefined> {
   const { data, error } = await db.from("photos").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
