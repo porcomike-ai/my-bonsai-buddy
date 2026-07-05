@@ -34,12 +34,18 @@ function ConnexionPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const goRedirect = () => {
+    const target = redirect ?? "/";
+    // window.location for full URL fidelity (preserves query strings like ?authorization_id=…)
+    if (target.includes("?") || target.startsWith("/.")) window.location.assign(target);
+    else navigate({ to: target, replace: true });
+  };
+
   // Déjà connecté → on quitte la page d'auth
   useEffect(() => {
-    if (!loading && user) {
-      navigate({ to: redirect ?? "/", replace: true });
-    }
-  }, [user, loading, redirect, navigate]);
+    if (!loading && user) goRedirect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +53,7 @@ function ConnexionPage() {
     try {
       await signIn(email.trim(), password);
       toast.success("Connexion réussie");
-      navigate({ to: redirect ?? "/", replace: true });
+      goRedirect();
     } catch (err) {
       toast.error("Connexion impossible : " + (err as Error).message);
     } finally {
