@@ -320,8 +320,16 @@ export async function getPoteriePhoto(
   return data ?? undefined;
 }
 
-async function uploadBonsaiPhoto(photoId: string, bonsaiId: string, blob: Blob): Promise<string> {
-  const uidStr = await currentUserId();
+// NOTE perf : ces fonctions reçoivent désormais `uidStr` déjà résolu par l'appelant
+// au lieu de rappeler `currentUserId()` (qui déclenche un aller-retour réseau réel
+// vers l'API Auth de Supabase via `db.auth.getUser()`). Avant ce correctif, une
+// sauvegarde avec photo déclenchait DEUX appels `getUser()` séquentiels au lieu d'un.
+async function uploadBonsaiPhoto(
+  uidStr: string,
+  photoId: string,
+  bonsaiId: string,
+  blob: Blob,
+): Promise<string> {
   const path = bonsaiPhotoPath(uidStr, bonsaiId, photoId);
   const { error } = await db.storage
     .from(BONSAI_BUCKET)
@@ -330,8 +338,7 @@ async function uploadBonsaiPhoto(photoId: string, bonsaiId: string, blob: Blob):
   return path;
 }
 
-async function uploadPoteriePhoto(poterieId: string, blob: Blob): Promise<string> {
-  const uidStr = await currentUserId();
+async function uploadPoteriePhoto(uidStr: string, poterieId: string, blob: Blob): Promise<string> {
   const path = poteriePhotoPath(uidStr, poterieId);
   const { error } = await db.storage
     .from(POTERIE_BUCKET)
@@ -342,11 +349,11 @@ async function uploadPoteriePhoto(poterieId: string, blob: Blob): Promise<string
 
 /** Upload d'une photo de galerie pour une poterie (chemin distinct du photo_path principal). */
 async function uploadPoterieGalleryPhoto(
+  uidStr: string,
   photoId: string,
   poterieId: string,
   blob: Blob,
 ): Promise<string> {
-  const uidStr = await currentUserId();
   const path = `${uidStr}/${poterieId}/${photoId}.jpg`;
   const { error } = await db.storage
     .from(POTERIE_BUCKET)
@@ -440,7 +447,7 @@ export async function savePhoto(photo: Photo & { blob?: Blob }): Promise<string>
   if (!photo.blob) throw new Error("savePhoto: blob manquant");
   if (!photo.bonsaiId) throw new Error("savePhoto: bonsaiId manquant");
   const uidStr = await currentUserId();
-  const path = await uploadBonsaiPhoto(photo.id, photo.bonsaiId, photo.blob);
+  const path = await uploadBonsaiPhoto(uidStr, photo.id, photo.bonsaiId, photo.blob);
   const { error } = await db.from("photos").upsert({
     id: photo.id,
     bonsai_id: photo.bonsaiId,
@@ -561,7 +568,7 @@ export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<vo
   const uidStr = await currentUserId();
   let photoPath = p.photoPath;
   if (p.photoBlob) {
-    photoPath = await uploadPoteriePhoto(p.id, p.photoBlob);
+    photoPath = await uploadPoteriePhoto(uidStr, p.id, p.photoBlob);
   }
   const row = poterieToRow({ ...p, photoPath });
   const { error } = await db.from("poteries").upsert({ ...row, user_id: uidStr });
@@ -604,7 +611,7 @@ export async function savePoterieGalleryPhoto(
   if (!photo.blob) throw new Error("savePoterieGalleryPhoto: blob manquant");
   if (!photo.poterieId) throw new Error("savePoterieGalleryPhoto: poterieId manquant");
   const uidStr = await currentUserId();
-  const path = await uploadPoterieGalleryPhoto(photo.id, photo.poterieId, photo.blob);
+  const path = await uploadPoterieGalleryPhoto(uidStr, photo.id, photo.poterieId, photo.blob);
   const { error } = await db.from("photos").upsert({
     id: photo.id,
     poterie_id: photo.poterieId,
