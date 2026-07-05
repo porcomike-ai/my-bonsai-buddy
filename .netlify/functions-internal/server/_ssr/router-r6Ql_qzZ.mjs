@@ -70,7 +70,7 @@ import "../_libs/get-nonce.mjs";
 import "../_libs/use-sidecar.mjs";
 import "../_libs/use-callback-ref.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
-const appCss = "/assets/styles-D5LJDB2V.css";
+const appCss = "/assets/styles-C1sORIMo.css";
 const Toaster = ({ ...props }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Toaster$1,
@@ -255,7 +255,7 @@ function AuthGate({ children }) {
   if (!user && !isAuthRoute) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$b = () => import("./statistiques-C1yUvUTG.mjs");
+const $$splitComponentImporter$b = () => import("./statistiques-Ds-xXRYO.mjs");
 const Route$c = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -1391,7 +1391,7 @@ function useFileInput() {
   };
   return { file, setFile, inputRef, reset };
 }
-const $$splitComponentImporter$a = () => import("./poteries-l-9fb9kA.mjs");
+const $$splitComponentImporter$a = () => import("./poteries-XOTTdZSw.mjs");
 const FORMES = ["Ovale", "Ronde", "Rectangulaire", "Rectangulaire à coins arrondis", "Carrée", "Hexagonale", "Octogonale", "Pentagonale", "Lotus", "Demi-lune", "Cascade (haute)", "Tambour (cylindrique)", "Suiban (plateau peu profond, sans trou)", "Coupe peu profonde", "Nanban (forme libre, texturée)", "Nuage / forme irrégulière"];
 const MATIERES = ["Grès", "Terre cuite non émaillée", "Céramique émaillée", "Porcelaine", "Argile de Yixing", "Béton", "Plastique / résine (entraînement)"];
 const AUTRE = "__autre__";
@@ -1590,7 +1590,7 @@ function ExistingImage({
   const url = useBlobUrl(blob);
   return url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : null;
 }
-const $$splitComponentImporter$9 = () => import("./parametres-BmxMyDTE.mjs");
+const $$splitComponentImporter$9 = () => import("./parametres-Bd6XRVH2.mjs");
 const Route$9 = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -1611,7 +1611,7 @@ const Route$9 = createFileRoute("/parametres")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./journal-BgiAFPCW.mjs");
+const $$splitComponentImporter$8 = () => import("./journal-BUP0DcUD.mjs");
 const Route$8 = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -1632,7 +1632,7 @@ const Route$8 = createFileRoute("/journal")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./inscription-B1BrkM1I.mjs");
+const $$splitComponentImporter$7 = () => import("./inscription-BF2rxmHH.mjs");
 const Route$7 = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -1644,7 +1644,7 @@ const Route$7 = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
-const $$splitComponentImporter$6 = () => import("./connexion-DmCtaHNe.mjs");
+const $$splitComponentImporter$6 = () => import("./connexion-IKx15AxL.mjs");
 const Route$6 = createFileRoute("/connexion")({
   validateSearch: (s) => ({
     redirect: typeof s.redirect === "string" && s.redirect.startsWith("/") ? s.redirect : void 0
@@ -1659,7 +1659,7 @@ const Route$6 = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component")
 });
-const $$splitComponentImporter$5 = () => import("./collection-BW5m3TJT.mjs");
+const $$splitComponentImporter$5 = () => import("./collection-D2vzPFeK.mjs");
 const Route$5 = createFileRoute("/collection")({
   head: () => ({
     meta: [{
@@ -1680,7 +1680,7 @@ const Route$5 = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./calendrier-CzgIk8Y2.mjs");
+const $$splitComponentImporter$4 = () => import("./calendrier-CVgrE2Xt.mjs");
 const Route$4 = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -1701,7 +1701,7 @@ const Route$4 = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-B2WbW3hg.mjs");
+const $$splitComponentImporter$3 = () => import("./index-Ar_rWjdM.mjs");
 const Route$3 = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -1722,7 +1722,7 @@ const Route$3 = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./poterie._id-B4G0E1yq.mjs");
+const $$splitComponentImporter$2 = () => import("./poterie._id-ZLjBfmkg.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -1768,7 +1768,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-DvVE4Jap.mjs");
+const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-DhqZWZgG.mjs");
 const Route$1 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -1792,7 +1792,7 @@ const Route$1 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./bonsai._id-DDV_ENg5.mjs");
+const $$splitComponentImporter = () => import("./bonsai._id-NuO5cCOc.mjs");
 const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
   loader: async ({

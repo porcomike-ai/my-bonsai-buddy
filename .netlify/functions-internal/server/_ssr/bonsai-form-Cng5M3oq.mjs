@@ -4,7 +4,7 @@ import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-que
 import { u as useForm, C as Controller } from "../_libs/react-hook-form.mjs";
 import { u } from "../_libs/hookform__resolvers.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { m as useAuth, u as uid, n as saveBonsai, o as savePhoto, L as Label, I as Input, T as Textarea, B as Button, A as AddPhotoDialog, w as cn, a as listPoteries } from "./router-B380VHsD.mjs";
+import { m as useAuth, u as uid, n as saveBonsai, o as savePhoto, L as Label, I as Input, T as Textarea, B as Button, A as AddPhotoDialog, w as cn, a as listPoteries } from "./router-r6Ql_qzZ.mjs";
 import { g as getAllEspeces, d as addCustomEspece, S as STYLES, E as ETAPES } from "./bonsai-meta-gq8SRzvW.mjs";
 import { S as Switch$1, a as SwitchThumb } from "../_libs/radix-ui__react-switch.mjs";
 import { I as ImagePlus } from "../_libs/lucide-react.mjs";
@@ -260,10 +260,28 @@ function BonsaiForm({
           }
         ) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(Field, { label: "Âge estimé à l'acquisition (années)", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "number", min: 0, ...form.register("ageEstime"), placeholder: "35" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Input,
+            {
+              type: "number",
+              min: 0,
+              inputMode: "numeric",
+              ...form.register("ageEstime"),
+              placeholder: "35"
+            }
+          ),
           form.watch("ageEstime") && !form.watch("dateAcquisition") && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: "Renseignez une date d'acquisition pour que l'âge se mette à jour automatiquement chaque année." })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Hauteur (cm)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "number", min: 0, ...form.register("hauteurCm"), placeholder: "45" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Hauteur (cm)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Input,
+          {
+            type: "number",
+            min: 0,
+            inputMode: "numeric",
+            ...form.register("hauteurCm"),
+            placeholder: "45"
+          }
+        ) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Date d'acquisition", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "date", ...form.register("dateAcquisition") }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Origine / pépinière", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { ...form.register("origine"), placeholder: "Pépinière Saulieu" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Prix d'achat (€)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(

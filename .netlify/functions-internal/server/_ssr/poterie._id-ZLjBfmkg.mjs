@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { z as Route$2, j as getPoteriePhoto, k as useBlobUrl, P as PoterieForm, B as Button, E as deletePoterie, C as getPoterie, l as listBonsais, D as listPoteriePhotos } from "./router-B380VHsD.mjs";
-import { A as AppShell } from "./app-shell-DVADMHR6.mjs";
-import { u as useConfirm } from "./confirm-dialog-DR1ebqbl.mjs";
+import { z as Route$2, j as getPoteriePhoto, k as useBlobUrl, P as PoterieForm, B as Button, E as deletePoterie, C as getPoterie, l as listBonsais, D as listPoteriePhotos } from "./router-r6Ql_qzZ.mjs";
+import { A as AppShell } from "./app-shell-J8hjpWAy.mjs";
+import { u as useConfirm } from "./confirm-dialog-BYEP0dHO.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { y as ArrowLeft, h as Container, z as Pencil, G as Trash2 } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -74,7 +74,7 @@ import "../_libs/radix-ui__react-radio-group.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
 import "../_libs/date-fns.mjs";
 import "../_libs/radix-ui__react-alert-dialog.mjs";
-const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-CB09lMo-.mjs"));
+const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-CBTzPN4H.mjs"));
 function PoterieDetail() {
   const {
     id

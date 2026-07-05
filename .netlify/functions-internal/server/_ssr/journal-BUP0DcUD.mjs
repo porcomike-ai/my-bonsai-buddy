@@ -1,8 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { e as listJournal, l as listBonsais } from "./router-B380VHsD.mjs";
-import { A as AppShell } from "./app-shell-DVADMHR6.mjs";
+import { e as listJournal, l as listBonsais } from "./router-r6Ql_qzZ.mjs";
+import { A as AppShell } from "./app-shell-J8hjpWAy.mjs";
 import { a as SOINS, b as soinEmoji, c as soinLabel } from "./bonsai-meta-gq8SRzvW.mjs";
 import "../_libs/sonner.mjs";
 import { f as format, p as parseISO, a as fr } from "../_libs/date-fns.mjs";
