@@ -51,6 +51,8 @@ function CollectionPage() {
   const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous" | "favoris">(
     "actifs",
   );
+  const [sortBy, setSortBy] = useState<SortOption>("nom-asc");
+  const [favorisFirst, setFavorisFirst] = useState(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -67,9 +69,52 @@ function CollectionPage() {
         (b.origine ?? "").toLowerCase().includes(needle)
       );
     });
-    // Favoris d'abord
-    return list.sort((a, b) => Number(!!b.favori) - Number(!!a.favori));
-  }, [bonsais, q, styleFilter, statutFilter]);
+
+    const cmp = (a: typeof list[number], b: typeof list[number]): number => {
+      switch (sortBy) {
+        case "nom-asc":
+          return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+        case "nom-desc":
+          return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+        case "espece-asc":
+          return a.espece.localeCompare(b.espece, "fr", { sensitivity: "base" });
+        case "acquisition-desc": {
+          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
+          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return db - da;
+        }
+        case "acquisition-asc": {
+          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
+          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return da - db;
+        }
+        case "valeur-desc": {
+          const va = a.valeurEstimee ?? null;
+          const vb = b.valeurEstimee ?? null;
+          if (va === null && vb === null) return 0;
+          if (va === null) return 1;
+          if (vb === null) return -1;
+          return vb - va;
+        }
+        default:
+          return 0;
+      }
+    };
+
+    return list.sort((a, b) => {
+      if (favorisFirst) {
+        const diff = Number(!!b.favori) - Number(!!a.favori);
+        if (diff !== 0) return diff;
+      }
+      return cmp(a, b);
+    });
+  }, [bonsais, q, styleFilter, statutFilter, sortBy, favorisFirst]);
 
   const actifsCount = bonsais.filter((b) => b.dansCollection ?? true).length;
 
