@@ -20,7 +20,7 @@ import {
 } from "@/lib/supabase-data";
 import * as idb from "@/lib/db";
 import { useAuth } from "@/components/supabase-auth-provider";
-import { subscribeToPush, notificationStatus } from "@/lib/notifications";
+import { subscribeToPush, notificationStatus, checkPushSubscription, unsubscribeFromPush } from "@/lib/notifications";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CloudUpload as UploadCloud,
@@ -70,6 +70,7 @@ function ParametresPage() {
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
   const [enablingPush, setEnablingPush] = useState(false);
+  const [disablingPush, setDisablingPush] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
 
   // Détecte la présence d'anciennes données dans IndexedDB (côté client uniquement).
@@ -97,11 +98,21 @@ function ParametresPage() {
     };
   }, []);
 
-  // Vérifie le statut des notifications push
+  // Vérifie le statut des notifications push (vérifie l'abonnement réel, pas juste la permission)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const status = notificationStatus();
-    setPushEnabled(status === "granted");
+    let cancelled = false;
+    (async () => {
+      try {
+        const hasSubscription = await checkPushSubscription();
+        if (!cancelled) setPushEnabled(hasSubscription);
+      } catch {
+        if (!cancelled) setPushEnabled(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const doSignOut = async () => {
@@ -131,6 +142,23 @@ function ParametresPage() {
       toast.error("Erreur: " + (e as Error).message);
     } finally {
       setEnablingPush(false);
+    }
+  };
+
+  const doDisablePush = async () => {
+    setDisablingPush(true);
+    try {
+      const success = await unsubscribeFromPush();
+      if (success) {
+        setPushEnabled(false);
+        toast.success("Notifications push désactivées");
+      } else {
+        toast.error("Impossible de désactiver les notifications push");
+      }
+    } catch (e) {
+      toast.error("Erreur: " + (e as Error).message);
+    } finally {
+      setDisablingPush(false);
     }
   };
 
@@ -407,9 +435,9 @@ function ParametresPage() {
               </Button>
             ) : pushEnabled ? (
               <>
-                <Button variant="outline" disabled className="opacity-50">
-                  <Bell className="mr-2 h-4 w-4" />
-                  Notifications activées
+                <Button variant="outline" onClick={doDisablePush} disabled={disablingPush}>
+                  <BellOff className="mr-2 h-4 w-4" />
+                  {disablingPush ? "Désactivation..." : "Désactiver les notifications"}
                 </Button>
                 <Button onClick={doSendTestNotification} disabled={sendingTest}>
                   {sendingTest ? "Envoi..." : "Envoyer une notification de test"}

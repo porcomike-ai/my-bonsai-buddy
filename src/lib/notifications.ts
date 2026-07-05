@@ -157,6 +157,56 @@ export async function subscribeToPush(): Promise<boolean> {
   }
 }
 
+export async function checkPushSubscription(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return false;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return false;
+
+    const subscription = await registration.pushManager.getSubscription();
+    return subscription !== null;
+  } catch {
+    return false;
+  }
+}
+
+export async function unsubscribeFromPush(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return false;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return false;
+
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return false;
+
+    // Delete from Supabase first
+    const { error } = await (supabase.from("push_subscriptions" as any) as any)
+      .delete()
+      .eq("endpoint", subscription.endpoint);
+
+    if (error) {
+      console.error("Erreur lors de la suppression de l'abonnement:", error);
+      return false;
+    }
+
+    // Unsubscribe from browser
+    const unsubscribed = await subscription.unsubscribe();
+    console.log("Abonnement push supprimé:", unsubscribed);
+    return true;
+  } catch (error) {
+    console.error("Erreur lors de la désabonnement push:", error);
+    return false;
+  }
+}
+
 // Convertir une clé VAPID base64 URL-safe en Uint8Array
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
