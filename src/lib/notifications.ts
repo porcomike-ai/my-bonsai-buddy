@@ -142,7 +142,7 @@ export async function subscribeToPush(): Promise<boolean> {
       endpoint: subscription.endpoint,
       p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh")!))),
       auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("auth")!))),
-    });
+    }, { onConflict: "endpoint" });
 
     if (error) {
       console.error("Erreur lors de l'enregistrement de l'abonnement:", error);
