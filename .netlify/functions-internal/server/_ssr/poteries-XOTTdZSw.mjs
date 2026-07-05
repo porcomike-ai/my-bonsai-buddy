@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, T as Textarea, B as Button, A as AddPhotoDialog, u as uid, s as savePoterie, g as getPoteriePhoto, e as useBlobUrl, L as Label, a as listPoteries, l as listBonsais } from "./router-C3eaBvs2.mjs";
-import { A as AppShell } from "./app-shell-OBpQ-DwG.mjs";
+import { I as Input, L as Label, S as Select, f as SelectTrigger, g as SelectValue, h as SelectContent, i as SelectItem, T as Textarea, B as Button, A as AddPhotoDialog, u as uid, s as savePoterie, j as getPoteriePhoto, k as useBlobUrl, a as listPoteries, l as listBonsais } from "./router-r6Ql_qzZ.mjs";
+import { A as AppShell } from "./app-shell-J8hjpWAy.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { I as ImagePlus, P as Plus, e as Container } from "../_libs/lucide-react.mjs";
+import { I as ImagePlus, P as Plus, h as Container } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -36,33 +36,59 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
-import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__react-select.mjs";
+import "../_libs/radix-ui__number.mjs";
 import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-context.mjs";
-import "../_libs/radix-ui__react-id.mjs";
-import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
-import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
 import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
 import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
 import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/radix-ui__react-popper.mjs";
+import "../_libs/floating-ui__react-dom.mjs";
+import "../_libs/floating-ui__dom.mjs";
+import "../_libs/floating-ui__core.mjs";
+import "../_libs/floating-ui__utils.mjs";
+import "../_libs/radix-ui__react-arrow.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-portal.mjs";
 import "../_libs/radix-ui__react-presence.mjs";
-import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/@radix-ui/react-visually-hidden+[...].mjs";
+import "../_libs/aria-hidden.mjs";
 import "../_libs/react-remove-scroll.mjs";
 import "../_libs/react-remove-scroll-bar.mjs";
 import "../_libs/react-style-singleton.mjs";
 import "../_libs/get-nonce.mjs";
 import "../_libs/use-sidecar.mjs";
 import "../_libs/use-callback-ref.mjs";
-import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
 import "../_libs/radix-ui__react-radio-group.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
-import "../_libs/radix-ui__react-collection.mjs";
-import "../_libs/radix-ui__react-direction.mjs";
-import "../_libs/radix-ui__react-use-size.mjs";
-import "../_libs/radix-ui__react-use-previous.mjs";
 import "../_libs/date-fns.mjs";
+const FORMES = ["Ovale", "Ronde", "Rectangulaire", "Rectangulaire à coins arrondis", "Carrée", "Hexagonale", "Octogonale", "Pentagonale", "Lotus", "Demi-lune", "Cascade (haute)", "Tambour (cylindrique)", "Suiban (plateau peu profond, sans trou)", "Coupe peu profonde", "Nanban (forme libre, texturée)", "Nuage / forme irrégulière"];
+const MATIERES = ["Grès", "Terre cuite non émaillée", "Céramique émaillée", "Porcelaine", "Argile de Yixing", "Béton", "Plastique / résine (entraînement)"];
+const AUTRE = "__autre__";
+function initialSelection(value, list) {
+  if (!value) return {
+    selection: "",
+    custom: ""
+  };
+  if (list.includes(value)) return {
+    selection: value,
+    custom: ""
+  };
+  return {
+    selection: AUTRE,
+    custom: value
+  };
+}
 function PoteriesPage() {
   const {
     data: poteries = []
@@ -160,9 +186,7 @@ function PoterieForm({
     longueurCm: initial?.longueurCm?.toString() ?? "",
     largeurCm: initial?.largeurCm?.toString() ?? "",
     hauteurCm: initial?.hauteurCm?.toString() ?? "",
-    forme: initial?.forme ?? "",
     couleur: initial?.couleur ?? "",
-    matiere: initial?.matiere ?? "",
     artisan: initial?.artisan ?? "",
     origine: initial?.origine ?? "",
     prix: initial?.prix?.toString() ?? "",
@@ -172,6 +196,14 @@ function PoterieForm({
     ...f,
     [k]: v
   }));
+  const formeInit = initialSelection(initial?.forme, FORMES);
+  const matiereInit = initialSelection(initial?.matiere, MATIERES);
+  const [formeChoice, setFormeChoice] = reactExports.useState(formeInit.selection);
+  const [formeCustom, setFormeCustom] = reactExports.useState(formeInit.custom);
+  const [matiereChoice, setMatiereChoice] = reactExports.useState(matiereInit.selection);
+  const [matiereCustom, setMatiereCustom] = reactExports.useState(matiereInit.custom);
+  const resolvedForme = formeChoice === AUTRE ? formeCustom.trim() : formeChoice ? formeChoice : "";
+  const resolvedMatiere = matiereChoice === AUTRE ? matiereCustom.trim() : matiereChoice ? matiereChoice : "";
   const submit = async (e) => {
     e.preventDefault();
     if (!form.nom.trim()) {
@@ -185,9 +217,9 @@ function PoterieForm({
       longueurCm: form.longueurCm ? Number(form.longueurCm) : void 0,
       largeurCm: form.largeurCm ? Number(form.largeurCm) : void 0,
       hauteurCm: form.hauteurCm ? Number(form.hauteurCm) : void 0,
-      forme: form.forme.trim() || void 0,
+      forme: resolvedForme || void 0,
       couleur: form.couleur.trim() || void 0,
-      matiere: form.matiere.trim() || void 0,
+      matiere: resolvedMatiere || void 0,
       artisan: form.artisan.trim() || void 0,
       origine: form.origine.trim() || void 0,
       prix: form.prix ? Number(form.prix) : void 0,
@@ -230,8 +262,28 @@ function PoterieForm({
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-3 sm:grid-cols-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Nom", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.nom, onChange: (e) => set("nom", e.target.value), placeholder: "Tokoname ovale brune" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Forme", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.forme, onChange: (e) => set("forme", e.target.value), placeholder: "Ovale, rectangle, ronde…" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Matière", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.matiere, onChange: (e) => set("matiere", e.target.value), placeholder: "Grès, terre cuite émaillée…" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Forme" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Select, { value: formeChoice, onValueChange: setFormeChoice, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { "aria-label": "Forme", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, { placeholder: "Choisir une forme…" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(SelectContent, { children: [
+              FORMES.map((f) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: f, children: f }, f)),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: AUTRE, children: "Autre" })
+            ] })
+          ] }),
+          formeChoice === AUTRE && /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { className: "mt-2", value: formeCustom, onChange: (e) => setFormeCustom(e.target.value), placeholder: "Précisez la forme" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Matière" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Select, { value: matiereChoice, onValueChange: setMatiereChoice, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { "aria-label": "Matière", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, { placeholder: "Choisir une matière…" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(SelectContent, { children: [
+              MATIERES.map((m) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: m, children: m }, m)),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: AUTRE, children: "Autre" })
+            ] })
+          ] }),
+          matiereChoice === AUTRE && /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { className: "mt-2", value: matiereCustom, onChange: (e) => setMatiereCustom(e.target.value), placeholder: "Précisez la matière" })
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Couleur", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.couleur, onChange: (e) => set("couleur", e.target.value), placeholder: "Brun, vert céladon…" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Longueur (cm)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "number", min: 0, value: form.longueurCm, onChange: (e) => set("longueurCm", e.target.value) }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Largeur (cm)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "number", min: 0, value: form.largeurCm, onChange: (e) => set("largeurCm", e.target.value) }) }),

@@ -1,12 +1,12 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { l as listBonsais, a as listPoteries, b as listRappels, c as listPhotos, d as listJournal } from "./router-C3eaBvs2.mjs";
-import { A as AppShell } from "./app-shell-OBpQ-DwG.mjs";
+import { c as ageActuel, l as listBonsais, a as listPoteries, b as listRappels, d as listPhotos, e as listJournal } from "./router-r6Ql_qzZ.mjs";
+import { A as AppShell } from "./app-shell-J8hjpWAy.mjs";
 import { E as ETAPES, S as STYLES, s as styleLabel, e as etapeLabel } from "./bonsai-meta-gq8SRzvW.mjs";
 import "../_libs/sonner.mjs";
 import { d as differenceInDays, p as parseISO } from "../_libs/date-fns.mjs";
-import { c as ChartBar, d as Sprout, e as Container, a as Camera, b as Calendar, E as Euro, T as TrendingUp } from "../_libs/lucide-react.mjs";
+import { f as ChartBar, g as Sprout, h as Container, d as Camera, e as Calendar, E as Euro, T as TrendingUp } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -38,32 +38,41 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
-import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__react-select.mjs";
+import "../_libs/radix-ui__number.mjs";
 import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-context.mjs";
-import "../_libs/radix-ui__react-id.mjs";
-import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
-import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
 import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
 import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
 import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/radix-ui__react-popper.mjs";
+import "../_libs/floating-ui__react-dom.mjs";
+import "../_libs/floating-ui__dom.mjs";
+import "../_libs/floating-ui__core.mjs";
+import "../_libs/floating-ui__utils.mjs";
+import "../_libs/radix-ui__react-arrow.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-portal.mjs";
 import "../_libs/radix-ui__react-presence.mjs";
-import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/@radix-ui/react-visually-hidden+[...].mjs";
+import "../_libs/aria-hidden.mjs";
 import "../_libs/react-remove-scroll.mjs";
 import "../_libs/react-remove-scroll-bar.mjs";
 import "../_libs/react-style-singleton.mjs";
 import "../_libs/get-nonce.mjs";
 import "../_libs/use-sidecar.mjs";
 import "../_libs/use-callback-ref.mjs";
-import "../_libs/aria-hidden.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
 import "../_libs/radix-ui__react-radio-group.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
-import "../_libs/radix-ui__react-collection.mjs";
-import "../_libs/radix-ui__react-direction.mjs";
-import "../_libs/radix-ui__react-use-size.mjs";
-import "../_libs/radix-ui__react-use-previous.mjs";
 async function loadAllPhotos() {
   const bonsais = await listBonsais();
   const photosByBonsai = await Promise.all(bonsais.map((b) => listPhotos(b.id)));
@@ -110,11 +119,11 @@ function StatistiquesPage() {
     const totalValeur = actifs.reduce((s, b) => s + (b.valeurEstimee ?? 0), 0);
     const plusValue = totalValeur - totalPrix;
     const ageMoyen = (() => {
-      const withAge = actifs.filter((b) => b.ageEstime != null);
-      if (!withAge.length) return null;
-      return Math.round(withAge.reduce((s, b) => s + (b.ageEstime ?? 0), 0) / withAge.length);
+      const ages = actifs.map((b) => ageActuel(b)).filter((a) => a != null);
+      if (!ages.length) return null;
+      return Math.round(ages.reduce((s, a) => s + a, 0) / ages.length);
     })();
-    const plusVieux = actifs.filter((b) => b.ageEstime != null).sort((a, b) => (b.ageEstime ?? 0) - (a.ageEstime ?? 0))[0];
+    const plusVieux = actifs.filter((b) => ageActuel(b) != null).sort((a, b) => (ageActuel(b) ?? 0) - (ageActuel(a) ?? 0))[0];
     const parEtape = ETAPES.map((e) => ({
       ...e,
       count: actifs.filter((b) => (b.etape ?? "culture") === e.value).length
@@ -195,7 +204,7 @@ function StatistiquesPage() {
           }, className: "text-accent hover:underline", children: [
             stats.plusVieux.nom,
             " (",
-            stats.plusVieux.ageEstime,
+            ageActuel(stats.plusVieux),
             " ans)"
           ] }) : "—" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(Row, { label: "Étape majoritaire", value: (() => {

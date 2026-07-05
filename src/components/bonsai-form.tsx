@@ -289,11 +289,28 @@ export function BonsaiForm({
               ))}
             </select>
           </Field>
-          <Field label="Âge estimé (années)">
-            <Input type="number" min={0} {...form.register("ageEstime")} placeholder="35" />
+          <Field label="Âge estimé à l'acquisition (années)">
+            <Input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              {...form.register("ageEstime")}
+              placeholder="35"
+            />
+            {form.watch("ageEstime") && !form.watch("dateAcquisition") && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Renseignez une date d'acquisition pour que l'âge se mette à jour automatiquement chaque année.
+              </p>
+            )}
           </Field>
           <Field label="Hauteur (cm)">
-            <Input type="number" min={0} {...form.register("hauteurCm")} placeholder="45" />
+            <Input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              {...form.register("hauteurCm")}
+              placeholder="45"
+            />
           </Field>
           <Field label="Date d'acquisition">
             <Input type="date" {...form.register("dateAcquisition")} />

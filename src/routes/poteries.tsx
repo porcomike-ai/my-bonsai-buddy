@@ -16,9 +16,53 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Container, ImagePlus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddPhotoDialog, type PhotoSource } from "@/components/add-photo-dialog";
+
+const FORMES = [
+  "Ovale",
+  "Ronde",
+  "Rectangulaire",
+  "Rectangulaire à coins arrondis",
+  "Carrée",
+  "Hexagonale",
+  "Octogonale",
+  "Pentagonale",
+  "Lotus",
+  "Demi-lune",
+  "Cascade (haute)",
+  "Tambour (cylindrique)",
+  "Suiban (plateau peu profond, sans trou)",
+  "Coupe peu profonde",
+  "Nanban (forme libre, texturée)",
+  "Nuage / forme irrégulière",
+] as const;
+
+const MATIERES = [
+  "Grès",
+  "Terre cuite non émaillée",
+  "Céramique émaillée",
+  "Porcelaine",
+  "Argile de Yixing",
+  "Béton",
+  "Plastique / résine (entraînement)",
+] as const;
+
+const AUTRE = "__autre__";
+
+function initialSelection(value: string | undefined, list: readonly string[]) {
+  if (!value) return { selection: "", custom: "" };
+  if (list.includes(value)) return { selection: value, custom: "" };
+  return { selection: AUTRE, custom: value };
+}
 
 export const Route = createFileRoute("/poteries")({
   head: () => ({
@@ -163,15 +207,25 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
     longueurCm: initial?.longueurCm?.toString() ?? "",
     largeurCm: initial?.largeurCm?.toString() ?? "",
     hauteurCm: initial?.hauteurCm?.toString() ?? "",
-    forme: initial?.forme ?? "",
     couleur: initial?.couleur ?? "",
-    matiere: initial?.matiere ?? "",
     artisan: initial?.artisan ?? "",
     origine: initial?.origine ?? "",
     prix: initial?.prix?.toString() ?? "",
     notes: initial?.notes ?? "",
   });
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const formeInit = initialSelection(initial?.forme, FORMES);
+  const matiereInit = initialSelection(initial?.matiere, MATIERES);
+  const [formeChoice, setFormeChoice] = useState<string>(formeInit.selection);
+  const [formeCustom, setFormeCustom] = useState<string>(formeInit.custom);
+  const [matiereChoice, setMatiereChoice] = useState<string>(matiereInit.selection);
+  const [matiereCustom, setMatiereCustom] = useState<string>(matiereInit.custom);
+
+  const resolvedForme =
+    formeChoice === AUTRE ? formeCustom.trim() : formeChoice ? formeChoice : "";
+  const resolvedMatiere =
+    matiereChoice === AUTRE ? matiereCustom.trim() : matiereChoice ? matiereChoice : "";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,9 +241,9 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
       longueurCm: form.longueurCm ? Number(form.longueurCm) : undefined,
       largeurCm: form.largeurCm ? Number(form.largeurCm) : undefined,
       hauteurCm: form.hauteurCm ? Number(form.hauteurCm) : undefined,
-      forme: form.forme.trim() || undefined,
+      forme: resolvedForme || undefined,
       couleur: form.couleur.trim() || undefined,
-      matiere: form.matiere.trim() || undefined,
+      matiere: resolvedMatiere || undefined,
       artisan: form.artisan.trim() || undefined,
       origine: form.origine.trim() || undefined,
       prix: form.prix ? Number(form.prix) : undefined,
@@ -255,20 +309,54 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
               placeholder="Tokoname ovale brune"
             />
           </Field>
-          <Field label="Forme">
-            <Input
-              value={form.forme}
-              onChange={(e) => set("forme", e.target.value)}
-              placeholder="Ovale, rectangle, ronde…"
-            />
-          </Field>
-          <Field label="Matière">
-            <Input
-              value={form.matiere}
-              onChange={(e) => set("matiere", e.target.value)}
-              placeholder="Grès, terre cuite émaillée…"
-            />
-          </Field>
+          <div>
+            <Label className="mb-1.5 block text-sm">Forme</Label>
+            <Select value={formeChoice} onValueChange={setFormeChoice}>
+              <SelectTrigger aria-label="Forme">
+                <SelectValue placeholder="Choisir une forme…" />
+              </SelectTrigger>
+              <SelectContent>
+                {FORMES.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+                <SelectItem value={AUTRE}>Autre</SelectItem>
+              </SelectContent>
+            </Select>
+            {formeChoice === AUTRE && (
+              <Input
+                className="mt-2"
+                value={formeCustom}
+                onChange={(e) => setFormeCustom(e.target.value)}
+                placeholder="Précisez la forme"
+              />
+            )}
+          </div>
+          <div>
+            <Label className="mb-1.5 block text-sm">Matière</Label>
+            <Select value={matiereChoice} onValueChange={setMatiereChoice}>
+              <SelectTrigger aria-label="Matière">
+                <SelectValue placeholder="Choisir une matière…" />
+              </SelectTrigger>
+              <SelectContent>
+                {MATIERES.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+                <SelectItem value={AUTRE}>Autre</SelectItem>
+              </SelectContent>
+            </Select>
+            {matiereChoice === AUTRE && (
+              <Input
+                className="mt-2"
+                value={matiereCustom}
+                onChange={(e) => setMatiereCustom(e.target.value)}
+                placeholder="Précisez la matière"
+              />
+            )}
+          </div>
           <Field label="Couleur">
             <Input
               value={form.couleur}

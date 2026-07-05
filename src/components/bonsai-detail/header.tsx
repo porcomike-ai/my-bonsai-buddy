@@ -8,6 +8,7 @@ import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { Button } from "@/components/ui/button";
 import { styleLabel, etapeLabel } from "@/lib/bonsai-meta";
 import type { Bonsai, Poterie } from "@/lib/supabase-data";
+import { ageActuel } from "@/lib/supabase-data";
 
 import { SharePdfButton } from "./share-pdf-button";
 import { Stat } from "./stat";
@@ -77,7 +78,7 @@ export function BonsaiHeader({
 
         <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Stat label="Étape" value={etapeLabel(b.etape)} />
-          {b.ageEstime != null && <Stat label="Âge" value={`${b.ageEstime} ans`} />}
+          {ageActuel(b) != null && <Stat label="Âge" value={`${ageActuel(b)} ans`} />}
           {b.hauteurCm != null && <Stat label="Hauteur" value={`${b.hauteurCm} cm`} />}
           {b.dateAcquisition && (
             <Stat

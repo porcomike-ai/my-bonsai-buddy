@@ -1,12 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listBonsais } from "@/lib/supabase-data";
+import { listBonsais, ageActuel } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { STYLES, styleLabel } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, Sprout, Star } from "lucide-react";
+
+type SortOption =
+  | "nom-asc"
+  | "nom-desc"
+  | "espece-asc"
+  | "acquisition-desc"
+  | "acquisition-asc"
+  | "valeur-desc";
 
 export const Route = createFileRoute("/collection")({
   head: () => ({
@@ -35,6 +51,8 @@ function CollectionPage() {
   const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous" | "favoris">(
     "actifs",
   );
+  const [sortBy, setSortBy] = useState<SortOption>("nom-asc");
+  const [favorisFirst, setFavorisFirst] = useState(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -51,9 +69,52 @@ function CollectionPage() {
         (b.origine ?? "").toLowerCase().includes(needle)
       );
     });
-    // Favoris d'abord
-    return list.sort((a, b) => Number(!!b.favori) - Number(!!a.favori));
-  }, [bonsais, q, styleFilter, statutFilter]);
+
+    const cmp = (a: typeof list[number], b: typeof list[number]): number => {
+      switch (sortBy) {
+        case "nom-asc":
+          return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+        case "nom-desc":
+          return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+        case "espece-asc":
+          return a.espece.localeCompare(b.espece, "fr", { sensitivity: "base" });
+        case "acquisition-desc": {
+          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
+          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return db - da;
+        }
+        case "acquisition-asc": {
+          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
+          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return da - db;
+        }
+        case "valeur-desc": {
+          const va = a.valeurEstimee ?? null;
+          const vb = b.valeurEstimee ?? null;
+          if (va === null && vb === null) return 0;
+          if (va === null) return 1;
+          if (vb === null) return -1;
+          return vb - va;
+        }
+        default:
+          return 0;
+      }
+    };
+
+    return list.sort((a, b) => {
+      if (favorisFirst) {
+        const diff = Number(!!b.favori) - Number(!!a.favori);
+        if (diff !== 0) return diff;
+      }
+      return cmp(a, b);
+    });
+  }, [bonsais, q, styleFilter, statutFilter, sortBy, favorisFirst]);
 
   const actifsCount = bonsais.filter((b) => b.dansCollection ?? true).length;
 
@@ -114,7 +175,32 @@ function CollectionPage() {
           <option value="sortis">Sortis de la collection</option>
           <option value="tous">Tous</option>
         </select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger
+            aria-label="Trier les bonsaïs"
+            className="h-11 w-auto min-w-[200px] rounded-full border-input bg-card px-4 text-sm"
+          >
+            <SelectValue placeholder="Trier par…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nom-asc">Alphabétique (A → Z)</SelectItem>
+            <SelectItem value="nom-desc">Alphabétique (Z → A)</SelectItem>
+            <SelectItem value="espece-asc">Par espèce (A → Z)</SelectItem>
+            <SelectItem value="acquisition-desc">Acquisition (récent → ancien)</SelectItem>
+            <SelectItem value="acquisition-asc">Acquisition (ancien → récent)</SelectItem>
+            <SelectItem value="valeur-desc">Valeur estimée (décroissante)</SelectItem>
+          </SelectContent>
+        </Select>
+        <label className="flex h-11 cursor-pointer items-center gap-2 rounded-full border border-input bg-card px-4 text-sm">
+          <Checkbox
+            checked={favorisFirst}
+            onCheckedChange={(v) => setFavorisFirst(v === true)}
+            aria-label="Favoris en premier"
+          />
+          <span>Favoris en premier</span>
+        </label>
       </div>
+
 
       {filtered.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border bg-card/50 py-16 text-center">
@@ -168,9 +254,9 @@ function CollectionPage() {
                 <div className="space-y-1 p-4">
                   <div className="flex items-baseline justify-between gap-2">
                     <h2 className="truncate font-display text-lg font-semibold">{b.nom}</h2>
-                    {b.ageEstime != null && (
+                    {ageActuel(b) != null && (
                       <span className="shrink-0 text-xs text-muted-foreground">
-                        {b.ageEstime} ans
+                        {ageActuel(b)} ans
                       </span>
                     )}
                   </div>

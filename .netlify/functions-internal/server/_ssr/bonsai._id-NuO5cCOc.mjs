@@ -2,16 +2,16 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { C as Route, B as Button, h as saveBonsai, D as deleteBonsai, q as cn, y as getBonsai, v as getPoterie, d as listJournal, b as listRappels, c as listPhotos, z as getPhotoBlob } from "./router-C3eaBvs2.mjs";
-import { A as AppShell } from "./app-shell-OBpQ-DwG.mjs";
-import { B as BonsaiForm } from "./bonsai-form-BiAWbbY3.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-BWIR9FVY.mjs";
+import { H as Route, B as Button, c as ageActuel, n as saveBonsai, J as deleteBonsai, w as cn, F as getBonsai, C as getPoterie, e as listJournal, b as listRappels, d as listPhotos, G as getPhotoBlob } from "./router-r6Ql_qzZ.mjs";
+import { A as AppShell } from "./app-shell-J8hjpWAy.mjs";
+import { B as BonsaiForm } from "./bonsai-form-Cng5M3oq.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-BGGsEzPy.mjs";
 import { s as styleLabel, e as etapeLabel, c as soinLabel } from "./bonsai-meta-gq8SRzvW.mjs";
 import { R as Root2$1, T as Trigger$1, P as Portal2, C as Content2, I as Item2, S as SubTrigger2, a as SubContent2, b as CheckboxItem2, c as ItemIndicator2, d as RadioItem2, L as Label2, e as Separator2 } from "../_libs/radix-ui__react-dropdown-menu.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
-import { u as useConfirm } from "./confirm-dialog-_odOmEnW.mjs";
+import { u as useConfirm } from "./confirm-dialog-BYEP0dHO.mjs";
 import { R as Root2, L as List, T as Trigger, C as Content } from "../_libs/radix-ui__react-tabs.mjs";
-import { w as ArrowLeft, x as Pencil, y as Trash2, n as Star, L as Loader, z as Share2, G as Image$1, J as Images, p as ChevronRight, q as Check, C as Circle } from "../_libs/lucide-react.mjs";
+import { y as ArrowLeft, z as Pencil, G as Trash2, q as Star, L as Loader, J as Share2, K as Image$1, M as Images, s as ChevronRight, b as Check, c as Circle } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -44,43 +44,46 @@ import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
-import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__react-select.mjs";
+import "../_libs/radix-ui__number.mjs";
 import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-context.mjs";
-import "../_libs/radix-ui__react-id.mjs";
-import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
-import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
 import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
 import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
-import "../_libs/radix-ui__react-focus-scope.mjs";
-import "../_libs/radix-ui__react-portal.mjs";
-import "../_libs/radix-ui__react-presence.mjs";
 import "../_libs/radix-ui__react-focus-guards.mjs";
-import "../_libs/react-remove-scroll.mjs";
-import "../_libs/react-remove-scroll-bar.mjs";
-import "../_libs/react-style-singleton.mjs";
-import "../_libs/get-nonce.mjs";
-import "../_libs/use-sidecar.mjs";
-import "../_libs/use-callback-ref.mjs";
-import "../_libs/aria-hidden.mjs";
-import "../_libs/radix-ui__react-radio-group.mjs";
-import "../_libs/radix-ui__react-roving-focus.mjs";
-import "../_libs/radix-ui__react-collection.mjs";
-import "../_libs/radix-ui__react-direction.mjs";
-import "../_libs/radix-ui__react-use-size.mjs";
-import "../_libs/radix-ui__react-use-previous.mjs";
-import "../_libs/react-hook-form.mjs";
-import "../_libs/hookform__resolvers.mjs";
-import "../_libs/zod.mjs";
-import "../_libs/radix-ui__react-switch.mjs";
-import "../_libs/radix-ui__react-menu.mjs";
+import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
 import "../_libs/radix-ui__react-popper.mjs";
 import "../_libs/floating-ui__react-dom.mjs";
 import "../_libs/floating-ui__dom.mjs";
 import "../_libs/floating-ui__core.mjs";
 import "../_libs/floating-ui__utils.mjs";
 import "../_libs/radix-ui__react-arrow.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
+import "../_libs/radix-ui__react-portal.mjs";
+import "../_libs/radix-ui__react-presence.mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/@radix-ui/react-visually-hidden+[...].mjs";
+import "../_libs/aria-hidden.mjs";
+import "../_libs/react-remove-scroll.mjs";
+import "../_libs/react-remove-scroll-bar.mjs";
+import "../_libs/react-style-singleton.mjs";
+import "../_libs/get-nonce.mjs";
+import "../_libs/use-sidecar.mjs";
+import "../_libs/use-callback-ref.mjs";
+import "../_libs/radix-ui__react-dialog.mjs";
+import "../_libs/radix-ui__react-radio-group.mjs";
+import "../_libs/radix-ui__react-roving-focus.mjs";
+import "../_libs/react-hook-form.mjs";
+import "../_libs/hookform__resolvers.mjs";
+import "../_libs/zod.mjs";
+import "../_libs/radix-ui__react-switch.mjs";
+import "../_libs/radix-ui__react-menu.mjs";
 import "fs";
 import "path";
 import "../_libs/fflate.mjs";
@@ -278,7 +281,8 @@ async function generateBonsaiPdf(bonsaiId, options = {}) {
   doc.setTextColor(40, 40, 40);
   doc.setFontSize(10);
   const infos = [];
-  if (b.ageEstime != null) infos.push(["Âge estimé", `${b.ageEstime} ans`]);
+  const age = ageActuel(b);
+  if (age != null) infos.push(["Âge estimé", `${age} ans`]);
   if (b.hauteurCm != null) infos.push(["Hauteur", `${b.hauteurCm} cm`]);
   if (b.dateAcquisition)
     infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);
@@ -540,7 +544,7 @@ function BonsaiHeader({
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-lg italic text-muted-foreground", children: b.espece }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("dl", { className: "mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Stat, { label: "Étape", value: etapeLabel(b.etape) }),
-        b.ageEstime != null && /* @__PURE__ */ jsxRuntimeExports.jsx(Stat, { label: "Âge", value: `${b.ageEstime} ans` }),
+        ageActuel(b) != null && /* @__PURE__ */ jsxRuntimeExports.jsx(Stat, { label: "Âge", value: `${ageActuel(b)} ans` }),
         b.hauteurCm != null && /* @__PURE__ */ jsxRuntimeExports.jsx(Stat, { label: "Hauteur", value: `${b.hauteurCm} cm` }),
         b.dateAcquisition && /* @__PURE__ */ jsxRuntimeExports.jsx(
           Stat,
@@ -613,8 +617,8 @@ const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 TabsContent.displayName = Content.displayName;
-const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-DqTDAZJK.mjs"));
-const RappelsTab = reactExports.lazy(() => import("./rappels-tab-DH6elx82.mjs"));
+const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-DDBCbMFt.mjs"));
+const RappelsTab = reactExports.lazy(() => import("./rappels-tab-BdpwJXDX.mjs"));
 function TabFallback() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "pt-4 text-sm text-muted-foreground", children: "Chargement…" });
 }

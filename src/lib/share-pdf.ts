@@ -10,6 +10,7 @@ import {
   listJournal,
   listPhotos,
   listRappels,
+  ageActuel,
 } from "./supabase-data";
 import { soinLabel, styleLabel } from "./bonsai-meta";
 
@@ -113,7 +114,8 @@ export async function generateBonsaiPdf(
   doc.setTextColor(40, 40, 40);
   doc.setFontSize(10);
   const infos: Array<[string, string]> = [];
-  if (b.ageEstime != null) infos.push(["Âge estimé", `${b.ageEstime} ans`]);
+  const age = ageActuel(b);
+  if (age != null) infos.push(["Âge estimé", `${age} ans`]);
   if (b.hauteurCm != null) infos.push(["Hauteur", `${b.hauteurCm} cm`]);
   if (b.dateAcquisition)
     infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);

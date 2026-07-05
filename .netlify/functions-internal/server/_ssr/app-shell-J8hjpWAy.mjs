@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { f as useRouterState, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { q as cn, p as listEvenements, m as saveEvenement } from "./router-C3eaBvs2.mjs";
-import { f as Leaf, g as LayoutDashboard, d as Sprout, e as Container, b as Calendar, B as BookOpen, c as ChartBar, h as Settings } from "../_libs/lucide-react.mjs";
+import { w as cn, x as listEvenements, r as saveEvenement } from "./router-r6Ql_qzZ.mjs";
+import { i as Leaf, j as LayoutDashboard, g as Sprout, h as Container, e as Calendar, B as BookOpen, f as ChartBar, k as Settings } from "../_libs/lucide-react.mjs";
 async function requestNotificationPermission() {
   if (typeof window === "undefined" || !("Notification" in window)) return "denied";
   if (Notification.permission === "default") {
@@ -19,6 +19,7 @@ function notificationStatus() {
 }
 function triggerTimeFor(e) {
   const ts = new Date(e.dateHeure).getTime();
+  if (isNaN(ts)) return Infinity;
   const minutesBefore = e.rappelMinutes ?? 0;
   return ts - minutesBefore * 6e4;
 }
@@ -35,7 +36,11 @@ async function fireNotification(e) {
     });
   } catch {
   }
-  await saveEvenement({ ...e, notifiedAt: (/* @__PURE__ */ new Date()).toISOString() });
+  try {
+    await saveEvenement({ ...e, notifiedAt: (/* @__PURE__ */ new Date()).toISOString() });
+  } catch (err) {
+    console.error("Erreur lors de la sauvegarde du statut de notification", err);
+  }
 }
 let intervalId = null;
 async function check() {
@@ -45,7 +50,8 @@ async function check() {
     for (const e of evs) {
       if (e.notifiedAt) continue;
       const trigger = triggerTimeFor(e);
-      if (trigger <= now && new Date(e.dateHeure).getTime() + 24 * 36e5 > now) {
+      const eventTime = new Date(e.dateHeure).getTime();
+      if (trigger <= now && eventTime + 24 * 36e5 > now) {
         await fireNotification(e);
       }
     }
@@ -57,9 +63,10 @@ function startNotificationScheduler() {
   if (intervalId) return;
   setTimeout(check, 2e3);
   intervalId = setInterval(check, 3e4);
-  document.addEventListener("visibilitychange", () => {
+  const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") check();
-  });
+  };
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 }
 const NAV = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard },

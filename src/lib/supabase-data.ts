@@ -116,9 +116,34 @@ export function uid() {
   return crypto.randomUUID();
 }
 
+/**
+ * Calcule l'âge actuel d'un bonsaï à partir de son âge estimé à l'acquisition
+ * et de la date d'acquisition.
+ *
+ * @param b - Bonsaï avec ageEstime (âge à l'acquisition) et dateAcquisition
+ * @param today - Date de référence (défaut: aujourd'hui)
+ * @returns L'âge actuel recalculé, ou ageEstime tel quel si pas de date d'acquisition
+ */
+export function ageActuel(
+  b: Pick<Bonsai, "ageEstime" | "dateAcquisition">,
+  today: Date = new Date(),
+): number | undefined {
+  if (b.ageEstime == null) return undefined;
+  if (!b.dateAcquisition) return b.ageEstime;
+
+  const acquisition = new Date(b.dateAcquisition);
+  let annees = today.getFullYear() - acquisition.getFullYear();
+  const pasEncoreAnniversaire =
+    today.getMonth() < acquisition.getMonth() ||
+    (today.getMonth() === acquisition.getMonth() && today.getDate() < acquisition.getDate());
+  if (pasEncoreAnniversaire) annees -= 1;
+
+  return b.ageEstime + Math.max(0, annees);
+}
+
 // --- Mappers snake_case ↔ camelCase ---
 
-function rowToBonsai(r: BonsaiRow): Bonsai {
+export function rowToBonsai(r: BonsaiRow): Bonsai {
   return {
     id: r.id,
     nom: r.nom,
@@ -140,7 +165,7 @@ function rowToBonsai(r: BonsaiRow): Bonsai {
   };
 }
 
-function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
+export function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
   const row: Record<string, unknown> = {};
   if (b.id !== undefined) row.id = b.id;
   if (b.nom !== undefined) row.nom = b.nom;
@@ -161,41 +186,7 @@ function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
   return row;
 }
 
-function rowToPhoto(r: PhotoRow): Photo {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id ?? undefined,
-    poterieId: r.poterie_id ?? undefined,
-    storagePath: r.storage_path,
-    date: r.date,
-    legende: r.legende ?? undefined,
-  };
-}
-
-function rowToJournal(r: JournalEntryRow): JournalEntry {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id,
-    type: r.type,
-    date: r.date,
-    notes: r.notes ?? undefined,
-    rappelId: r.rappel_id ?? undefined,
-  };
-}
-
-function rowToRappel(r: RappelRow): Rappel {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id,
-    type: r.type,
-    prochaineDate: r.prochaine_date,
-    intervalleJours: r.intervalle_jours ?? undefined,
-    notes: r.notes ?? undefined,
-    actif: r.actif,
-  };
-}
-
-function rowToPoterie(r: PoterieRow): Poterie {
+export function rowToPoterie(r: PoterieRow): Poterie {
   return {
     id: r.id,
     nom: r.nom,
@@ -214,7 +205,7 @@ function rowToPoterie(r: PoterieRow): Poterie {
   };
 }
 
-function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
+export function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
   const row: Record<string, unknown> = {};
   if (p.id !== undefined) row.id = p.id;
   if (p.nom !== undefined) row.nom = p.nom;
@@ -230,6 +221,40 @@ function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
   if (p.photoPath !== undefined) row.photo_path = p.photoPath;
   if (p.notes !== undefined) row.notes = p.notes;
   return row;
+}
+
+export function rowToPhoto(r: PhotoRow): Photo {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id ?? undefined,
+    poterieId: r.poterie_id ?? undefined,
+    storagePath: r.storage_path,
+    date: r.date,
+    legende: r.legende ?? undefined,
+  };
+}
+
+export function rowToJournal(r: JournalEntryRow): JournalEntry {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id,
+    type: r.type,
+    date: r.date,
+    notes: r.notes ?? undefined,
+    rappelId: r.rappel_id ?? undefined,
+  };
+}
+
+export function rowToRappel(r: RappelRow): Rappel {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id,
+    type: r.type,
+    prochaineDate: r.prochaine_date,
+    intervalleJours: r.intervalle_jours ?? undefined,
+    notes: r.notes ?? undefined,
+    actif: r.actif,
+  };
 }
 
 function rowToEvenement(r: EvenementRow): Evenement {
@@ -634,7 +659,7 @@ export interface SupabaseBackupPayload {
   evenements?: Evenement[];
 }
 
-async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
+export async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
   const buf = new Uint8Array(await blob.arrayBuffer());
   let bin = "";
   const chunk = 0x8000;
@@ -644,7 +669,7 @@ async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }>
   return { data: btoa(bin), type: blob.type || "application/octet-stream" };
 }
 
-function base64ToBlob(data: string, type: string): Blob {
+export function base64ToBlob(data: string, type: string): Blob {
   const bin = atob(data);
   const buf = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
