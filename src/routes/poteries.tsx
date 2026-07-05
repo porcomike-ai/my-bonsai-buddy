@@ -16,9 +16,53 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Container, ImagePlus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AddPhotoDialog, type PhotoSource } from "@/components/add-photo-dialog";
+
+const FORMES = [
+  "Ovale",
+  "Ronde",
+  "Rectangulaire",
+  "Rectangulaire à coins arrondis",
+  "Carrée",
+  "Hexagonale",
+  "Octogonale",
+  "Pentagonale",
+  "Lotus",
+  "Demi-lune",
+  "Cascade (haute)",
+  "Tambour (cylindrique)",
+  "Suiban (plateau peu profond, sans trou)",
+  "Coupe peu profonde",
+  "Nanban (forme libre, texturée)",
+  "Nuage / forme irrégulière",
+] as const;
+
+const MATIERES = [
+  "Grès",
+  "Terre cuite non émaillée",
+  "Céramique émaillée",
+  "Porcelaine",
+  "Argile de Yixing",
+  "Béton",
+  "Plastique / résine (entraînement)",
+] as const;
+
+const AUTRE = "__autre__";
+
+function initialSelection(value: string | undefined, list: readonly string[]) {
+  if (!value) return { selection: "", custom: "" };
+  if (list.includes(value)) return { selection: value, custom: "" };
+  return { selection: AUTRE, custom: value };
+}
 
 export const Route = createFileRoute("/poteries")({
   head: () => ({
