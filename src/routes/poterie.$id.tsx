@@ -20,8 +20,15 @@ const PoterieGalerieTab = lazy(() => import("@/components/poterie-detail/galerie
 
 export const Route = createFileRoute("/poterie/$id")({
   ssr: false,
-  loader: async ({ params }) => {
-    const p = await getPoterie(params.id);
+  loader: async ({ params, context }) => {
+    // Utilise le même cache React Query (même queryKey) que le `useQuery` du
+    // composant PoterieDetail ci-dessous : évite un 2e appel réseau `getPoterie`
+    // redondant juste après la navigation (ex: juste après avoir enregistré la
+    // poterie et été redirigé vers cette page).
+    const p = await context.queryClient.ensureQueryData({
+      queryKey: ["poterie", params.id],
+      queryFn: () => getPoterie(params.id),
+    });
     return p
       ? {
           nom: p.nom,
