@@ -207,15 +207,25 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
     longueurCm: initial?.longueurCm?.toString() ?? "",
     largeurCm: initial?.largeurCm?.toString() ?? "",
     hauteurCm: initial?.hauteurCm?.toString() ?? "",
-    forme: initial?.forme ?? "",
     couleur: initial?.couleur ?? "",
-    matiere: initial?.matiere ?? "",
     artisan: initial?.artisan ?? "",
     origine: initial?.origine ?? "",
     prix: initial?.prix?.toString() ?? "",
     notes: initial?.notes ?? "",
   });
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const formeInit = initialSelection(initial?.forme, FORMES);
+  const matiereInit = initialSelection(initial?.matiere, MATIERES);
+  const [formeChoice, setFormeChoice] = useState<string>(formeInit.selection);
+  const [formeCustom, setFormeCustom] = useState<string>(formeInit.custom);
+  const [matiereChoice, setMatiereChoice] = useState<string>(matiereInit.selection);
+  const [matiereCustom, setMatiereCustom] = useState<string>(matiereInit.custom);
+
+  const resolvedForme =
+    formeChoice === AUTRE ? formeCustom.trim() : formeChoice ? formeChoice : "";
+  const resolvedMatiere =
+    matiereChoice === AUTRE ? matiereCustom.trim() : matiereChoice ? matiereChoice : "";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
