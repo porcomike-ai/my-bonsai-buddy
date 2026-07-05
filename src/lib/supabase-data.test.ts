@@ -7,6 +7,7 @@ import {
   poterieToRow,
   rowToBonsai,
   rowToPoterie,
+  ageActuel,
 } from "./supabase-data";
 import { describe, expect, test } from "vitest";
 
@@ -239,5 +240,51 @@ describe("blobToBase64 / base64ToBlob", () => {
     expect(new Uint8Array(await base64ToBlob(encoded.data, encoded.type).arrayBuffer())).toEqual(
       Uint8Array.from([10, 20, 30]),
     );
+  });
+});
+
+describe("ageActuel", () => {
+  test("retourne undefined si ageEstime n'est pas renseigné", () => {
+    expect(ageActuel({ ageEstime: undefined, dateAcquisition: "2020-01-01" })).toBeUndefined();
+    expect(ageActuel({ ageEstime: null, dateAcquisition: "2020-01-01" } as unknown as Parameters<typeof ageActuel>[0])).toBeUndefined();
+  });
+
+  test("retourne ageEstime tel quel si pas de date d'acquisition", () => {
+    expect(ageActuel({ ageEstime: 35, dateAcquisition: undefined })).toBe(35);
+    expect(ageActuel({ ageEstime: 10, dateAcquisition: "" as unknown as undefined })).toBe(10);
+  });
+
+  test("calcule l'âge actuel avec date d'acquisition dans le passé", () => {
+    // Acquisition le 15 mars 2020, âge estimé 10 ans à l'acquisition
+    // Au 1er janvier 2025 : pas encore passé le 15 mars → 10 + 4 = 14 ans
+    const today = new Date("2025-01-01");
+    expect(ageActuel({ ageEstime: 10, dateAcquisition: "2020-03-15" }, today)).toBe(14);
+
+    // Au 20 mars 2025 : après le 15 mars → 10 + 5 = 15 ans
+    const afterAnniversary = new Date("2025-03-20");
+    expect(ageActuel({ ageEstime: 10, dateAcquisition: "2020-03-15" }, afterAnniversary)).toBe(15);
+
+    // Le jour même de l'anniversaire
+    const onAnniversary = new Date("2025-03-15");
+    expect(ageActuel({ ageEstime: 10, dateAcquisition: "2020-03-15" }, onAnniversary)).toBe(15);
+  });
+
+  test("gère le cas où l'anniversaire n'est pas encore passé cette année", () => {
+    // Acquisition le 1er décembre 2020,âge 5 ans
+    // Au 15 juin 2025 : pas encore passé le 1er décembre → 5 + 4 = 9 ans
+    const today = new Date("2025-06-15");
+    expect(ageActuel({ ageEstime: 5, dateAcquisition: "2020-12-01" }, today)).toBe(9);
+  });
+
+  test("retourne au minimum ageEstime (pas d'âge négatif)", () => {
+    // Si la date d'acquisition est dans le futur (donnée invalide), ne pas retourner d'âge négatif
+    const today = new Date("2025-01-01");
+    expect(ageActuel({ ageEstime: 10, dateAcquisition: "2026-01-01" }, today)).toBe(10);
+  });
+
+  test("calcul correct sur plusieurs années", () => {
+    // Acquisition en 2015, âge 20 ans → en 2025, âge = 20 + 10 = 30 ans
+    const today = new Date("2025-06-01");
+    expect(ageActuel({ ageEstime: 20, dateAcquisition: "2015-03-01" }, today)).toBe(30);
   });
 });

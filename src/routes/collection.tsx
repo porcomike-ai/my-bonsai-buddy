@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listBonsais } from "@/lib/supabase-data";
+import { listBonsais, ageActuel } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
 import { STYLES, styleLabel } from "@/lib/bonsai-meta";
@@ -254,9 +254,9 @@ function CollectionPage() {
                 <div className="space-y-1 p-4">
                   <div className="flex items-baseline justify-between gap-2">
                     <h2 className="truncate font-display text-lg font-semibold">{b.nom}</h2>
-                    {b.ageEstime != null && (
+                    {ageActuel(b) != null && (
                       <span className="shrink-0 text-xs text-muted-foreground">
-                        {b.ageEstime} ans
+                        {ageActuel(b)} ans
                       </span>
                     )}
                   </div>

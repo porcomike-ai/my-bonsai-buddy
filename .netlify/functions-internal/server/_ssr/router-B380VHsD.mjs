@@ -9,9 +9,10 @@ import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { R as Root } from "../_libs/radix-ui__react-label.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
+import { S as SelectTrigger$1, a as SelectIcon, b as SelectScrollUpButton$1, c as SelectScrollDownButton$1, d as SelectPortal, e as SelectContent$1, f as SelectViewport, g as SelectLabel$1, h as SelectItem$1, i as SelectItemIndicator, j as SelectItemText, k as SelectSeparator$1, l as Select$1, m as SelectValue$1 } from "../_libs/radix-ui__react-select.mjs";
 import { g as DialogOverlay$1, a as DialogPortal$1, b as DialogContent$1, f as DialogClose, d as DialogTitle$1, e as DialogDescription$1, D as Dialog$1 } from "../_libs/radix-ui__react-dialog.mjs";
 import { R as RadioGroup$1, a as RadioGroupItem$1, b as RadioGroupIndicator } from "../_libs/radix-ui__react-radio-group.mjs";
-import { X, C as Circle, a as Camera, S as Sparkles, b as Calendar, F as FileText, L as Loader, I as ImagePlus } from "../_libs/lucide-react.mjs";
+import { C as ChevronDown, a as ChevronUp, b as Check, X, c as Circle, d as Camera, S as Sparkles, e as Calendar, F as FileText, L as Loader, I as ImagePlus } from "../_libs/lucide-react.mjs";
 import { f as format, p as parseISO, a as fr } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -37,31 +38,39 @@ import "tslib";
 import "../_libs/supabase__functions-js.mjs";
 import "../_libs/radix-ui__react-primitive.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
+import "../_libs/radix-ui__number.mjs";
 import "../_libs/radix-ui__primitive.mjs";
+import "../_libs/radix-ui__react-collection.mjs";
 import "../_libs/radix-ui__react-context.mjs";
-import "../_libs/radix-ui__react-id.mjs";
-import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
-import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-direction.mjs";
 import "../_libs/@radix-ui/react-dismissable-layer+[...].mjs";
 import "../_libs/@radix-ui/react-use-callback-ref+[...].mjs";
 import "../_libs/@radix-ui/react-use-escape-keydown+[...].mjs";
+import "../_libs/radix-ui__react-focus-guards.mjs";
 import "../_libs/radix-ui__react-focus-scope.mjs";
+import "../_libs/radix-ui__react-id.mjs";
+import "../_libs/@radix-ui/react-use-layout-effect+[...].mjs";
+import "../_libs/radix-ui__react-popper.mjs";
+import "../_libs/floating-ui__react-dom.mjs";
+import "../_libs/floating-ui__dom.mjs";
+import "../_libs/floating-ui__core.mjs";
+import "../_libs/floating-ui__utils.mjs";
+import "../_libs/radix-ui__react-arrow.mjs";
+import "../_libs/radix-ui__react-use-size.mjs";
 import "../_libs/radix-ui__react-portal.mjs";
 import "../_libs/radix-ui__react-presence.mjs";
-import "../_libs/radix-ui__react-focus-guards.mjs";
+import "../_libs/@radix-ui/react-use-controllable-state+[...].mjs";
+import "../_libs/radix-ui__react-use-previous.mjs";
+import "../_libs/@radix-ui/react-visually-hidden+[...].mjs";
+import "../_libs/aria-hidden.mjs";
 import "../_libs/react-remove-scroll.mjs";
 import "../_libs/react-remove-scroll-bar.mjs";
 import "../_libs/react-style-singleton.mjs";
 import "../_libs/get-nonce.mjs";
 import "../_libs/use-sidecar.mjs";
 import "../_libs/use-callback-ref.mjs";
-import "../_libs/aria-hidden.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
-import "../_libs/radix-ui__react-collection.mjs";
-import "../_libs/radix-ui__react-direction.mjs";
-import "../_libs/radix-ui__react-use-size.mjs";
-import "../_libs/radix-ui__react-use-previous.mjs";
-const appCss = "/assets/styles-De_UofJl.css";
+const appCss = "/assets/styles-D5LJDB2V.css";
 const Toaster = ({ ...props }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Toaster$1,
@@ -246,7 +255,7 @@ function AuthGate({ children }) {
   if (!user && !isAuthRoute) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$b = () => import("./statistiques-uEMCAnFk.mjs");
+const $$splitComponentImporter$b = () => import("./statistiques-C1yUvUTG.mjs");
 const Route$c = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -309,6 +318,15 @@ const db = supabase;
 function uid() {
   return crypto.randomUUID();
 }
+function ageActuel(b, today = /* @__PURE__ */ new Date()) {
+  if (b.ageEstime == null) return void 0;
+  if (!b.dateAcquisition) return b.ageEstime;
+  const acquisition = new Date(b.dateAcquisition);
+  let annees = today.getFullYear() - acquisition.getFullYear();
+  const pasEncoreAnniversaire = today.getMonth() < acquisition.getMonth() || today.getMonth() === acquisition.getMonth() && today.getDate() < acquisition.getDate();
+  if (pasEncoreAnniversaire) annees -= 1;
+  return b.ageEstime + Math.max(0, annees);
+}
 function rowToBonsai(r) {
   return {
     id: r.id,
@@ -350,37 +368,6 @@ function bonsaiToRow(b) {
   if (b.favori !== void 0) row.favori = b.favori;
   return row;
 }
-function rowToPhoto(r) {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id ?? void 0,
-    poterieId: r.poterie_id ?? void 0,
-    storagePath: r.storage_path,
-    date: r.date,
-    legende: r.legende ?? void 0
-  };
-}
-function rowToJournal(r) {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id,
-    type: r.type,
-    date: r.date,
-    notes: r.notes ?? void 0,
-    rappelId: r.rappel_id ?? void 0
-  };
-}
-function rowToRappel(r) {
-  return {
-    id: r.id,
-    bonsaiId: r.bonsai_id,
-    type: r.type,
-    prochaineDate: r.prochaine_date,
-    intervalleJours: r.intervalle_jours ?? void 0,
-    notes: r.notes ?? void 0,
-    actif: r.actif
-  };
-}
 function rowToPoterie(r) {
   return {
     id: r.id,
@@ -415,6 +402,37 @@ function poterieToRow(p) {
   if (p.photoPath !== void 0) row.photo_path = p.photoPath;
   if (p.notes !== void 0) row.notes = p.notes;
   return row;
+}
+function rowToPhoto(r) {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id ?? void 0,
+    poterieId: r.poterie_id ?? void 0,
+    storagePath: r.storage_path,
+    date: r.date,
+    legende: r.legende ?? void 0
+  };
+}
+function rowToJournal(r) {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id,
+    type: r.type,
+    date: r.date,
+    notes: r.notes ?? void 0,
+    rappelId: r.rappel_id ?? void 0
+  };
+}
+function rowToRappel(r) {
+  return {
+    id: r.id,
+    bonsaiId: r.bonsai_id,
+    type: r.type,
+    prochaineDate: r.prochaine_date,
+    intervalleJours: r.intervalle_jours ?? void 0,
+    notes: r.notes ?? void 0,
+    actif: r.actif
+  };
 }
 function rowToEvenement(r) {
   return {
@@ -769,6 +787,10 @@ async function importSupabaseBackup(payload) {
 }
 const supabaseData = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
+  ageActuel,
+  base64ToBlob,
+  blobToBase64,
+  bonsaiToRow,
   deleteBonsai,
   deleteEvenement,
   deleteJournal,
@@ -789,6 +811,12 @@ const supabaseData = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.define
   listPoteriePhotos,
   listPoteries,
   listRappels,
+  poterieToRow,
+  rowToBonsai,
+  rowToJournal,
+  rowToPhoto,
+  rowToPoterie,
+  rowToRappel,
   saveBonsai,
   saveEvenement,
   saveJournal,
@@ -913,6 +941,106 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
+const Select = Select$1;
+const SelectValue = SelectValue$1;
+const SelectTrigger = reactExports.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  SelectTrigger$1,
+  {
+    ref,
+    className: cn(
+      "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background cursor-pointer data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      className
+    ),
+    ...props,
+    children: [
+      children,
+      /* @__PURE__ */ jsxRuntimeExports.jsx(SelectIcon, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-4 w-4 opacity-50" }) })
+    ]
+  }
+));
+SelectTrigger.displayName = SelectTrigger$1.displayName;
+const SelectScrollUpButton = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  SelectScrollUpButton$1,
+  {
+    ref,
+    className: cn("flex cursor-default items-center justify-center py-1", className),
+    ...props,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronUp, { className: "h-4 w-4" })
+  }
+));
+SelectScrollUpButton.displayName = SelectScrollUpButton$1.displayName;
+const SelectScrollDownButton = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  SelectScrollDownButton$1,
+  {
+    ref,
+    className: cn("flex cursor-default items-center justify-center py-1", className),
+    ...props,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-4 w-4" })
+  }
+));
+SelectScrollDownButton.displayName = SelectScrollDownButton$1.displayName;
+const SelectContent = reactExports.forwardRef(({ className, children, position = "popper", ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectPortal, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  SelectContent$1,
+  {
+    ref,
+    className: cn(
+      "relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-select-content-transform-origin)",
+      position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+      className
+    ),
+    position,
+    ...props,
+    children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(SelectScrollUpButton, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        SelectViewport,
+        {
+          className: cn(
+            "p-1",
+            position === "popper" && "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+          ),
+          children
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(SelectScrollDownButton, {})
+    ]
+  }
+) }));
+SelectContent.displayName = SelectContent$1.displayName;
+const SelectLabel = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  SelectLabel$1,
+  {
+    ref,
+    className: cn("px-2 py-1.5 text-sm font-semibold", className),
+    ...props
+  }
+));
+SelectLabel.displayName = SelectLabel$1.displayName;
+const SelectItem = reactExports.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  SelectItem$1,
+  {
+    ref,
+    className: cn(
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    ),
+    ...props,
+    children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute right-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItemIndicator, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" }) }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItemText, { children })
+    ]
+  }
+));
+SelectItem.displayName = SelectItem$1.displayName;
+const SelectSeparator = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  SelectSeparator$1,
+  {
+    ref,
+    className: cn("-mx-1 my-1 h-px bg-muted", className),
+    ...props
+  }
+));
+SelectSeparator.displayName = SelectSeparator$1.displayName;
 const Dialog = Dialog$1;
 const DialogPortal = DialogPortal$1;
 const DialogOverlay = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -1263,7 +1391,24 @@ function useFileInput() {
   };
   return { file, setFile, inputRef, reset };
 }
-const $$splitComponentImporter$a = () => import("./poteries-DwRQ1Dvy.mjs");
+const $$splitComponentImporter$a = () => import("./poteries-l-9fb9kA.mjs");
+const FORMES = ["Ovale", "Ronde", "Rectangulaire", "Rectangulaire à coins arrondis", "Carrée", "Hexagonale", "Octogonale", "Pentagonale", "Lotus", "Demi-lune", "Cascade (haute)", "Tambour (cylindrique)", "Suiban (plateau peu profond, sans trou)", "Coupe peu profonde", "Nanban (forme libre, texturée)", "Nuage / forme irrégulière"];
+const MATIERES = ["Grès", "Terre cuite non émaillée", "Céramique émaillée", "Porcelaine", "Argile de Yixing", "Béton", "Plastique / résine (entraînement)"];
+const AUTRE = "__autre__";
+function initialSelection(value, list) {
+  if (!value) return {
+    selection: "",
+    custom: ""
+  };
+  if (list.includes(value)) return {
+    selection: value,
+    custom: ""
+  };
+  return {
+    selection: AUTRE,
+    custom: value
+  };
+}
 const Route$a = createFileRoute("/poteries")({
   head: () => ({
     meta: [{
@@ -1300,9 +1445,7 @@ function PoterieForm({
     longueurCm: initial?.longueurCm?.toString() ?? "",
     largeurCm: initial?.largeurCm?.toString() ?? "",
     hauteurCm: initial?.hauteurCm?.toString() ?? "",
-    forme: initial?.forme ?? "",
     couleur: initial?.couleur ?? "",
-    matiere: initial?.matiere ?? "",
     artisan: initial?.artisan ?? "",
     origine: initial?.origine ?? "",
     prix: initial?.prix?.toString() ?? "",
@@ -1312,6 +1455,14 @@ function PoterieForm({
     ...f,
     [k]: v
   }));
+  const formeInit = initialSelection(initial?.forme, FORMES);
+  const matiereInit = initialSelection(initial?.matiere, MATIERES);
+  const [formeChoice, setFormeChoice] = reactExports.useState(formeInit.selection);
+  const [formeCustom, setFormeCustom] = reactExports.useState(formeInit.custom);
+  const [matiereChoice, setMatiereChoice] = reactExports.useState(matiereInit.selection);
+  const [matiereCustom, setMatiereCustom] = reactExports.useState(matiereInit.custom);
+  const resolvedForme = formeChoice === AUTRE ? formeCustom.trim() : formeChoice ? formeChoice : "";
+  const resolvedMatiere = matiereChoice === AUTRE ? matiereCustom.trim() : matiereChoice ? matiereChoice : "";
   const submit = async (e) => {
     e.preventDefault();
     if (!form.nom.trim()) {
@@ -1325,9 +1476,9 @@ function PoterieForm({
       longueurCm: form.longueurCm ? Number(form.longueurCm) : void 0,
       largeurCm: form.largeurCm ? Number(form.largeurCm) : void 0,
       hauteurCm: form.hauteurCm ? Number(form.hauteurCm) : void 0,
-      forme: form.forme.trim() || void 0,
+      forme: resolvedForme || void 0,
       couleur: form.couleur.trim() || void 0,
-      matiere: form.matiere.trim() || void 0,
+      matiere: resolvedMatiere || void 0,
       artisan: form.artisan.trim() || void 0,
       origine: form.origine.trim() || void 0,
       prix: form.prix ? Number(form.prix) : void 0,
@@ -1370,8 +1521,28 @@ function PoterieForm({
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-3 sm:grid-cols-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Nom", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.nom, onChange: (e) => set("nom", e.target.value), placeholder: "Tokoname ovale brune" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Forme", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.forme, onChange: (e) => set("forme", e.target.value), placeholder: "Ovale, rectangle, ronde…" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Matière", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.matiere, onChange: (e) => set("matiere", e.target.value), placeholder: "Grès, terre cuite émaillée…" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Forme" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Select, { value: formeChoice, onValueChange: setFormeChoice, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { "aria-label": "Forme", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, { placeholder: "Choisir une forme…" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(SelectContent, { children: [
+              FORMES.map((f) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: f, children: f }, f)),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: AUTRE, children: "Autre" })
+            ] })
+          ] }),
+          formeChoice === AUTRE && /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { className: "mt-2", value: formeCustom, onChange: (e) => setFormeCustom(e.target.value), placeholder: "Précisez la forme" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Matière" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Select, { value: matiereChoice, onValueChange: setMatiereChoice, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { "aria-label": "Matière", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, { placeholder: "Choisir une matière…" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(SelectContent, { children: [
+              MATIERES.map((m) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: m, children: m }, m)),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: AUTRE, children: "Autre" })
+            ] })
+          ] }),
+          matiereChoice === AUTRE && /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { className: "mt-2", value: matiereCustom, onChange: (e) => setMatiereCustom(e.target.value), placeholder: "Précisez la matière" })
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Couleur", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { value: form.couleur, onChange: (e) => set("couleur", e.target.value), placeholder: "Brun, vert céladon…" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Longueur (cm)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "number", min: 0, value: form.longueurCm, onChange: (e) => set("longueurCm", e.target.value) }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Field, { label: "Largeur (cm)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { type: "number", min: 0, value: form.largeurCm, onChange: (e) => set("largeurCm", e.target.value) }) }),
@@ -1419,7 +1590,7 @@ function ExistingImage({
   const url = useBlobUrl(blob);
   return url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : null;
 }
-const $$splitComponentImporter$9 = () => import("./parametres-Bws6_cta.mjs");
+const $$splitComponentImporter$9 = () => import("./parametres-BmxMyDTE.mjs");
 const Route$9 = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -1440,7 +1611,7 @@ const Route$9 = createFileRoute("/parametres")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./journal-DaMECZe8.mjs");
+const $$splitComponentImporter$8 = () => import("./journal-BgiAFPCW.mjs");
 const Route$8 = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -1461,7 +1632,7 @@ const Route$8 = createFileRoute("/journal")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./inscription-DW9IFlQe.mjs");
+const $$splitComponentImporter$7 = () => import("./inscription-B1BrkM1I.mjs");
 const Route$7 = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -1473,7 +1644,7 @@ const Route$7 = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
-const $$splitComponentImporter$6 = () => import("./connexion-uEwzyejU.mjs");
+const $$splitComponentImporter$6 = () => import("./connexion-DmCtaHNe.mjs");
 const Route$6 = createFileRoute("/connexion")({
   validateSearch: (s) => ({
     redirect: typeof s.redirect === "string" && s.redirect.startsWith("/") ? s.redirect : void 0
@@ -1488,7 +1659,7 @@ const Route$6 = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component")
 });
-const $$splitComponentImporter$5 = () => import("./collection-BogflmvR.mjs");
+const $$splitComponentImporter$5 = () => import("./collection-BW5m3TJT.mjs");
 const Route$5 = createFileRoute("/collection")({
   head: () => ({
     meta: [{
@@ -1509,7 +1680,7 @@ const Route$5 = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./calendrier-DykuDN5R.mjs");
+const $$splitComponentImporter$4 = () => import("./calendrier-CzgIk8Y2.mjs");
 const Route$4 = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -1530,7 +1701,7 @@ const Route$4 = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-BJ5JM4vi.mjs");
+const $$splitComponentImporter$3 = () => import("./index-B2WbW3hg.mjs");
 const Route$3 = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -1551,7 +1722,7 @@ const Route$3 = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./poterie._id-BhBoN0b9.mjs");
+const $$splitComponentImporter$2 = () => import("./poterie._id-B4G0E1yq.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -1597,7 +1768,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-BoKtbKEh.mjs");
+const $$splitComponentImporter$1 = () => import("./bonsai.nouveau-DvVE4Jap.mjs");
 const Route$1 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -1621,7 +1792,7 @@ const Route$1 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./bonsai._id-yqb2_IqU.mjs");
+const $$splitComponentImporter = () => import("./bonsai._id-DDV_ENg5.mjs");
 const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
   loader: async ({
@@ -1773,54 +1944,60 @@ const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   getRouter
 }, Symbol.toStringTag, { value: "Module" }));
 export {
+  deleteRappel as $,
   AddPhotoDialog as A,
   Button as B,
-  Route as C,
-  deleteBonsai as D,
-  buttonVariants as E,
-  useFileInput as F,
-  updatePhotoDate as G,
-  updatePhotoLegende as H,
+  getPoterie as C,
+  listPoteriePhotos as D,
+  deletePoterie as E,
+  getBonsai as F,
+  getPhotoBlob as G,
+  Route as H,
   Input as I,
-  deletePhoto as J,
-  savePoterieGalleryPhoto as K,
+  deleteBonsai as J,
+  buttonVariants as K,
   Label as L,
-  Dialog as M,
-  DialogContent as N,
-  DialogHeader as O,
+  useFileInput as M,
+  updatePhotoDate as N,
+  updatePhotoLegende as O,
   PoterieForm as P,
-  DialogTitle as Q,
+  deletePhoto as Q,
   Route$6 as R,
-  DialogFooter as S,
+  Select as S,
   Textarea as T,
-  deleteJournal as U,
-  deleteRappel as V,
-  supabaseData as W,
-  router as X,
+  savePoterieGalleryPhoto as U,
+  Dialog as V,
+  DialogContent as W,
+  DialogHeader as X,
+  DialogTitle as Y,
+  DialogFooter as Z,
+  deleteJournal as _,
   listPoteries as a,
+  supabaseData as a0,
+  router as a1,
   listRappels as b,
-  listPhotos as c,
-  listJournal as d,
-  useBlobUrl as e,
-  useAuth as f,
-  getPoteriePhoto as g,
-  saveBonsai as h,
-  savePhoto as i,
-  saveJournal as j,
-  saveRappel as k,
+  ageActuel as c,
+  listPhotos as d,
+  listJournal as e,
+  SelectTrigger as f,
+  SelectValue as g,
+  SelectContent as h,
+  SelectItem as i,
+  getPoteriePhoto as j,
+  useBlobUrl as k,
   listBonsais as l,
-  saveEvenement as m,
-  exportSupabaseBackup as n,
-  importSupabaseBackup as o,
-  listEvenements as p,
-  cn as q,
-  deleteEvenement as r,
+  useAuth as m,
+  saveBonsai as n,
+  savePhoto as o,
+  saveJournal as p,
+  saveRappel as q,
+  saveEvenement as r,
   savePoterie as s,
-  Route$2 as t,
+  exportSupabaseBackup as t,
   uid as u,
-  getPoterie as v,
-  listPoteriePhotos as w,
-  deletePoterie as x,
-  getBonsai as y,
-  getPhotoBlob as z
+  importSupabaseBackup as v,
+  cn as w,
+  listEvenements as x,
+  deleteEvenement as y,
+  Route$2 as z
 };

@@ -116,6 +116,31 @@ export function uid() {
   return crypto.randomUUID();
 }
 
+/**
+ * Calcule l'âge actuel d'un bonsaï à partir de son âge estimé à l'acquisition
+ * et de la date d'acquisition.
+ *
+ * @param b - Bonsaï avec ageEstime (âge à l'acquisition) et dateAcquisition
+ * @param today - Date de référence (défaut: aujourd'hui)
+ * @returns L'âge actuel recalculé, ou ageEstime tel quel si pas de date d'acquisition
+ */
+export function ageActuel(
+  b: Pick<Bonsai, "ageEstime" | "dateAcquisition">,
+  today: Date = new Date(),
+): number | undefined {
+  if (b.ageEstime == null) return undefined;
+  if (!b.dateAcquisition) return b.ageEstime;
+
+  const acquisition = new Date(b.dateAcquisition);
+  let annees = today.getFullYear() - acquisition.getFullYear();
+  const pasEncoreAnniversaire =
+    today.getMonth() < acquisition.getMonth() ||
+    (today.getMonth() === acquisition.getMonth() && today.getDate() < acquisition.getDate());
+  if (pasEncoreAnniversaire) annees -= 1;
+
+  return b.ageEstime + Math.max(0, annees);
+}
+
 // --- Mappers snake_case ↔ camelCase ---
 
 export function rowToBonsai(r: BonsaiRow): Bonsai {

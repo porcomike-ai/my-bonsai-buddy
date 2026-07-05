@@ -7,6 +7,7 @@ import {
   listJournal,
   listRappels,
   listPoteries,
+  ageActuel,
 } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { ETAPES, STYLES, styleLabel, etapeLabel } from "@/lib/bonsai-meta";
@@ -65,13 +66,13 @@ function StatistiquesPage() {
     const totalValeur = actifs.reduce((s, b) => s + (b.valeurEstimee ?? 0), 0);
     const plusValue = totalValeur - totalPrix;
     const ageMoyen = (() => {
-      const withAge = actifs.filter((b) => b.ageEstime != null);
-      if (!withAge.length) return null;
-      return Math.round(withAge.reduce((s, b) => s + (b.ageEstime ?? 0), 0) / withAge.length);
+      const ages = actifs.map((b) => ageActuel(b)).filter((a): a is number => a != null);
+      if (!ages.length) return null;
+      return Math.round(ages.reduce((s, a) => s + a, 0) / ages.length);
     })();
     const plusVieux = actifs
-      .filter((b) => b.ageEstime != null)
-      .sort((a, b) => (b.ageEstime ?? 0) - (a.ageEstime ?? 0))[0];
+      .filter((b) => ageActuel(b) != null)
+      .sort((a, b) => (ageActuel(b) ?? 0) - (ageActuel(a) ?? 0))[0];
 
     const parEtape = ETAPES.map((e) => ({
       ...e,
@@ -243,7 +244,7 @@ function StatistiquesPage() {
                         params={{ id: stats.plusVieux.id }}
                         className="text-accent hover:underline"
                       >
-                        {stats.plusVieux.nom} ({stats.plusVieux.ageEstime} ans)
+                        {stats.plusVieux.nom} ({ageActuel(stats.plusVieux)} ans)
                       </Link>
                     ) : (
                       "—"
