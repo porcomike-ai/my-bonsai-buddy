@@ -5,6 +5,18 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
+// Garde-fou : ce fichier contient une clé qui contourne RLS (tous les droits
+// sur la base). S'il est un jour importé par erreur dans du code qui tourne
+// dans le navigateur, on préfère planter bruyamment ici plutôt que de laisser
+// la clé service_role fuiter dans le bundle envoyé aux visiteurs.
+if (typeof window !== "undefined") {
+  throw new Error(
+    "supabaseAdmin (client.server.ts) ne doit jamais être importé côté client : " +
+      "il contient la clé service_role qui contourne RLS. Utilisez-le uniquement " +
+      "dans une server function (createServerFn), idéalement protégée par requireSupabaseAuth.",
+  );
+}
+
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
