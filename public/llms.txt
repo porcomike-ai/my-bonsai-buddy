@@ -2,7 +2,11 @@
 
 > Carnet personnel pour gérer une collection de bonsaïs : fiches détaillées, galerie évolutive, journal d'entretien, rappels de soins et catalogue de poteries.
 
-Bonsaï Studio est une application web installable qui fonctionne hors-ligne. Les données restent sur l'appareil (IndexedDB), avec sauvegarde optionnelle et chiffrée sur le Google Drive de l'utilisateur (scope `drive.file`).
+Bonsaï Studio est une application web installable (icône sur l'écran d'accueil).
+Les données sont stockées sur Supabase, associées à un compte utilisateur
+(email / mot de passe) et synchronisées en temps réel entre tous les
+appareils connectés au même compte. Une connexion réseau est nécessaire :
+l'application ne fonctionne pas hors-ligne.
 
 ## Pages
 
@@ -13,4 +17,6 @@ Bonsaï Studio est une application web installable qui fonctionne hors-ligne. Le
 - [Poteries](/poteries): Catalogue des contenants (forme, matière, dimensions, artisan).
 - [Statistiques](/statistiques): Valeur estimée, répartition par style et étape, fréquence des soins.
 - [Nouveau bonsaï](/bonsai/nouveau): Formulaire d'ajout d'un arbre.
-- [Paramètres](/parametres): Sauvegarde Google Drive, export local, optimisation des photos.
+- [Connexion](/connexion) et [Inscription](/inscription): Création de compte et authentification.
+- [Paramètres](/parametres): Export/import de sauvegarde Supabase, migration des anciennes données locales, options de l'application.
+
