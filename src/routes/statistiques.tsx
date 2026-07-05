@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
   listBonsais,
-  listPhotos,
+  listAllPhotos,
   listJournal,
   listRappels,
   listPoteries,
@@ -39,12 +39,6 @@ export const Route = createFileRoute("/statistiques")({
   component: StatistiquesPage,
 });
 
-async function loadAllPhotos() {
-  const bonsais = await listBonsais();
-  const photosByBonsai = await Promise.all(bonsais.map((b) => listPhotos(b.id)));
-  return photosByBonsai.flat();
-}
-
 async function loadAllJournal() {
   return listJournal();
 }
@@ -52,7 +46,7 @@ async function loadAllJournal() {
 function StatistiquesPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
-  const { data: photos = [] } = useQuery({ queryKey: ["photos-all"], queryFn: loadAllPhotos });
+  const { data: photos = [] } = useQuery({ queryKey: ["photos-all"], queryFn: listAllPhotos });
   const { data: journal = [] } = useQuery({ queryKey: ["journal-all"], queryFn: loadAllJournal });
   const { data: rappels = [] } = useQuery({
     queryKey: ["rappels-all"],
