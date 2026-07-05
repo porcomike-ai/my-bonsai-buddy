@@ -66,6 +66,7 @@ serve(async (req) => {
       .from('rappels')
       .select('*')
       .eq('actif', true)
+      .is('notified_at', null)
 
     if (remindersError) {
       console.error('Error fetching reminders:', remindersError)
@@ -265,7 +266,7 @@ serve(async (req) => {
         }
       }
 
-      // Update reminder next date
+      // Update reminder: mark as notified for one-time, or advance date for recurring
       const { data: reminderData } = await supabase
         .from('rappels')
         .select('intervalle_jours')
@@ -273,12 +274,19 @@ serve(async (req) => {
         .single();
 
       if (reminderData?.intervalle_jours) {
+        // Recurring reminder: advance to next date
         const nextDate = new Date(reminder.date_heure);
         nextDate.setDate(nextDate.getDate() + reminderData.intervalle_jours);
         
         await supabase
           .from('rappels')
           .update({ prochaine_date: nextDate.toISOString() })
+          .eq('id', reminder.id);
+      } else {
+        // One-time reminder: mark as notified
+        await supabase
+          .from('rappels')
+          .update({ notified_at: new Date().toISOString() })
           .eq('id', reminder.id);
       }
     }
