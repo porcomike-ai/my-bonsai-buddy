@@ -175,7 +175,32 @@ function CollectionPage() {
           <option value="sortis">Sortis de la collection</option>
           <option value="tous">Tous</option>
         </select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger
+            aria-label="Trier les bonsaïs"
+            className="h-11 w-auto min-w-[200px] rounded-full border-input bg-card px-4 text-sm"
+          >
+            <SelectValue placeholder="Trier par…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nom-asc">Alphabétique (A → Z)</SelectItem>
+            <SelectItem value="nom-desc">Alphabétique (Z → A)</SelectItem>
+            <SelectItem value="espece-asc">Par espèce (A → Z)</SelectItem>
+            <SelectItem value="acquisition-desc">Acquisition (récent → ancien)</SelectItem>
+            <SelectItem value="acquisition-asc">Acquisition (ancien → récent)</SelectItem>
+            <SelectItem value="valeur-desc">Valeur estimée (décroissante)</SelectItem>
+          </SelectContent>
+        </Select>
+        <label className="flex h-11 cursor-pointer items-center gap-2 rounded-full border border-input bg-card px-4 text-sm">
+          <Checkbox
+            checked={favorisFirst}
+            onCheckedChange={(v) => setFavorisFirst(v === true)}
+            aria-label="Favoris en premier"
+          />
+          <span>Favoris en premier</span>
+        </label>
       </div>
+
 
       {filtered.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border bg-card/50 py-16 text-center">
