@@ -20,6 +20,8 @@ import {
 } from "@/lib/supabase-data";
 import * as idb from "@/lib/db";
 import { useAuth } from "@/components/supabase-auth-provider";
+import { subscribeToPush, notificationStatus } from "@/lib/notifications";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CloudUpload as UploadCloud,
   Download,
@@ -29,6 +31,9 @@ import {
   LogOut,
   Database,
   Wand as Wand2,
+  Bell,
+  BellOff,
+  AlertCircle,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -63,6 +68,9 @@ function ParametresPage() {
   const [hasLocalData, setHasLocalData] = useState(false);
   const [checkingLocal, setCheckingLocal] = useState(true);
   const { confirm, dialog: confirmDialog } = useConfirm();
+  const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
+  const [enablingPush, setEnablingPush] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
 
   // Détecte la présence d'anciennes données dans IndexedDB (côté client uniquement).
   // On utilise le module idb (IndexedDB) et son listBonsais — les données Supabase
@@ -89,12 +97,60 @@ function ParametresPage() {
     };
   }, []);
 
+  // Vérifie le statut des notifications push
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const status = notificationStatus();
+    setPushEnabled(status === "granted");
+  }, []);
+
   const doSignOut = async () => {
     try {
       await signOut();
       toast.success("Déconnecté");
     } catch (e) {
       toast.error((e as Error).message);
+    }
+  };
+
+  const doEnablePush = async () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour activer les notifications");
+      return;
+    }
+    setEnablingPush(true);
+    try {
+      const success = await subscribeToPush();
+      if (success) {
+        setPushEnabled(true);
+        toast.success("Notifications push activées");
+      } else {
+        toast.error("Impossible d'activer les notifications push");
+      }
+    } catch (e) {
+      toast.error("Erreur: " + (e as Error).message);
+    } finally {
+      setEnablingPush(false);
+    }
+  };
+
+  const doSendTestNotification = async () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour envoyer une notification de test");
+      return;
+    }
+    setSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-test-push");
+      if (error) {
+        toast.error("Erreur: " + error.message);
+        return;
+      }
+      toast.success(data?.message || "Notification de test envoyée");
+    } catch (e) {
+      toast.error("Erreur: " + (e as Error).message);
+    } finally {
+      setSendingTest(false);
     }
   };
 
@@ -318,6 +374,61 @@ function ParametresPage() {
           )}
         </div>
       </section>
+
+      {/* Notifications push */}
+      {typeof window !== "undefined" && (
+        <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+              {pushEnabled ? (
+                <Bell className="h-5 w-5" />
+              ) : (
+                <BellOff className="h-5 w-5" />
+              )}
+            </div>
+            <div className="flex-1">
+              <h2 className="font-display text-xl font-semibold">Notifications push</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {pushEnabled === null
+                  ? "Vérification du support des notifications..."
+                  : pushEnabled
+                  ? "Les notifications push sont activées. Vous recevrez des rappels même si l'application est fermée."
+                  : notificationStatus() === "unsupported"
+                  ? "Votre navigateur ne supporte pas les notifications push."
+                  : "Activez les notifications pour recevoir des rappels même si l'application est fermée."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex gap-3">
+            {pushEnabled === null ? (
+              <Button disabled className="opacity-50">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Vérification...
+              </Button>
+            ) : pushEnabled ? (
+              <>
+                <Button variant="outline" disabled className="opacity-50">
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications activées
+                </Button>
+                <Button onClick={doSendTestNotification} disabled={sendingTest}>
+                  {sendingTest ? "Envoi..." : "Envoyer une notification de test"}
+                </Button>
+              </>
+            ) : notificationStatus() === "unsupported" ? (
+              <Button variant="outline" disabled className="opacity-50">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Non supporté
+              </Button>
+            ) : (
+              <Button onClick={doEnablePush} disabled={enablingPush || !user}>
+                <Bell className="mr-2 h-4 w-4" />
+                {enablingPush ? "Activation..." : "Activer les notifications"}
+              </Button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Import IndexedDB → Supabase */}
       {typeof window !== "undefined" && !checkingLocal && hasLocalData && (
