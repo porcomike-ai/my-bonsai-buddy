@@ -309,20 +309,54 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
               placeholder="Tokoname ovale brune"
             />
           </Field>
-          <Field label="Forme">
-            <Input
-              value={form.forme}
-              onChange={(e) => set("forme", e.target.value)}
-              placeholder="Ovale, rectangle, ronde…"
-            />
-          </Field>
-          <Field label="Matière">
-            <Input
-              value={form.matiere}
-              onChange={(e) => set("matiere", e.target.value)}
-              placeholder="Grès, terre cuite émaillée…"
-            />
-          </Field>
+          <div>
+            <Label className="mb-1.5 block text-sm">Forme</Label>
+            <Select value={formeChoice} onValueChange={setFormeChoice}>
+              <SelectTrigger aria-label="Forme">
+                <SelectValue placeholder="Choisir une forme…" />
+              </SelectTrigger>
+              <SelectContent>
+                {FORMES.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+                <SelectItem value={AUTRE}>Autre</SelectItem>
+              </SelectContent>
+            </Select>
+            {formeChoice === AUTRE && (
+              <Input
+                className="mt-2"
+                value={formeCustom}
+                onChange={(e) => setFormeCustom(e.target.value)}
+                placeholder="Précisez la forme"
+              />
+            )}
+          </div>
+          <div>
+            <Label className="mb-1.5 block text-sm">Matière</Label>
+            <Select value={matiereChoice} onValueChange={setMatiereChoice}>
+              <SelectTrigger aria-label="Matière">
+                <SelectValue placeholder="Choisir une matière…" />
+              </SelectTrigger>
+              <SelectContent>
+                {MATIERES.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+                <SelectItem value={AUTRE}>Autre</SelectItem>
+              </SelectContent>
+            </Select>
+            {matiereChoice === AUTRE && (
+              <Input
+                className="mt-2"
+                value={matiereCustom}
+                onChange={(e) => setMatiereCustom(e.target.value)}
+                placeholder="Précisez la matière"
+              />
+            )}
+          </div>
           <Field label="Couleur">
             <Input
               value={form.couleur}
