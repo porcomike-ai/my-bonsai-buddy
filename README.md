@@ -17,11 +17,29 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_URL=
 SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+VITE_VAPID_PUBLIC_KEY=
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
 ```
 
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` : utilisées côté client (build Vite).
 - `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` : utilisées côté serveur (SSR).
 - `SUPABASE_SERVICE_ROLE_KEY` : clé admin, réservée aux routes serveur (`client.server.ts`). Ne jamais l'exposer côté client.
+- `VITE_VAPID_PUBLIC_KEY` : clé publique VAPID pour les notifications push (côté client).
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` : clés VAPID pour l'envoi des notifications push (côté serveur).
+
+Pour générer les clés VAPID :
+```bash
+npx web-push generate-vapid-keys
+```
+
+Une fois les clés générées, configurez-les :
+- Côté client : ajoutez `VITE_VAPID_PUBLIC_KEY` dans votre fichier `.env`
+- Côté serveur (Edge Functions) : configurez les secrets Supabase :
+```bash
+supabase secrets set VAPID_PUBLIC_KEY="votre_clé_publique"
+supabase secrets set VAPID_PRIVATE_KEY="votre_clé_privée"
+```
 
 Ces valeurs se trouvent dans le dashboard Supabase du projet, sous **Project Settings → API**.
 

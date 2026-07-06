@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://qsxlpnrqlyrfrwtmmqxf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "bonsai-studio-mcp",
+      "version": "0.1.0",
+      "title": "Bonsaï Studio"
+    },
+    "tools": [
+      {
+        "name": "list_bonsais",
+        "title": "Lister mes bonsaïs",
+        "description": "Retourne les bonsaïs de la collection de l'utilisateur connecté (nom, espèce, style, étape, favori).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 50,
+              "description": "Nombre maximum de résultats",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "favoris_only": {
+              "default": false,
+              "description": "Ne renvoyer que les bonsaïs favoris",
+              "type": "boolean"
+            },
+            "search": {
+              "description": "Filtre plein-texte sur nom / espèce",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_bonsai",
+        "title": "Détail d'un bonsaï",
+        "description": "Retourne la fiche complète d'un bonsaï (métadonnées, derniers soins, prochains rappels).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "bonsai_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Identifiant du bonsaï"
+            }
+          },
+          "required": [
+            "bonsai_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_rappels_a_venir",
+        "title": "Rappels à venir",
+        "description": "Liste les rappels d'entretien actifs à venir (par défaut sur les 30 prochains jours), triés par date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "days_ahead": {
+              "default": 30,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365
+            },
+            "overdue_only": {
+              "default": false,
+              "description": "Ne renvoyer que les rappels en retard",
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "log_soin",
+        "title": "Enregistrer un soin",
+        "description": "Ajoute une entrée dans le journal d'entretien d'un bonsaï (arrosage, taille, rempotage, etc.).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "bonsai_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "arrosage",
+                "taille",
+                "rempotage",
+                "fertilisation",
+                "traitement",
+                "ligature",
+                "don_vente",
+                "mort",
+                "autre"
+              ],
+              "description": "Type de soin"
+            },
+            "date": {
+              "description": "Date ISO (YYYY-MM-DD). Par défaut : aujourd'hui.",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "bonsai_id",
+            "type"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_poteries",
+        "title": "Lister mes poteries",
+        "description": "Retourne les poteries de la collection avec leurs dimensions et matières.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "search": {
+              "description": "Filtre sur nom / artisan / forme",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

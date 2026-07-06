@@ -13,6 +13,7 @@ import { Route as StatistiquesRouteImport } from './routes/statistiques'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PoteriesRouteImport } from './routes/poteries'
 import { Route as ParametresRouteImport } from './routes/parametres'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as ConnexionRouteImport } from './routes/connexion'
@@ -22,6 +23,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PoterieIdRouteImport } from './routes/poterie.$id'
 import { Route as BonsaiNouveauRouteImport } from './routes/bonsai.nouveau'
 import { Route as BonsaiIdRouteImport } from './routes/bonsai.$id'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const StatistiquesRoute = StatistiquesRouteImport.update({
   id: '/statistiques',
@@ -41,6 +46,11 @@ const PoteriesRoute = PoteriesRouteImport.update({
 const ParametresRoute = ParametresRouteImport.update({
   id: '/parametres',
   path: '/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalRoute = JournalRouteImport.update({
@@ -88,6 +98,29 @@ const BonsaiIdRoute = BonsaiIdRouteImport.update({
   path: '/bonsai/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,13 +129,18 @@ export interface FileRoutesByFullPath {
   '/connexion': typeof ConnexionRoute
   '/inscription': typeof InscriptionRoute
   '/journal': typeof JournalRoute
+  '/mcp': typeof McpRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistiques': typeof StatistiquesRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
   '/poterie/$id': typeof PoterieIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -111,13 +149,18 @@ export interface FileRoutesByTo {
   '/connexion': typeof ConnexionRoute
   '/inscription': typeof InscriptionRoute
   '/journal': typeof JournalRoute
+  '/mcp': typeof McpRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistiques': typeof StatistiquesRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
   '/poterie/$id': typeof PoterieIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,13 +170,18 @@ export interface FileRoutesById {
   '/connexion': typeof ConnexionRoute
   '/inscription': typeof InscriptionRoute
   '/journal': typeof JournalRoute
+  '/mcp': typeof McpRoute
   '/parametres': typeof ParametresRoute
   '/poteries': typeof PoteriesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statistiques': typeof StatistiquesRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bonsai/$id': typeof BonsaiIdRoute
   '/bonsai/nouveau': typeof BonsaiNouveauRoute
   '/poterie/$id': typeof PoterieIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -144,13 +192,18 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/inscription'
     | '/journal'
+    | '/mcp'
     | '/parametres'
     | '/poteries'
     | '/sitemap.xml'
     | '/statistiques'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
     | '/poterie/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -159,13 +212,18 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/inscription'
     | '/journal'
+    | '/mcp'
     | '/parametres'
     | '/poteries'
     | '/sitemap.xml'
     | '/statistiques'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
     | '/poterie/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
   id:
     | '__root__'
     | '/'
@@ -174,13 +232,18 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/inscription'
     | '/journal'
+    | '/mcp'
     | '/parametres'
     | '/poteries'
     | '/sitemap.xml'
     | '/statistiques'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/bonsai/$id'
     | '/bonsai/nouveau'
     | '/poterie/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -190,13 +253,18 @@ export interface RootRouteChildren {
   ConnexionRoute: typeof ConnexionRoute
   InscriptionRoute: typeof InscriptionRoute
   JournalRoute: typeof JournalRoute
+  McpRoute: typeof McpRoute
   ParametresRoute: typeof ParametresRoute
   PoteriesRoute: typeof PoteriesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatistiquesRoute: typeof StatistiquesRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BonsaiIdRoute: typeof BonsaiIdRoute
   BonsaiNouveauRoute: typeof BonsaiNouveauRoute
   PoterieIdRoute: typeof PoterieIdRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -227,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/parametres'
       fullPath: '/parametres'
       preLoaderRoute: typeof ParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal': {
@@ -292,6 +367,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BonsaiIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -302,13 +405,19 @@ const rootRouteChildren: RootRouteChildren = {
   ConnexionRoute: ConnexionRoute,
   InscriptionRoute: InscriptionRoute,
   JournalRoute: JournalRoute,
+  McpRoute: McpRoute,
   ParametresRoute: ParametresRoute,
   PoteriesRoute: PoteriesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatistiquesRoute: StatistiquesRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BonsaiIdRoute: BonsaiIdRoute,
   BonsaiNouveauRoute: BonsaiNouveauRoute,
   PoterieIdRoute: PoterieIdRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
