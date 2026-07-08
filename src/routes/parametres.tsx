@@ -133,7 +133,9 @@ function ParametresPage() {
     try {
       const success = await subscribeToPush();
       if (success) {
-        setPushEnabled(true);
+        // Vérifier l'abonnement réel après l'activation
+        const hasSubscription = await checkPushSubscription();
+        setPushEnabled(hasSubscription);
         toast.success("Notifications push activées");
       } else {
         toast.error("Impossible d'activer les notifications push");
