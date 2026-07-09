@@ -119,11 +119,7 @@ export async function subscribeToPush(): Promise<boolean> {
     console.log("Service Worker enregistré:", registration);
 
     // 3. S'abonner au push
-    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!vapidPublicKey) {
-      console.error("VITE_VAPID_PUBLIC_KEY non défini");
-      return false;
-    }
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BPaInHKLpk5oPhZGKKdeJ9bq5Pdj-jSVpZP6rad3r61MEWJm-RX7zHLwiRbT7fqlu7Xpa_hgjs3YABRHxMUOlIM";
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
