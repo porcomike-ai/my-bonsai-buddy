@@ -180,8 +180,8 @@ serve(async (req) => {
         try {
           const eventDate = new Date(event.date_heure);
           const body = event.description
-            ? `${eventDate.toLocaleString('fr-FR')} — ${event.description}`
-            : eventDate.toLocaleString('fr-FR');
+            ? `${eventDate.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })} — ${event.description}`
+            : eventDate.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
 
           const payload = JSON.stringify({
             title: `🌱 ${event.titre}`,
@@ -237,7 +237,7 @@ serve(async (req) => {
       for (const sub of userSubscriptions) {
         try {
           const reminderDate = new Date(reminder.date_heure);
-          const body = reminder.notes || reminderDate.toLocaleString('fr-FR');
+          const body = reminder.notes || reminderDate.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
 
           const payload = JSON.stringify({
             title: `🌱 Rappel : ${reminder.titre}`,
