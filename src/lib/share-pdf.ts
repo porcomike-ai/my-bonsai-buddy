@@ -32,7 +32,7 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-function resizeImageForPdf(img: HTMLImageElement, maxWidth = 1600, quality = 0.78): string {
+function resizeImageForPdf(img: HTMLImageElement, maxWidth = 800, quality = 0.6): string {
   const scale = Math.min(1, maxWidth / img.width);
   const targetW = Math.round(img.width * scale);
   const targetH = Math.round(img.height * scale);
