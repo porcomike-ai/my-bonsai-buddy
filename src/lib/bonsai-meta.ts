@@ -37,15 +37,48 @@ export function etapeLabel(e?: BonsaiEtape) {
   return ETAPES.find((x) => x.value === e)?.label ?? e;
 }
 
+// Liste complète (utilisée pour l'affichage : soinLabel / soinEmoji).
+// Contient à la fois la nouvelle liste de types d'événements et les
+// anciennes valeurs ("arrosage", "taille", "fertilisation", "traitement",
+// "ligature") conservées uniquement pour que les entrées de journal
+// existantes gardent un libellé et un emoji corrects.
 export const SOINS: { value: SoinType; label: string; emoji: string }[] = [
+  { value: "accident", label: "Accident", emoji: "⚠️" },
+  { value: "achete", label: "Acheté", emoji: "🛒" },
+  { value: "engrais", label: "Engrais", emoji: "🌱" },
+  { value: "exposition", label: "Exposition", emoji: "🏆" },
+  { value: "greffe", label: "Greffe", emoji: "🌿" },
+  { value: "marcottage", label: "Marcottage", emoji: "🌾" },
+  { value: "mise_en_forme", label: "Mise en forme", emoji: "✂️" },
+  { value: "mise_en_pleine_terre", label: "Mis en pleine terre", emoji: "⛰️" },
+  { value: "prelevement", label: "Prélèvement", emoji: "🪓" },
+  { value: "rempotage", label: "Rempotage", emoji: "🪴" },
+  { value: "don_vente", label: "Vendu/don", emoji: "🎁" },
+  { value: "mort", label: "Mort", emoji: "🪦" },
+  { value: "autre", label: "Autre", emoji: "•" },
+  // --- Anciennes valeurs, conservées pour l'affichage de l'historique ---
   { value: "arrosage", label: "Arrosage", emoji: "💧" },
   { value: "taille", label: "Taille", emoji: "✂️" },
-  { value: "rempotage", label: "Rempotage", emoji: "🪴" },
   { value: "fertilisation", label: "Fertilisation", emoji: "🌱" },
   { value: "traitement", label: "Traitement", emoji: "🧪" },
   { value: "ligature", label: "Ligature", emoji: "🧵" },
-  { value: "don_vente", label: "Don / Vente", emoji: "🎁" },
+];
+
+// Liste proposée pour la création/modification d'une entrée de journal.
+// Ne contient volontairement pas les anciennes valeurs ci-dessus.
+export const SOINS_SELECTABLE: { value: SoinType; label: string; emoji: string }[] = [
+  { value: "accident", label: "Accident", emoji: "⚠️" },
+  { value: "achete", label: "Acheté", emoji: "🛒" },
+  { value: "engrais", label: "Engrais", emoji: "🌱" },
+  { value: "exposition", label: "Exposition", emoji: "🏆" },
+  { value: "greffe", label: "Greffe", emoji: "🌿" },
+  { value: "marcottage", label: "Marcottage", emoji: "🌾" },
+  { value: "mise_en_forme", label: "Mise en forme", emoji: "✂️" },
   { value: "mort", label: "Mort", emoji: "🪦" },
+  { value: "mise_en_pleine_terre", label: "Mis en pleine terre", emoji: "⛰️" },
+  { value: "prelevement", label: "Prélèvement", emoji: "🪓" },
+  { value: "rempotage", label: "Rempotage", emoji: "🪴" },
+  { value: "don_vente", label: "Vendu/don", emoji: "🎁" },
   { value: "autre", label: "Autre", emoji: "•" },
 ];
 
