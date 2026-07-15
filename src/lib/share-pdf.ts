@@ -21,8 +21,7 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-// Fonction optimisée : convertit un Blob en binaire compressé (Uint8Array)
-// Retourne aussi les dimensions pour permettre le calcul du ratio sans déformation
+// Fonction optimisée pour renvoyer un format binaire (Uint8Array) sans déformation
 async function getResizedImageBytes(blob: Blob, maxWidth = 800, quality = 0.7): Promise<{ bytes: Uint8Array; width: number; height: number }> {
   const dataUrl = await new Promise<string>((resolve) => {
     const reader = new FileReader();
@@ -47,12 +46,7 @@ async function getResizedImageBytes(blob: Blob, maxWidth = 800, quality = 0.7): 
 }
 
 export type PdfPhotosOption = "principale" | "toutes";
-
-export interface PdfProgress {
-  phase: "loading" | "generating" | "photos";
-  current: number;
-  total: number;
-}
+export interface PdfProgress { phase: "loading" | "generating" | "photos"; current: number; total: number; }
 
 export async function generateBonsaiPdf(
   bonsaiId: string,
@@ -101,7 +95,7 @@ export async function generateBonsaiPdf(
       const { bytes, width, height } = await getResizedImageBytes(blob, 400, 0.7);
       const ratio = Math.min(70 / width, 70 / height);
       doc.addImage(bytes, "JPEG", margin, y, width * ratio, height * ratio, undefined, "FAST");
-    } catch (err) { console.error("Photo principale:", err); }
+    } catch {}
   }
 
   // Textes (Infos clés)
@@ -118,41 +112,112 @@ export async function generateBonsaiPdf(
   doc.setFontSize(9);
   doc.text(styleLabel(b.style).toUpperCase(), textX, y + 22);
 
-  // ... (Logique Notes, Journal et Rappels identique à l'original)
-  // [Note : assure-toi de garder ton bloc original ici pour ne rien oublier]
+  // Infos
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(10);
+  const infos: Array<[string, string]> = [];
+  const age = ageActuel(b);
+  if (age != null) infos.push(["Âge estimé", `${age} ans`]);
+  if (b.hauteurCm != null) infos.push(["Hauteur", `${b.hauteurCm} cm`]);
+  if (b.dateAcquisition) infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);
+  if (b.origine) infos.push(["Origine", b.origine]);
+  if (poterie) infos.push(["Poterie", poterie.nom]);
+  infos.push(["Statut", (b.dansCollection ?? true) ? "Dans la collection" : "Sorti de la collection"]);
 
-  // Galerie Photos
+  let iy = y + 30;
+  for (const [label, value] of infos) {
+    doc.setFont("helvetica", "bold");
+    doc.text(label, textX, iy);
+    doc.setFont("helvetica", "normal");
+    doc.text(value, textX + 30, iy);
+    iy += 5.5;
+  }
+
+  y = Math.max(y + 76, iy) + 6;
+
+  // Notes
+  if (b.notes) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Notes", margin, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(b.notes, W - margin * 2);
+    doc.text(lines, margin, y);
+    y += lines.length * 5 + 4;
+  }
+
+  // Journal
+  if (journal.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Derniers entretiens", margin, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    for (const e of journal.slice(0, 6)) {
+      if (y > 270) break;
+      const line = `• ${format(parseISO(e.date), "d MMM yyyy", { locale: fr })} — ${soinLabel(e.type)}${e.notes ? " : " + e.notes : ""}`;
+      const wrapped = doc.splitTextToSize(line, W - margin * 2);
+      doc.text(wrapped, margin, y);
+      y += wrapped.length * 5;
+    }
+    y += 3;
+  }
+
+  // Rappels
+  const actifs = rappels.filter((r) => r.actif).slice(0, 5);
+  if (actifs.length > 0 && y < 270) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Prochains soins", margin, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    for (const r of actifs) {
+      if (y > 280) break;
+      doc.text(`• ${format(parseISO(r.prochaineDate), "d MMM yyyy", { locale: fr })} — ${soinLabel(r.type)}`, margin, y);
+      y += 5;
+    }
+  }
+
+  // Galerie
   if (photosOpt === "toutes" && allPhotos.length > 0) {
     const sorted = [...allPhotos].sort((a, b) => b.date.localeCompare(a.date));
     for (let i = 0; i < sorted.length; i += 4) {
       doc.addPage();
+      doc.setFillColor(135, 168, 120);
+      doc.rect(0, 0, W, 22, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Galerie — ${b.nom}`, margin, 14);
+      
       const slice = sorted.slice(i, i + 4);
       for (let k = 0; k < slice.length; k++) {
         const p = slice[k];
         currentStep++;
         onProgress?.({ phase: "photos", current: currentStep, total: totalSteps });
-        
         try {
           const blob = await getPhotoBlob(p);
           const { bytes, width, height } = await getResizedImageBytes(blob, 500, 0.6);
-          
-          const col = k % 2;
-          const row = Math.floor(k / 2);
           const cellW = 86, cellH = 86;
-          const xPos = margin + col * 92;
-          const yPos = 30 + row * 110;
-          
+          const xPos = margin + (k % 2) * 92;
+          const yPos = 30 + Math.floor(k / 2) * 110;
           const ratio = Math.min(cellW / width, cellH / height);
-          const w = width * ratio;
-          const h = height * ratio;
-          
-          doc.addImage(bytes, "JPEG", xPos + (cellW - w) / 2, yPos + (cellH - h) / 2, w, h, undefined, "FAST");
-        } catch (err) { console.error("Photo galerie:", err); }
+          doc.addImage(bytes, "JPEG", xPos + (cellW - width * ratio) / 2, yPos + (cellH - height * ratio) / 2, width * ratio, height * ratio, undefined, "FAST");
+          doc.setFontSize(9);
+          doc.setTextColor(110, 110, 110);
+          doc.text(format(parseISO(p.date), "d MMM yyyy", { locale: fr }), xPos, yPos + 92);
+        } catch {}
       }
     }
   }
 
   return doc.output("blob");
+}
+
+function safeFileName(s: string): string {
+  return s.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/^-+|-+$/g, "") || "bonsai";
 }
 
 export async function shareBonsaiPdf(
@@ -161,14 +226,13 @@ export async function shareBonsaiPdf(
   options: any = {},
 ): Promise<"shared" | "downloaded"> {
   const blob = await generateBonsaiPdf(bonsaiId, options);
-  const fileName = `bonsai-${bonsaiName.replace(/\s+/g, '-')}.pdf`;
-  
+  const fileName = `bonsai-${safeFileName(bonsaiName)}.pdf`;
   const file = new File([blob], fileName, { type: "application/pdf" });
-  const nav = navigator as any;
 
+  const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {
     try {
-      await nav.share({ files: [file], title: bonsaiName });
+      await nav.share({ files: [file], title: `Fiche ${bonsaiName}` });
       return "shared";
     } catch {}
   }
@@ -180,9 +244,6 @@ export async function shareBonsaiPdf(
   a.download = fileName;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => {
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, 100);
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
   return "downloaded";
 }
