@@ -42,7 +42,7 @@ import {
   type SoinType,
   type Bonsai,
 } from "@/lib/supabase-data";
-import { SOINS, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
+import { SOINS_SELECTABLE, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 
 type TimelineItem =
   | { kind: "photo"; data: Photo; dateKey: string }
@@ -84,7 +84,7 @@ export function UnifiedTimeline({
   // Journal edit modal state
   const [journalModalOpen, setJournalModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
-  const [journalType, setJournalType] = useState<SoinType>("arrosage");
+  const [journalType, setJournalType] = useState<SoinType>("rempotage");
   const [journalDate, setJournalDate] = useState(new Date().toISOString().slice(0, 10));
   const [journalNotes, setJournalNotes] = useState("");
 
@@ -190,7 +190,7 @@ export function UnifiedTimeline({
   // Journal handlers
   const openNewJournal = () => {
     setEditingEntry(null);
-    setJournalType("arrosage");
+    setJournalType("rempotage");
     setJournalDate(new Date().toISOString().slice(0, 10));
     setJournalNotes("");
     setJournalModalOpen(true);
@@ -205,6 +205,11 @@ export function UnifiedTimeline({
   };
 
   const saveJournalEntry = async () => {
+    if (journalType === "autre" && !journalNotes.trim()) {
+      toast.error("Merci de préciser l'information dans le champ Notes pour le type « Autre ».");
+      return;
+    }
+
     const isCollectionExit = journalType === "don_vente" || journalType === "mort";
     let shouldUpdateStatus = false;
 
@@ -404,13 +409,13 @@ export function UnifiedTimeline({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="mb-1.5 block text-sm">Type de soin</Label>
+              <Label className="mb-1.5 block text-sm">Type d'événement</Label>
               <select
                 value={journalType}
                 onChange={(e) => setJournalType(e.target.value as SoinType)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
-                {SOINS.map((s) => (
+                {SOINS_SELECTABLE.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.emoji} {s.label}
                   </option>
@@ -426,12 +431,18 @@ export function UnifiedTimeline({
               />
             </div>
             <div>
-              <Label className="mb-1.5 block text-sm">Notes (facultatif)</Label>
+              <Label className="mb-1.5 block text-sm">
+                {journalType === "autre" ? "Précisez (obligatoire)" : "Notes (facultatif)"}
+              </Label>
               <Textarea
                 value={journalNotes}
                 onChange={(e) => setJournalNotes(e.target.value)}
                 rows={3}
-                placeholder="Observations, détails…"
+                placeholder={
+                  journalType === "autre"
+                    ? "Décrivez cet événement…"
+                    : "Observations, détails…"
+                }
               />
             </div>
           </div>

@@ -32,6 +32,19 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
+function resizeImageForPdf(img: HTMLImageElement, maxWidth = 800, quality = 0.6): string {
+  const scale = Math.min(1, maxWidth / img.width);
+  const targetW = Math.round(img.width * scale);
+  const targetH = Math.round(img.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return img.src;
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 export type PdfPhotosOption = "principale" | "toutes";
 
 export interface PdfProgress {
@@ -90,7 +103,8 @@ export async function generateBonsaiPdf(
       const ratio = Math.min(maxW / img.width, maxH / img.height);
       const w = img.width * ratio,
         h = img.height * ratio;
-      doc.addImage(dataUrl, "JPEG", margin, y, w, h, undefined, "FAST");
+     const compressedDataUrl = resizeImageForPdf(img);
+      doc.addImage(compressedDataUrl, "JPEG", margin, y, w, h, undefined, "FAST");
     } catch {
       /* image illisible */
     }
@@ -245,7 +259,8 @@ export async function generateBonsaiPdf(
           const w = img.width * ratio,
             h = img.height * ratio;
           const ix = x + (cellW - w) / 2;
-          doc.addImage(dataUrl, "JPEG", ix, yy, w, h, undefined, "FAST");
+          const compressedDataUrl = resizeImageForPdf(img);
+          doc.addImage(compressedDataUrl, "JPEG", ix, yy, w, h, undefined, "FAST");
           doc.setFontSize(9);
           doc.setTextColor(110, 110, 110);
           const caption = `${format(parseISO(p.date), "d MMM yyyy", { locale: fr })}${p.legende ? " — " + p.legende : ""}`;

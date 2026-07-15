@@ -8,9 +8,18 @@ export type BonsaiStyle =
 
 export type BonsaiEtape = "culture" | "pre-bonsai" | "bonsai";
 
+// Types d'événements du journal d'entretien.
+// IMPORTANT : "mort" et "don_vente" sont utilisés tels quels dans
+// unified-timeline.tsx pour déclencher la sortie de collection
+// (isCollectionExit). Ne jamais renommer ces deux valeurs.
+// Les valeurs "arrosage", "taille", "fertilisation", "traitement", "ligature"
+// sont conservées uniquement pour la compatibilité avec les entrées de
+// journal existantes (elles ne sont plus proposées à la création).
 export type SoinType =
-  | "arrosage" | "taille" | "rempotage" | "fertilisation"
-  | "traitement" | "ligature" | "don_vente" | "mort" | "autre";
+  | "accident" | "achete" | "engrais" | "exposition" | "greffe"
+  | "marcottage" | "mise_en_forme" | "mise_en_pleine_terre" | "prelevement"
+  | "rempotage" | "don_vente" | "mort" | "autre"
+  | "arrosage" | "taille" | "fertilisation" | "traitement" | "ligature";
 
 export interface BonsaiRow {
   id: string;

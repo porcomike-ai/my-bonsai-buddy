@@ -36,8 +36,6 @@ import {
   Plus,
   X,
   Bell,
-  BellOff,
-  BellRing,
   CalendarPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,7 +45,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/components/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { notificationStatus, requestNotificationPermission } from "@/lib/notifications";
 
 export const Route = createFileRoute("/calendrier")({
   head: () => ({
@@ -285,17 +282,6 @@ function EvenementsSection({
   });
   const [rappelMinutes, setRappelMinutes] = useState("60");
   const [bonsaiId, setBonsaiId] = useState<string>("");
-  const [notifStatus, setNotifStatus] = useState<NotificationPermission | "unsupported">(() =>
-    notificationStatus(),
-  );
-
-  const ask = async () => {
-    const p = await requestNotificationPermission();
-    setNotifStatus(p);
-    if (p === "granted") toast.success("Notifications activées");
-    else if (p === "denied")
-      toast.error("Notifications refusées. Activez-les dans les réglages du navigateur.");
-  };
 
   const add = async () => {
     if (!titre.trim()) {
@@ -317,7 +303,6 @@ function EvenementsSection({
     setTitre("");
     setDescription("");
     toast.success("Évènement ajouté");
-    if (notifStatus !== "granted" && notifStatus !== "unsupported") ask();
   };
 
   const edit = (e: Evenement) => {
@@ -372,14 +357,11 @@ function EvenementsSection({
     <section className="mt-10">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-2xl font-semibold">Évènements à venir</h2>
-        <div className="flex items-center gap-2">
-          <NotifBadge status={notifStatus} onAsk={ask} />
-          {!open && (
-            <Button onClick={() => setOpen(true)}>
-              <CalendarPlus className="mr-1.5 h-4 w-4" /> Nouvel évènement
-            </Button>
-          )}
-        </div>
+        {!open && (
+          <Button onClick={() => setOpen(true)}>
+            <CalendarPlus className="mr-1.5 h-4 w-4" /> Nouvel évènement
+          </Button>
+        )}
       </div>
 
       {open && (
@@ -472,13 +454,6 @@ function EvenementsSection({
               {editingId ? "Mettre à jour" : <><Plus className="mr-1 h-4 w-4" /> Ajouter</>}
             </Button>
           </div>
-          {notifStatus !== "granted" && notifStatus !== "unsupported" && (
-            <p className="text-xs text-muted-foreground">
-              Pour recevoir une notification sur cet appareil, autorisez les notifications avec le
-              bouton ci-dessus. L'application doit être ouverte (au moins en arrière-plan dans le
-              navigateur) au moment du rappel.
-            </p>
-          )}
         </div>
       )}
 
@@ -547,34 +522,6 @@ function EvenementsSection({
       )}
       {confirmDialog}
     </section>
-  );
-}
-
-function NotifBadge({
-  status,
-  onAsk,
-}: {
-  status: NotificationPermission | "unsupported";
-  onAsk: () => void;
-}) {
-  if (status === "unsupported") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
-        <BellOff className="h-3 w-3" /> Notifications non supportées
-      </span>
-    );
-  }
-  if (status === "granted") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-sage/30 px-3 py-1 text-xs text-forest">
-        <BellRing className="h-3 w-3" /> Notifications activées
-      </span>
-    );
-  }
-  return (
-    <Button variant="outline" size="sm" onClick={onAsk}>
-      <Bell className="mr-1 h-3.5 w-3.5" /> Activer les notifications
-    </Button>
   );
 }
 
