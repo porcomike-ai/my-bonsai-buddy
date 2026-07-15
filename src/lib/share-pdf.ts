@@ -22,7 +22,7 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
 }
 
 // Fonction optimisée : convertit un Blob en binaire compressé (Uint8Array) pour jsPDF
-async function getResizedImageBytes(blob: Blob, maxWidth = 600, quality = 0.5): Promise<Uint8Array> {
+async function getResizedImageBytes(blob: Blob, maxWidth = 800, quality = 0.75): Promise<Uint8Array> {
   const dataUrl = await new Promise<string>((resolve) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
@@ -99,7 +99,7 @@ export async function generateBonsaiPdf(
   if (b.photoPrincipale) {
     try {
       const blob = await getPhotoBlob({ storagePath: b.photoPrincipale });
-      const binaryData = await getResizedImageBytes(blob, 400, 0.5);
+      const binaryData = await getResizedImageBytes(blob, 800, 0.75);
       doc.addImage(binaryData, "JPEG", margin, y, 70, 70, undefined, "FAST");
     } catch (err) {
       console.error("Erreur de chargement de la photo principale", err);
@@ -223,7 +223,7 @@ export async function generateBonsaiPdf(
         try {
           const blob = await getPhotoBlob(p);
           // Résolution de 500px de large max et qualité 0.4 pour un excellent ratio poids/visuel
-          const binaryData = await getResizedImageBytes(blob, 500, 0.4);
+          const binaryData = await getResizedImageBytes(blob, 800, 0.75);
           
           doc.addImage(binaryData, "JPEG", xPos, yPos, 86, 86, undefined, "FAST");
           
