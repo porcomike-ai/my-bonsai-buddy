@@ -92,7 +92,7 @@ export async function generateBonsaiPdf(
   if (b.photoPrincipale) {
     try {
       const blob = await getPhotoBlob({ storagePath: b.photoPrincipale });
-      const { bytes, width, height } = await getResizedImageBytes(blob, 400, 0.7);
+      const { bytes, width, height } = await getResizedImageBytes(blob, 800, 0.7);
       const ratio = Math.min(70 / width, 70 / height);
       doc.addImage(bytes, "JPEG", margin, y, width * ratio, height * ratio, undefined, "FAST");
     } catch {}
@@ -199,7 +199,7 @@ export async function generateBonsaiPdf(
         onProgress?.({ phase: "photos", current: currentStep, total: totalSteps });
         try {
           const blob = await getPhotoBlob(p);
-          const { bytes, width, height } = await getResizedImageBytes(blob, 500, 0.6);
+          const { bytes, width, height } = await getResizedImageBytes(blob, 800, 0.7);
           const cellW = 86, cellH = 86;
           const xPos = margin + (k % 2) * 92;
           const yPos = 30 + Math.floor(k / 2) * 110;
