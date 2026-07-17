@@ -3,9 +3,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   getBonsai,
-  getPhoto,
   getPhotoBlob,
-  getPoteriePhoto,
   getPoterie,
   listJournal,
   listPhotos,
@@ -13,15 +11,6 @@ import {
   ageActuel,
 } from "./supabase-data";
 import { soinLabel, styleLabel } from "./bonsai-meta";
-
-async function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(blob);
-  });
-}
 
 async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -32,26 +21,32 @@ async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-function resizeImageForPdf(img: HTMLImageElement, maxWidth = 800, quality = 0.6): string {
-  const scale = Math.min(1, maxWidth / img.width);
-  const targetW = Math.round(img.width * scale);
-  const targetH = Math.round(img.height * scale);
+// Fonction optimisée pour renvoyer un format binaire (Uint8Array) sans déformation
+async function getResizedImageBytes(blob: Blob, maxWidth = 800, quality = 0.7): Promise<{ bytes: Uint8Array; width: number; height: number }> {
+  const dataUrl = await new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
+  });
+  const img = await loadImage(dataUrl);
+  
+  const scale = Math.min(1, maxWidth / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  
   const canvas = document.createElement("canvas");
-  canvas.width = targetW;
-  canvas.height = targetH;
+  canvas.width = w;
+  canvas.height = h;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return img.src;
-  ctx.drawImage(img, 0, 0, targetW, targetH);
-  return canvas.toDataURL("image/jpeg", quality);
+  if (!ctx) return { bytes: new Uint8Array(await blob.arrayBuffer()), width: img.width, height: img.height };
+  
+  ctx.drawImage(img, 0, 0, w, h);
+  const resizedBlob = await new Promise<Blob>((resolve) => canvas.toBlob(r => resolve(r!), "image/jpeg", quality));
+  return { bytes: new Uint8Array(await resizedBlob.arrayBuffer()), width: w, height: h };
 }
 
 export type PdfPhotosOption = "principale" | "toutes";
-
-export interface PdfProgress {
-  phase: "loading" | "generating" | "photos";
-  current: number;
-  total: number;
-}
+export interface PdfProgress { phase: "loading" | "generating" | "photos"; current: number; total: number; }
 
 export async function generateBonsaiPdf(
   bonsaiId: string,
@@ -60,26 +55,27 @@ export async function generateBonsaiPdf(
   const photosOpt = options.photos ?? "principale";
   const onProgress = options.onProgress;
   onProgress?.({ phase: "loading", current: 0, total: 1 });
+
   const b = await getBonsai(bonsaiId);
   if (!b) throw new Error("Bonsaï introuvable");
+  
   const [poterie, journal, rappels, allPhotos] = await Promise.all([
     b.poterieId ? getPoterie(b.poterieId) : Promise.resolve(undefined),
     listJournal(bonsaiId),
     listRappels(bonsaiId),
     photosOpt === "toutes" ? listPhotos(bonsaiId) : Promise.resolve([]),
   ]);
-  const principalBlob = b.photoPrincipale
-    ? await getPhotoBlob({ storagePath: b.photoPrincipale })
-    : undefined;
 
-  onProgress?.({ phase: "generating", current: 0, total: allPhotos.length + 1 });
+  const totalSteps = 1 + (photosOpt === "toutes" ? allPhotos.length : 0);
+  let currentStep = 0;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210;
+  const H = 297;
   const margin = 16;
 
   // Header
-  doc.setFillColor(135, 168, 120); // sage
+  doc.setFillColor(135, 168, 120);
   doc.rect(0, 0, W, 32, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
@@ -93,24 +89,17 @@ export async function generateBonsaiPdf(
   let y = 44;
   doc.setTextColor(40, 40, 40);
 
-  // Photo
-  if (principalBlob) {
+  // Photo principale
+  if (b.photoPrincipale) {
     try {
-      const dataUrl = await blobToDataUrl(principalBlob);
-      const img = await loadImage(dataUrl);
-      const maxW = 70,
-        maxH = 70;
-      const ratio = Math.min(maxW / img.width, maxH / img.height);
-      const w = img.width * ratio,
-        h = img.height * ratio;
-     const compressedDataUrl = resizeImageForPdf(img);
-      doc.addImage(compressedDataUrl, "JPEG", margin, y, w, h, undefined, "FAST");
-    } catch {
-      /* image illisible */
-    }
+      const blob = await getPhotoBlob({ storagePath: b.photoPrincipale });
+      const { bytes, width, height } = await getResizedImageBytes(blob, 800, 0.7);
+      const ratio = Math.min(70 / width, 70 / height);
+      doc.addImage(bytes, "JPEG", margin, y, width * ratio, height * ratio, undefined, "FAST");
+    } catch {}
   }
 
-  // Titre + espèce à droite de la photo
+  // Textes (Infos clés)
   const textX = margin + 76;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
@@ -120,25 +109,21 @@ export async function generateBonsaiPdf(
   doc.setTextColor(110, 110, 110);
   doc.text(b.espece, textX, y + 16);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(196, 101, 74); // terracotta
+  doc.setTextColor(196, 101, 74);
   doc.setFontSize(9);
   doc.text(styleLabel(b.style).toUpperCase(), textX, y + 22);
 
-  // Infos clés
+  // Infos
   doc.setTextColor(40, 40, 40);
   doc.setFontSize(10);
   const infos: Array<[string, string]> = [];
   const age = ageActuel(b);
   if (age != null) infos.push(["Âge estimé", `${age} ans`]);
   if (b.hauteurCm != null) infos.push(["Hauteur", `${b.hauteurCm} cm`]);
-  if (b.dateAcquisition)
-    infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);
+  if (b.dateAcquisition) infos.push(["Acquis le", format(parseISO(b.dateAcquisition), "d MMM yyyy", { locale: fr })]);
   if (b.origine) infos.push(["Origine", b.origine]);
   if (poterie) infos.push(["Poterie", poterie.nom]);
-  infos.push([
-    "Statut",
-    (b.dansCollection ?? true) ? "Dans la collection" : "Sorti de la collection",
-  ]);
+  infos.push(["Statut", (b.dansCollection ?? true) ? "Dans la collection" : "Sorti de la collection"]);
 
   let iy = y + 30;
   for (const [label, value] of infos) {
@@ -164,7 +149,7 @@ export async function generateBonsaiPdf(
     y += lines.length * 5 + 4;
   }
 
-  // Derniers entretiens
+  // Journal
   if (journal.length > 0) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -182,7 +167,7 @@ export async function generateBonsaiPdf(
     y += 3;
   }
 
-  // Prochains soins
+  // Rappels
   const actifs = rappels.filter((r) => r.actif).slice(0, 5);
   if (actifs.length > 0 && y < 270) {
     doc.setFont("helvetica", "bold");
@@ -193,11 +178,7 @@ export async function generateBonsaiPdf(
     doc.setFontSize(10);
     for (const r of actifs) {
       if (y > 280) break;
-      doc.text(
-        `• ${format(parseISO(r.prochaineDate), "d MMM yyyy", { locale: fr })} — ${soinLabel(r.type)}`,
-        margin,
-        y,
-      );
+      doc.text(`• ${format(parseISO(r.prochaineDate), "d MMM yyyy", { locale: fr })} — ${soinLabel(r.type)}`, margin, y);
       y += 5;
     }
   }
@@ -207,23 +188,13 @@ export async function generateBonsaiPdf(
   doc.setTextColor(150, 150, 150);
   doc.text("Bonsaï Studio — carnet de collection", W / 2, 290, { align: "center" });
 
-  onProgress?.({ phase: "generating", current: 1, total: allPhotos.length + 1 });
-
-  // Pages galerie (option « toutes les photos »)
+  // Galerie
   if (photosOpt === "toutes" && allPhotos.length > 0) {
-    const H = 297;
     const sorted = [...allPhotos].sort((a, b) => b.date.localeCompare(a.date));
-    const perPage = 4;
-    const cols = 2;
-    const gap = 6;
-    const availW = W - margin * 2;
-    const cellW = (availW - gap) / cols;
-    const cellH = 110;
-
-    let photoIndex = 0;
-    for (let i = 0; i < sorted.length; i += perPage) {
+    const totalPages = Math.ceil(sorted.length / 4);
+    for (let i = 0; i < sorted.length; i += 4) {
+      const pageNum = Math.floor(i / 4) + 1;
       doc.addPage();
-      // En-tête galerie
       doc.setFillColor(135, 168, 120);
       doc.rect(0, 0, W, 22, "F");
       doc.setTextColor(255, 255, 255);
@@ -232,42 +203,27 @@ export async function generateBonsaiPdf(
       doc.text(`Galerie — ${b.nom}`, margin, 14);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(
-        `${Math.floor(i / perPage) + 1} / ${Math.ceil(sorted.length / perPage)}`,
-        W - margin,
-        14,
-        { align: "right" },
-      );
+      doc.text(`${pageNum} / ${totalPages}`, W - margin, 14, { align: "right" });
       doc.setTextColor(40, 40, 40);
-
-      const slice = sorted.slice(i, i + perPage);
+      
+      const slice = sorted.slice(i, i + 4);
       for (let k = 0; k < slice.length; k++) {
         const p = slice[k];
-        photoIndex++;
-        onProgress?.({ phase: "photos", current: photoIndex, total: sorted.length });
-        const col = k % cols;
-        const row = Math.floor(k / cols);
-        const x = margin + col * (cellW + gap);
-        const yy = 30 + row * (cellH + gap);
+        currentStep++;
+        onProgress?.({ phase: "photos", current: currentStep, total: totalSteps });
         try {
           const blob = await getPhotoBlob(p);
-          if (!blob) continue;
-          const dataUrl = await blobToDataUrl(blob);
-          const img = await loadImage(dataUrl);
-          const imgMaxH = cellH - 10;
-          const ratio = Math.min(cellW / img.width, imgMaxH / img.height);
-          const w = img.width * ratio,
-            h = img.height * ratio;
-          const ix = x + (cellW - w) / 2;
-          const compressedDataUrl = resizeImageForPdf(img);
-          doc.addImage(compressedDataUrl, "JPEG", ix, yy, w, h, undefined, "FAST");
+          const { bytes, width, height } = await getResizedImageBytes(blob, 800, 0.7);
+          const cellW = 86, cellH = 86;
+          const xPos = margin + (k % 2) * 92;
+          const yPos = 30 + Math.floor(k / 2) * 110;
+          const ratio = Math.min(cellW / width, cellH / height);
+          doc.addImage(bytes, "JPEG", xPos + (cellW - width * ratio) / 2, yPos + (cellH - height * ratio) / 2, width * ratio, height * ratio, undefined, "FAST");
           doc.setFontSize(9);
           doc.setTextColor(110, 110, 110);
           const caption = `${format(parseISO(p.date), "d MMM yyyy", { locale: fr })}${p.legende ? " — " + p.legende : ""}`;
-          doc.text(doc.splitTextToSize(caption, cellW), x, yy + h + 5);
-        } catch {
-          /* ignore */
-        }
+          doc.text(doc.splitTextToSize(caption, cellW), xPos, yPos + 92);
+        } catch {}
       }
 
       doc.setFontSize(8);
@@ -309,11 +265,14 @@ export async function shareBonsaiPdf(
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+  a.style.display = "none";
   a.href = url;
   a.download = fileName;
   document.body.appendChild(a);
   a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
   return "downloaded";
 }
