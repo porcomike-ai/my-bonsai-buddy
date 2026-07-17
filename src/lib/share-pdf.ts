@@ -71,6 +71,7 @@ export async function generateBonsaiPdf(
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210;
+  const H = 297;
   const margin = 16;
 
   // Header
@@ -182,15 +183,28 @@ export async function generateBonsaiPdf(
     }
   }
 
+  // Pied de page de la première page
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text("Bonsaï Studio — carnet de collection", W / 2, 290, { align: "center" });
+
   // Galerie
   if (photosOpt === "toutes" && allPhotos.length > 0) {
     const sorted = [...allPhotos].sort((a, b) => b.date.localeCompare(a.date));
+    const totalPages = Math.ceil(sorted.length / 4);
     for (let i = 0; i < sorted.length; i += 4) {
+      const pageNum = Math.floor(i / 4) + 1;
       doc.addPage();
       doc.setFillColor(135, 168, 120);
       doc.rect(0, 0, W, 22, "F");
       doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
       doc.text(`Galerie — ${b.nom}`, margin, 14);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`${pageNum} / ${totalPages}`, W - margin, 14, { align: "right" });
+      doc.setTextColor(40, 40, 40);
       
       const slice = sorted.slice(i, i + 4);
       for (let k = 0; k < slice.length; k++) {
@@ -207,9 +221,14 @@ export async function generateBonsaiPdf(
           doc.addImage(bytes, "JPEG", xPos + (cellW - width * ratio) / 2, yPos + (cellH - height * ratio) / 2, width * ratio, height * ratio, undefined, "FAST");
           doc.setFontSize(9);
           doc.setTextColor(110, 110, 110);
-          doc.text(format(parseISO(p.date), "d MMM yyyy", { locale: fr }), xPos, yPos + 92);
+          const caption = `${format(parseISO(p.date), "d MMM yyyy", { locale: fr })}${p.legende ? " — " + p.legende : ""}`;
+          doc.text(doc.splitTextToSize(caption, cellW), xPos, yPos + 92);
         } catch {}
       }
+
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Bonsaï Studio — carnet de collection", W / 2, H - 7, { align: "center" });
     }
   }
 
@@ -223,7 +242,7 @@ function safeFileName(s: string): string {
 export async function shareBonsaiPdf(
   bonsaiId: string,
   bonsaiName: string,
-  options: any = {},
+  options: { photos?: PdfPhotosOption; onProgress?: (p: PdfProgress) => void } = {},
 ): Promise<"shared" | "downloaded"> {
   const blob = await generateBonsaiPdf(bonsaiId, options);
   const fileName = `bonsai-${safeFileName(bonsaiName)}.pdf`;
@@ -232,9 +251,16 @@ export async function shareBonsaiPdf(
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {
     try {
-      await nav.share({ files: [file], title: `Fiche ${bonsaiName}` });
+      await nav.share({
+        files: [file],
+        title: `Fiche bonsaï — ${bonsaiName}`,
+        text: `Fiche récapitulative de ${bonsaiName}`,
+      });
       return "shared";
-    } catch {}
+    } catch (err) {
+      if ((err as DOMException)?.name === "AbortError") return "shared";
+      // fallback vers téléchargement
+    }
   }
 
   const url = URL.createObjectURL(blob);
@@ -244,6 +270,9 @@ export async function shareBonsaiPdf(
   a.download = fileName;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
   return "downloaded";
 }
