@@ -14,6 +14,7 @@ Créer un fichier `.env` à la racine avec :
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_PROJECT_ID=
 SUPABASE_URL=
 SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -23,9 +24,10 @@ VAPID_PRIVATE_KEY=
 ```
 
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` : utilisées côté client (build Vite).
+- `VITE_SUPABASE_PROJECT_ID` : identifiant du projet Supabase (`xvvqffgchelmszpbdvde`), utilisé pour construire l'issuer OAuth du serveur MCP (`src/lib/mcp/index.ts`). Sans elle, les routes MCP (`/mcp`, `/.mcp/invoke-tool/...`) refusent de démarrer.
 - `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` : utilisées côté serveur (SSR).
 - `SUPABASE_SERVICE_ROLE_KEY` : clé admin, réservée aux routes serveur (`client.server.ts`). Ne jamais l'exposer côté client.
-- `VITE_VAPID_PUBLIC_KEY` : clé publique VAPID pour les notifications push (côté client).
+- `VITE_VAPID_PUBLIC_KEY` : clé publique VAPID pour les notifications push (côté client). Obligatoire : aucune valeur par défaut n'est fournie si elle est absente.
 - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` : clés VAPID pour l'envoi des notifications push (côté serveur).
 
 Pour générer les clés VAPID :
