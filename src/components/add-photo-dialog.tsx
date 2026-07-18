@@ -68,9 +68,16 @@ export function AddPhotoDialog({
     }
 
     let cancelled = false;
+    // Capturée localement (plutôt que relue depuis l'état `preview`), pour que
+    // le nettoyage révoque toujours la bonne URL créée par CETTE exécution du
+    // useEffect — l'état `preview` n'est pas fiable ici car il n'est mis à
+    // jour qu'après un rendu asynchrone.
+    let createdUrl: string | undefined;
+
     (async () => {
       // Prévisualisation.
       const url = URL.createObjectURL(file);
+      createdUrl = url;
       if (!cancelled) setPreview(url);
 
       // Compression/normalisation via fileToBlob.
@@ -103,9 +110,8 @@ export function AddPhotoDialog({
 
     return () => {
       cancelled = true;
-      if (preview) URL.revokeObjectURL(preview);
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, file, source]);
 
   const options: DateOption[] =

@@ -52,7 +52,7 @@ export async function subscribeToPush(): Promise<boolean> {
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as any,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     });
 
     // 4. Enregistrer l'abonnement dans Supabase
@@ -62,7 +62,7 @@ export async function subscribeToPush(): Promise<boolean> {
       return false;
     }
 
-    const { error } = await (supabase.from("push_subscriptions" as any) as any).upsert({
+    const { error } = await supabase.from("push_subscriptions").upsert({
       user_id: user.id,
       endpoint: subscription.endpoint,
       p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh")!))),
@@ -113,7 +113,8 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     if (!subscription) return false;
 
     // Delete from Supabase first
-    const { error } = await (supabase.from("push_subscriptions" as any) as any)
+    const { error } = await supabase
+      .from("push_subscriptions")
       .delete()
       .eq("endpoint", subscription.endpoint);
 

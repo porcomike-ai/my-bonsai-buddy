@@ -713,10 +713,11 @@ export async function exportSupabaseBackup(): Promise<SupabaseBackupPayload> {
     listEvenements(),
   ]);
 
-  // Récupère toutes les photos de tous les bonsaïs (chaque bonsai peut avoir
-  // plusieurs photos liées par bonsai_id).
-  const photosParBonsai = await Promise.all(bonsais.map((b) => listPhotos(b.id)));
-  const allPhotos = photosParBonsai.flat();
+  // Récupère toutes les photos de bonsaïs de l'utilisateur en une seule
+  // requête (au lieu d'une requête par bonsaï) — même fonction que celle
+  // déjà utilisée par la page Statistiques, pour éviter le pattern N+1 sur
+  // le chemin le plus coûteux (export complet de la collection).
+  const allPhotos = await listAllPhotos();
 
   const photosEnc = await Promise.all(
     allPhotos.map(async (p) => {
