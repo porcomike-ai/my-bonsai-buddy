@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getPhotoBlob } from "@/lib/supabase-data";
+import { getCachedPhotoBlob } from "@/lib/photo-cache";
 import { useBlobUrl } from "@/lib/blob-url";
 import { cn } from "@/lib/utils";
 import { Leaf } from "lucide-react";
@@ -21,7 +21,9 @@ export function BonsaiPhoto({
       return;
     }
     // `photoId` contient désormais le chemin Storage (ex. "{uid}/{bonsaiId}/{photoId}.jpg").
-    getPhotoBlob({ storagePath: photoId })
+    // Passe par le cache partagé pour éviter de retélécharger une photo déjà
+    // vue ailleurs dans l'app (accueil, collection, fiche détail...).
+    getCachedPhotoBlob({ storagePath: photoId, poterieId: null })
       .then((blob) => {
         if (!cancelled) setBlob(blob);
       })
