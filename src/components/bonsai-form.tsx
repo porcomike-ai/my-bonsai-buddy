@@ -185,7 +185,12 @@ export function BonsaiForm({
         await saveBonsai(b);
       }
 
-      await qc.invalidateQueries();
+      qc.invalidateQueries({ queryKey: ["bonsais"] });
+      qc.invalidateQueries({ queryKey: ["bonsai", id] });
+      if (photoData) {
+        qc.invalidateQueries({ queryKey: ["photos", id] });
+        qc.invalidateQueries({ queryKey: ["photos-all"] });
+      }
       toast.success(initial ? "Bonsaï mis à jour" : "Bonsaï ajouté à votre collection");
       if (onSaved) onSaved(b);
       else navigate({ to: "/bonsai/$id", params: { id } });

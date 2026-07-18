@@ -1,24 +1,22 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser, textResult, errorResult } from "../supabase";
+import { SOINS_SELECTABLE } from "@/lib/bonsai-meta";
+import type { SoinType } from "@/integrations/supabase/domain-types";
 
-const SOIN_TYPES = [
-  "arrosage",
-  "taille",
-  "rempotage",
-  "fertilisation",
-  "traitement",
-  "ligature",
-  "don_vente",
-  "mort",
-  "autre",
-] as const;
+// Dérivé de SOINS_SELECTABLE (source unique de vérité) plutôt qu'une liste
+// en dur : reste automatiquement synchronisé si la taxonomie évolue, au lieu
+// de se figer et diverger silencieusement comme précédemment (cette liste
+// référençait encore "arrosage"/"taille"/"fertilisation"/"traitement"/
+// "ligature", abandonnés depuis, et ne proposait pas les 7 nouveaux types
+// comme "accident", "greffe" ou "exposition").
+const SOIN_TYPES = SOINS_SELECTABLE.map((s) => s.value) as [SoinType, ...SoinType[]];
 
 export default defineTool({
   name: "log_soin",
   title: "Enregistrer un soin",
   description:
-    "Ajoute une entrée dans le journal d'entretien d'un bonsaï (arrosage, taille, rempotage, etc.).",
+    "Ajoute une entrée dans le journal d'entretien d'un bonsaï (rempotage, engrais, greffe, etc.).",
   inputSchema: {
     bonsai_id: z.string().uuid(),
     type: z.enum(SOIN_TYPES).describe("Type de soin"),

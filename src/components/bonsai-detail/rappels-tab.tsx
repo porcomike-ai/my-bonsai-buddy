@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SOINS, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
+import { SOINS_SELECTABLE, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 import {
   deleteRappel,
   saveJournal,
@@ -27,7 +27,7 @@ export function RappelsTab({
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<SoinType>("arrosage");
+  const [type, setType] = useState<SoinType>("rempotage");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [intervalle, setIntervalle] = useState("");
 
@@ -40,7 +40,9 @@ export function RappelsTab({
       intervalleJours: intervalle ? Number(intervalle) : undefined,
       actif: true,
     });
-    qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["rappels", bonsaiId] });
+    qc.invalidateQueries({ queryKey: ["rappels"] });
+    qc.invalidateQueries({ queryKey: ["rappels-all"] });
     setOpen(false);
     setIntervalle("");
     toast.success("Rappel créé");
@@ -62,13 +64,20 @@ export function RappelsTab({
     } else {
       await saveRappel({ ...r, actif: false });
     }
-    qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["rappels", bonsaiId] });
+    qc.invalidateQueries({ queryKey: ["rappels"] });
+    qc.invalidateQueries({ queryKey: ["rappels-all"] });
+    qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
+    qc.invalidateQueries({ queryKey: ["journal"] });
+    qc.invalidateQueries({ queryKey: ["journal-all"] });
     toast.success("Soin effectué");
   };
 
   const remove = async (rid: string) => {
     await deleteRappel(rid);
-    qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["rappels", bonsaiId] });
+    qc.invalidateQueries({ queryKey: ["rappels"] });
+    qc.invalidateQueries({ queryKey: ["rappels-all"] });
   };
 
   return (
@@ -87,7 +96,7 @@ export function RappelsTab({
                 onChange={(e) => setType(e.target.value as SoinType)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
-                {SOINS.map((s) => (
+                {SOINS_SELECTABLE.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.emoji} {s.label}
                   </option>
