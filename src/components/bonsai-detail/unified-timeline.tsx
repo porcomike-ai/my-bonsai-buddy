@@ -28,9 +28,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { useConfirm } from "@/components/confirm-dialog";
 import { useBlobUrl } from "@/lib/blob-url";
+import { getCachedPhotoBlob, invalidateCachedPhoto } from "@/lib/photo-cache";
 import {
   deletePhoto,
-  getPhotoBlob,
   savePhoto,
   saveJournal,
   deleteJournal,
@@ -278,7 +278,9 @@ export function UnifiedTimeline({
       confirmLabel: "Supprimer",
     });
     if (!confirmed) return;
+    const target = photos.find((p) => p.id === pid);
     await deletePhoto(pid);
+    invalidateCachedPhoto(target?.storagePath);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
 
@@ -732,7 +734,7 @@ function usePhotoUrl(photo: Photo): string | undefined {
       setBlob(undefined);
       return;
     }
-    getPhotoBlob({ storagePath })
+    getCachedPhotoBlob({ storagePath, poterieId: photo.poterieId })
       .then((b) => {
         if (!cancelled) setBlob(b);
       })
@@ -742,7 +744,7 @@ function usePhotoUrl(photo: Photo): string | undefined {
     return () => {
       cancelled = true;
     };
-  }, [storagePath]);
+  }, [storagePath, photo.poterieId]);
   return useBlobUrl(blob);
 }
 
