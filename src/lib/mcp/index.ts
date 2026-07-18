@@ -5,7 +5,15 @@ import listRappels from "./tools/list-rappels";
 import logSoin from "./tools/log-soin";
 import listPoteries from "./tools/list-poteries";
 
-const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
+const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+
+if (!projectRef) {
+  throw new Error(
+    "VITE_SUPABASE_PROJECT_ID n'est pas défini : impossible de construire l'issuer OAuth du serveur MCP. " +
+      "Ajoutez VITE_SUPABASE_PROJECT_ID=xvvqffgchelmszpbdvde à vos variables d'environnement de build " +
+      "(voir README.md, section Variables d'environnement).",
+  );
+}
 
 export default defineMcp({
   name: "bonsai-studio-mcp",
