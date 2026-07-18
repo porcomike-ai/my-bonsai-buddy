@@ -113,14 +113,18 @@ function BonsaiDetail() {
     });
     if (!confirmed) return;
     await deleteBonsai(id);
-    await qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["bonsais"] });
+    qc.invalidateQueries({ queryKey: ["photos-all"] });
+    qc.invalidateQueries({ queryKey: ["journal-all"] });
+    qc.invalidateQueries({ queryKey: ["rappels-all"] });
     toast.success("Bonsaï supprimé");
     navigate({ to: "/collection" });
   };
 
   const toggleFavori = async () => {
     await saveBonsai({ ...b, favori: !b.favori });
-    await qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["bonsai", id] });
+    qc.invalidateQueries({ queryKey: ["bonsais"] });
     toast.success(b.favori ? "Retiré des favoris" : "Ajouté aux favoris");
   };
 
@@ -151,7 +155,8 @@ function BonsaiDetail() {
             initial={b}
             onSaved={() => {
               setEditing(false);
-              qc.invalidateQueries();
+              qc.invalidateQueries({ queryKey: ["bonsai", id] });
+              qc.invalidateQueries({ queryKey: ["bonsais"] });
             }}
           />
         </div>
