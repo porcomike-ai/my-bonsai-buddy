@@ -1,16 +1,17 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
-import { P as PhotoLightbox } from "./photo-lightbox-DM2YmSLO.mjs";
-import { a as useConfirm, B as Button, u as useFileInput, A as AddPhotoDialog, n as deleteJournal, b as updatePhotoDate, c as updatePhotoLegende, d as deletePhoto, i as invalidateCachedPhoto, D as Dialog, j as DialogContent, k as DialogHeader, l as DialogTitle, L as Label, S as SOINS_SELECTABLE, I as Input, T as Textarea, m as DialogFooter, h as savePhoto, e as uid, p as soinEmoji, q as soinLabel, o as saveJournal, g as getCachedPhotoBlob, f as useBlobUrl } from "./router-Ct3Q4f0_.mjs";
+import { P as PhotoLightbox } from "./photo-lightbox-CK43UjE0.mjs";
+import { B as Button, Q as useFileInput, A as AddPhotoDialog, a1 as deleteJournal, U as updatePhotoDate, V as updatePhotoLegende, W as deletePhoto, Y as Dialog, Z as DialogContent, _ as DialogHeader, $ as DialogTitle, L as Label, I as Input, T as Textarea, a0 as DialogFooter, o as savePhoto, u as uid, p as saveJournal, k as useBlobUrl } from "./router-lnbQiR3D.mjs";
+import { u as useConfirm } from "./confirm-dialog-B2mq8kMp.mjs";
+import { invalidateCachedPhoto, getCachedPhotoBlob } from "./photo-cache-DhR44897.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import "../_libs/idb.mjs";
+import { f as SOINS_SELECTABLE, b as soinEmoji, c as soinLabel } from "./bonsai-meta-6FZGZ_0u.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
-import "../_libs/jspdf.mjs";
-import { e as Plus, Q as ArrowUpDown, b as Camera, N as FolderOpen, c as Calendar, X, O as MessageSquarePlus } from "../_libs/lucide-react.mjs";
-import { f as format, n as fr, p as parseISO } from "../_libs/date-fns.mjs";
+import { P as Plus, Q as ArrowUpDown, d as Camera, N as FolderOpen, e as Calendar, X, O as MessageSquarePlus } from "../_libs/lucide-react.mjs";
+import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -78,36 +79,13 @@ import "../_libs/radix-ui__react-dialog.mjs";
 import "../_libs/radix-ui__react-presence.mjs";
 import "../_libs/radix-ui__react-radio-group.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
-import "../_libs/radix-ui__react-alert-dialog.mjs";
-import "../_libs/radix-ui__react-checkbox.mjs";
-import "../_libs/react-hook-form.mjs";
-import "../_libs/hookform__resolvers.mjs";
 import "../_libs/zod.mjs";
-import "../_libs/radix-ui__react-switch.mjs";
-import "../_libs/radix-ui__react-dropdown-menu.mjs";
-import "../_libs/radix-ui__react-menu.mjs";
-import "../_libs/radix-ui__react-tabs.mjs";
 import "../_libs/jose.mjs";
 import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
-import "fs";
-import "path";
-import "../_libs/fflate.mjs";
-import "../_libs/fast-png.mjs";
-import "../_libs/iobuffer.mjs";
-import "../_libs/pako.mjs";
-import "../_libs/html2canvas.mjs";
-import "../_libs/dompurify.mjs";
-import "../_libs/canvg.mjs";
-import "../_libs/core-js.mjs";
-import "../_libs/babel__runtime.mjs";
-import "../_libs/raf.mjs";
-import "../_libs/performance-now.mjs";
-import "../_libs/rgbcolor.mjs";
-import "../_libs/svg-pathdata.mjs";
-import "../_libs/stackblur-canvas.mjs";
+import "../_libs/radix-ui__react-alert-dialog.mjs";
 function PhotoUploadButtons({ bonsaiId }) {
   const qc = useQueryClient();
   const cameraInput = useFileInput();
@@ -326,11 +304,10 @@ function JournalEntryDialog({
       /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: entry ? "Modifier l'entrée" : "Nouvelle entrée" }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "journal-type", className: "mb-1.5 block text-sm", children: "Type d'événement" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Type d'événement" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "select",
             {
-              id: "journal-type",
               value: journalType,
               onChange: (e) => setJournalType(e.target.value),
               className: "h-10 w-full rounded-md border border-input bg-background px-3 text-sm",
@@ -343,11 +320,10 @@ function JournalEntryDialog({
           )
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "journal-date", className: "mb-1.5 block text-sm", children: "Date" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: "Date" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             Input,
             {
-              id: "journal-date",
               type: "date",
               value: journalDate,
               onChange: (e) => setJournalDate(e.target.value)
@@ -355,11 +331,10 @@ function JournalEntryDialog({
           )
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "journal-notes", className: "mb-1.5 block text-sm", children: journalType === "autre" ? "Précisez (obligatoire)" : "Notes (facultatif)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "mb-1.5 block text-sm", children: journalType === "autre" ? "Précisez (obligatoire)" : "Notes (facultatif)" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             Textarea,
             {
-              id: "journal-notes",
               value: journalNotes,
               onChange: (e) => setJournalNotes(e.target.value),
               rows: 3,

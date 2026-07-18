@@ -2164,20 +2164,20 @@ const fr = {
   }
 };
 export {
-  startOfMonth as a,
-  endOfMonth as b,
-  eachDayOfInterval as c,
+  fr as a,
+  startOfMonth as b,
+  endOfMonth as c,
   differenceInDays as d,
   endOfWeek as e,
   format as f,
-  subMonths as g,
-  addMonths as h,
-  isSameMonth as i,
-  isSameDay as j,
-  addDays as k,
-  isBefore as l,
-  isAfter as m,
-  fr as n,
+  eachDayOfInterval as g,
+  subMonths as h,
+  addMonths as i,
+  isSameMonth as j,
+  isSameDay as k,
+  addDays as l,
+  isBefore as m,
+  isAfter as n,
   parseISO as p,
   startOfWeek as s
 };

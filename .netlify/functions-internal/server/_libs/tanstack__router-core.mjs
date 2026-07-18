@@ -80,6 +80,10 @@ function createControlledPromise(onResolve) {
   };
   return controlledPromise;
 }
+function isModuleNotFoundError(error) {
+  if (typeof error?.message !== "string") return false;
+  return error.message.startsWith("Failed to fetch dynamically imported module") || error.message.startsWith("error loading dynamically imported module") || error.message.startsWith("Importing a module script failed");
+}
 function isPromise(value) {
   return Boolean(value && typeof value === "object" && typeof value.then === "function");
 }
@@ -4261,38 +4265,39 @@ function getScrollRestorationScriptForRouter(router) {
   });
 }
 export {
-  isResolvedRedirect as A,
+  createRawStreamRPCPlugin as A,
   BaseRootRoute as B,
-  mergeHeaders as C,
-  executeRewriteInput as D,
-  defaultSerovalPlugins as E,
-  makeSerovalPlugin as F,
-  redirect as G,
+  isResolvedRedirect as C,
+  mergeHeaders as D,
+  executeRewriteInput as E,
+  defaultSerovalPlugins as F,
+  makeSerovalPlugin as G,
+  redirect as H,
   RouterCore as R,
   isDangerousProtocol as a,
   BaseRoute as b,
-  isNotFound as c,
+  isModuleNotFoundError as c,
   deepEqual as d,
   exactPathTest as e,
   functionalUpdate as f,
-  getScrollRestorationScriptForRouter as g,
-  rootRouteId as h,
+  isNotFound as g,
+  getScrollRestorationScriptForRouter as h,
   invariant as i,
-  isServer as j,
-  isRedirect as k,
-  createNonReactiveReadonlyStore as l,
-  createNonReactiveMutableStore as m,
-  escapeHtml as n,
-  isInlinableStylesheet as o,
-  getAssetCrossOrigin as p,
-  resolveManifestAssetLink as q,
+  rootRouteId as j,
+  isServer as k,
+  isRedirect as l,
+  createNonReactiveReadonlyStore as m,
+  createNonReactiveMutableStore as n,
+  escapeHtml as o,
+  isInlinableStylesheet as p,
+  getAssetCrossOrigin as q,
   removeTrailingSlash as r,
-  transformPipeableStreamWithRouter as s,
+  resolveManifestAssetLink as s,
   transformReadableStreamWithRouter as t,
-  getNormalizedURL as u,
-  getOrigin as v,
-  attachRouterServerSsrUtils as w,
-  defineHandlerCallback as x,
-  createSerializationAdapter as y,
-  createRawStreamRPCPlugin as z
+  transformPipeableStreamWithRouter as u,
+  getNormalizedURL as v,
+  getOrigin as w,
+  attachRouterServerSsrUtils as x,
+  defineHandlerCallback as y,
+  createSerializationAdapter as z
 };

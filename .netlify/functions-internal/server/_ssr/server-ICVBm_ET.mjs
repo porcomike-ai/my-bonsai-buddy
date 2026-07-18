@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { H as H3Event, t as toResponse } from "../_libs/h3-v2.mjs";
-import { q as resolveManifestAssetLink, h as rootRouteId, u as getNormalizedURL, v as getOrigin, w as attachRouterServerSsrUtils, x as defineHandlerCallback, y as createSerializationAdapter, z as createRawStreamRPCPlugin, i as invariant, c as isNotFound, k as isRedirect, A as isResolvedRedirect, C as mergeHeaders, D as executeRewriteInput, E as defaultSerovalPlugins, F as makeSerovalPlugin } from "../_libs/tanstack__router-core.mjs";
+import { s as resolveManifestAssetLink, j as rootRouteId, v as getNormalizedURL, w as getOrigin, x as attachRouterServerSsrUtils, y as defineHandlerCallback, z as createSerializationAdapter, A as createRawStreamRPCPlugin, i as invariant, g as isNotFound, l as isRedirect, C as isResolvedRedirect, D as mergeHeaders, E as executeRewriteInput, F as defaultSerovalPlugins, G as makeSerovalPlugin } from "../_libs/tanstack__router-core.mjs";
 import { a as au, I as Iu, o as ou } from "../_libs/seroval.mjs";
 import { c as createMemoryHistory } from "../_libs/tanstack__history.mjs";
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
@@ -81,7 +81,7 @@ function getResponse() {
 }
 var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 async function getStartManifest(matchedRoutes) {
-  const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-BLe2EQRf.mjs");
+  const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-Bv9QNGL-.mjs");
   const startManifest = tsrStartManifest();
   const rootRoute = startManifest.routes[rootRouteId] = startManifest.routes[rootRouteId] || {};
   rootRoute.assets = rootRoute.assets || [];
@@ -690,7 +690,7 @@ var baseManifestPromise;
 var cachedFinalManifestPromise;
 async function loadEntries() {
   const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-    import("./router-Ct3Q4f0_.mjs").then((n) => n.x),
+    import("./router-lnbQiR3D.mjs").then((n) => n.a3),
     import("./start-Bx2ow9Wd.mjs"),
     import("../__23tanstack-start-plugin-adapters-Cwee5PKy.mjs")
   ]);
