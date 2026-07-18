@@ -45,10 +45,16 @@ export async function subscribeToPush(): Promise<boolean> {
 
     // 2. Enregistrer le service worker
     const registration = await navigator.serviceWorker.register("/sw.js");
-    console.log("Service Worker enregistré:", registration);
+    if (import.meta.env.DEV) console.log("Service Worker enregistré:", registration);
 
     // 3. S'abonner au push
-    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BFIBioio6UseGsO67Zk0hJuGdYjkNuJ69RxTWBN0EfBXeSy3-t_z-zm9bCXYnqU2-u5YbZWW42gh1EQ4ZFyKtDE";
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+      console.error(
+        "VITE_VAPID_PUBLIC_KEY n'est pas défini : impossible de s'abonner aux notifications push.",
+      );
+      return false;
+    }
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
@@ -62,11 +68,18 @@ export async function subscribeToPush(): Promise<boolean> {
       return false;
     }
 
+    const p256dhKey = subscription.getKey("p256dh");
+    const authKey = subscription.getKey("auth");
+    if (!p256dhKey || !authKey) {
+      console.error("Clés de chiffrement manquantes sur l'abonnement push.");
+      return false;
+    }
+
     const { error } = await supabase.from("push_subscriptions").upsert({
       user_id: user.id,
       endpoint: subscription.endpoint,
-      p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh")!))),
-      auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("auth")!))),
+      p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
+      auth: btoa(String.fromCharCode(...new Uint8Array(authKey))),
     }, { onConflict: "endpoint" });
 
     if (error) {
@@ -74,7 +87,7 @@ export async function subscribeToPush(): Promise<boolean> {
       return false;
     }
 
-    console.log("Abonnement push enregistré avec succès");
+    if (import.meta.env.DEV) console.log("Abonnement push enregistré avec succès");
     return true;
   } catch (error) {
     console.error("Erreur lors de l'abonnement push:", error);
@@ -125,7 +138,7 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 
     // Unsubscribe from browser
     const unsubscribed = await subscription.unsubscribe();
-    console.log("Abonnement push supprimé:", unsubscribed);
+    if (import.meta.env.DEV) console.log("Abonnement push supprimé:", unsubscribed);
     return true;
   } catch (error) {
     console.error("Erreur lors de la désabonnement push:", error);
