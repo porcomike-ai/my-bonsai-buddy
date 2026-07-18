@@ -131,11 +131,8 @@ export function JournalEntryDialog({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="journal-type" className="mb-1.5 block text-sm">
-                Type d'événement
-              </Label>
+              <Label className="mb-1.5 block text-sm">Type d'événement</Label>
               <select
-                id="journal-type"
                 value={journalType}
                 onChange={(e) => setJournalType(e.target.value as SoinType)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -148,22 +145,18 @@ export function JournalEntryDialog({
               </select>
             </div>
             <div>
-              <Label htmlFor="journal-date" className="mb-1.5 block text-sm">
-                Date
-              </Label>
+              <Label className="mb-1.5 block text-sm">Date</Label>
               <Input
-                id="journal-date"
                 type="date"
                 value={journalDate}
                 onChange={(e) => setJournalDate(e.target.value)}
               />
             </div>
             <div>
-              <Label htmlFor="journal-notes" className="mb-1.5 block text-sm">
+              <Label className="mb-1.5 block text-sm">
                 {journalType === "autre" ? "Précisez (obligatoire)" : "Notes (facultatif)"}
               </Label>
               <Textarea
-                id="journal-notes"
                 value={journalNotes}
                 onChange={(e) => setJournalNotes(e.target.value)}
                 rows={3}
