@@ -111,7 +111,10 @@ function CalendrierPage() {
     } else {
       await saveRappel({ ...r, actif: false });
     }
-    qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["rappels"] });
+    qc.invalidateQueries({ queryKey: ["rappels-all"] });
+    qc.invalidateQueries({ queryKey: ["journal"] });
+    qc.invalidateQueries({ queryKey: ["journal-all"] });
     toast.success("Soin enregistré");
   };
 
