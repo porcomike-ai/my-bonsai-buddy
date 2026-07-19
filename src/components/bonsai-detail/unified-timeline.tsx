@@ -99,7 +99,7 @@ export function UnifiedTimeline({
     });
     if (!confirmed) return;
     await deleteJournal(e.id);
-    qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
+    qc.invalidateQueries({ queryKey: ["journal"] });
   };
 
   // Photo handlers

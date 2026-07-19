@@ -40,9 +40,7 @@ export function RappelsTab({
       intervalleJours: intervalle ? Number(intervalle) : undefined,
       actif: true,
     });
-    qc.invalidateQueries({ queryKey: ["rappels", bonsaiId] });
     qc.invalidateQueries({ queryKey: ["rappels"] });
-    qc.invalidateQueries({ queryKey: ["rappels-all"] });
     setOpen(false);
     setIntervalle("");
     toast.success("Rappel créé");
@@ -64,20 +62,14 @@ export function RappelsTab({
     } else {
       await saveRappel({ ...r, actif: false });
     }
-    qc.invalidateQueries({ queryKey: ["rappels", bonsaiId] });
     qc.invalidateQueries({ queryKey: ["rappels"] });
-    qc.invalidateQueries({ queryKey: ["rappels-all"] });
-    qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
     qc.invalidateQueries({ queryKey: ["journal"] });
-    qc.invalidateQueries({ queryKey: ["journal-all"] });
     toast.success("Soin effectué");
   };
 
   const remove = async (rid: string) => {
     await deleteRappel(rid);
-    qc.invalidateQueries({ queryKey: ["rappels", bonsaiId] });
     qc.invalidateQueries({ queryKey: ["rappels"] });
-    qc.invalidateQueries({ queryKey: ["rappels-all"] });
   };
 
   return (

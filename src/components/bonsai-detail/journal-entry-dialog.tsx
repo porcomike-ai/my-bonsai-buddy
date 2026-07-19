@@ -118,7 +118,7 @@ export function JournalEntryDialog({
       toast.info("Arbre retiré de la collection");
     }
 
-    qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
+    qc.invalidateQueries({ queryKey: ["journal"] });
     onOpenChange(false);
   };
 
@@ -187,7 +187,7 @@ export function JournalEntryDialog({
                     });
                     if (confirmed) {
                       await deleteJournal(entry.id);
-                      qc.invalidateQueries({ queryKey: ["journal", bonsaiId] });
+                      qc.invalidateQueries({ queryKey: ["journal"] });
                       onOpenChange(false);
                       toast.success("Entrée supprimée");
                     }
