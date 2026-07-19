@@ -4,7 +4,7 @@ Carnet personnel pour gérer une collection de bonsaïs (fiches, journal de soin
 
 ## Prérequis
 
-- Node.js 20 ou supérieur
+- [Bun](https://bun.sh) (gestionnaire de paquets et runtime utilisés par ce projet — voir `bun.lock`)
 - Un projet Supabase (base de données + authentification + storage)
 
 ## Variables d'environnement
@@ -48,11 +48,13 @@ Ces valeurs se trouvent dans le dashboard Supabase du projet, sous **Project Set
 ## Lancer le projet
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 L'application est ensuite disponible sur `http://localhost:3000` (ou le port affiché dans le terminal).
+
+Utilisez toujours `bun install` (pas `npm install`) pour ce projet : `bun.lock` fait foi. Mélanger les deux génère un `package-lock.json` en doublon qui finit par diverger et provoquer des conflits git.
 
 ## Pourquoi ce fichier
 
