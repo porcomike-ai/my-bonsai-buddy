@@ -11,7 +11,8 @@ import { listBonsais, saveBonsai } from "./bonsai";
 import { listAllPhotos, getPhotoBlob, savePhoto } from "./photo";
 import { listJournal, saveJournal } from "./journal";
 import { listRappels, saveRappel } from "./rappel";
-import { listPoteries, savePoterie, getPoteriePhoto } from "./poterie";
+import { listPoteries, savePoterie } from "./poterie";
+import { getPoteriePhoto } from "./photo";
 import { listEvenements, saveEvenement } from "./evenement";
 
 export interface SupabaseBackupPayload {
