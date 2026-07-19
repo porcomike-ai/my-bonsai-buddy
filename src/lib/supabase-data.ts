@@ -366,16 +366,44 @@ async function deleteStorageObject(bucket: string, path: string): Promise<void> 
   await db.storage.from(bucket).remove([path]);
 }
 
+// --- Récupération exhaustive (sans plafond arbitraire) ---
+//
+// Supabase/PostgREST plafonne chaque requête à un nombre de lignes fixe.
+// Utiliser un simple `.limit(N)` codé en dur revient à tronquer silencieusement
+// les données au-delà de N, sans que rien ne prévienne l'utilisateur (voir audit).
+// `fetchAllRows` boucle sur `.range()` par lots jusqu'à épuisement des résultats,
+// pour garantir que toutes les lignes de l'utilisateur sont bien récupérées, quelle
+// que soit la taille réelle de sa collection.
+const FETCH_CHUNK_SIZE = 1000;
+
+async function fetchAllRows<T>(
+  runQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const all: T[] = [];
+  let from = 0;
+  for (;;) {
+    const to = from + FETCH_CHUNK_SIZE - 1;
+    const { data, error } = await runQuery(from, to);
+    if (error) throw error;
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < FETCH_CHUNK_SIZE) break;
+    from += FETCH_CHUNK_SIZE;
+  }
+  return all;
+}
+
 // --- Bonsais ---
 
 export async function listBonsais(): Promise<Bonsai[]> {
-  const { data, error } = await db
-    .from("bonsais")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (error) throw error;
-  return (data as BonsaiRow[]).map(rowToBonsai);
+  const rows = await fetchAllRows<BonsaiRow>((from, to) =>
+    db
+      .from("bonsais")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map(rowToBonsai);
 }
 
 export async function getBonsai(id: string): Promise<Bonsai | undefined> {
@@ -410,14 +438,15 @@ export async function deleteBonsai(id: string): Promise<void> {
 // --- Photos ---
 
 export async function listPhotos(bonsaiId: string): Promise<Photo[]> {
-  const { data, error } = await db
-    .from("photos")
-    .select("*")
-    .eq("bonsai_id", bonsaiId)
-    .order("date", { ascending: false })
-    .limit(200);
-  if (error) throw error;
-  return (data as PhotoRow[]).map(rowToPhoto);
+  const rows = await fetchAllRows<PhotoRow>((from, to) =>
+    db
+      .from("photos")
+      .select("*")
+      .eq("bonsai_id", bonsaiId)
+      .order("date", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map(rowToPhoto);
 }
 
 /**
@@ -426,14 +455,15 @@ export async function listPhotos(bonsaiId: string): Promise<Photo[]> {
  * utilisateur, pas besoin de préciser bonsai_id ici.
  */
 export async function listAllPhotos(): Promise<Photo[]> {
-  const { data, error } = await db
-    .from("photos")
-    .select("*")
-    .not("bonsai_id", "is", null)
-    .order("date", { ascending: false })
-    .limit(2000);
-  if (error) throw error;
-  return (data as PhotoRow[]).map(rowToPhoto);
+  const rows = await fetchAllRows<PhotoRow>((from, to) =>
+    db
+      .from("photos")
+      .select("*")
+      .not("bonsai_id", "is", null)
+      .order("date", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map(rowToPhoto);
 }
 
 export async function getPhoto(id: string): Promise<Photo | undefined> {
@@ -489,11 +519,12 @@ export async function updatePhotoDate(id: string, date: string): Promise<void> {
 // --- Journal ---
 
 export async function listJournal(bonsaiId?: string): Promise<JournalEntry[]> {
-  let query = db.from("journal_entries").select("*");
-  if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("date", { ascending: false }).limit(500);
-  if (error) throw error;
-  return (data as JournalEntryRow[]).map(rowToJournal);
+  const rows = await fetchAllRows<JournalEntryRow>((from, to) => {
+    let query = db.from("journal_entries").select("*");
+    if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
+    return query.order("date", { ascending: false }).range(from, to);
+  });
+  return rows.map(rowToJournal);
 }
 
 export async function saveJournal(e: JournalEntry): Promise<void> {
@@ -518,11 +549,12 @@ export async function deleteJournal(id: string): Promise<void> {
 // --- Rappels ---
 
 export async function listRappels(bonsaiId?: string): Promise<Rappel[]> {
-  let query = db.from("rappels").select("*");
-  if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
-  const { data, error } = await query.order("prochaine_date", { ascending: true }).limit(200);
-  if (error) throw error;
-  return (data as RappelRow[]).map(rowToRappel);
+  const rows = await fetchAllRows<RappelRow>((from, to) => {
+    let query = db.from("rappels").select("*");
+    if (bonsaiId) query = query.eq("bonsai_id", bonsaiId);
+    return query.order("prochaine_date", { ascending: true }).range(from, to);
+  });
+  return rows.map(rowToRappel);
 }
 
 export async function saveRappel(r: Rappel): Promise<void> {
@@ -548,13 +580,14 @@ export async function deleteRappel(id: string): Promise<void> {
 // --- Poteries ---
 
 export async function listPoteries(): Promise<Poterie[]> {
-  const { data, error } = await db
-    .from("poteries")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (error) throw error;
-  return (data as PoterieRow[]).map(rowToPoterie);
+  const rows = await fetchAllRows<PoterieRow>((from, to) =>
+    db
+      .from("poteries")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map(rowToPoterie);
 }
 
 export async function getPoterie(id: string): Promise<Poterie | undefined> {
@@ -594,14 +627,15 @@ export async function deletePoterie(id: string): Promise<void> {
 // --- Photos de poteries (galerie) ---
 
 export async function listPoteriePhotos(poterieId: string): Promise<Photo[]> {
-  const { data, error } = await db
-    .from("photos")
-    .select("*")
-    .eq("poterie_id", poterieId)
-    .order("date", { ascending: false })
-    .limit(200);
-  if (error) throw error;
-  return (data as PhotoRow[]).map(rowToPhoto);
+  const rows = await fetchAllRows<PhotoRow>((from, to) =>
+    db
+      .from("photos")
+      .select("*")
+      .eq("poterie_id", poterieId)
+      .order("date", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map(rowToPhoto);
 }
 
 /** Sauvegarde une photo de galerie pour une poterie. Retourne le storage_path. */
@@ -632,13 +666,14 @@ export async function savePoterieGalleryPhoto(
 // --- Évènements ---
 
 export async function listEvenements(): Promise<Evenement[]> {
-  const { data, error } = await db
-    .from("evenements")
-    .select("*")
-    .order("date_heure", { ascending: true })
-    .limit(100);
-  if (error) throw error;
-  return (data as EvenementRow[]).map(rowToEvenement);
+  const rows = await fetchAllRows<EvenementRow>((from, to) =>
+    db
+      .from("evenements")
+      .select("*")
+      .order("date_heure", { ascending: true })
+      .range(from, to),
+  );
+  return rows.map(rowToEvenement);
 }
 
 export async function saveEvenement(e: Evenement): Promise<void> {

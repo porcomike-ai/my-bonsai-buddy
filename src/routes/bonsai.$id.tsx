@@ -115,8 +115,8 @@ function BonsaiDetail() {
     await deleteBonsai(id);
     qc.invalidateQueries({ queryKey: ["bonsais"] });
     qc.invalidateQueries({ queryKey: ["photos-all"] });
-    qc.invalidateQueries({ queryKey: ["journal-all"] });
-    qc.invalidateQueries({ queryKey: ["rappels-all"] });
+    qc.invalidateQueries({ queryKey: ["journal"] });
+    qc.invalidateQueries({ queryKey: ["rappels"] });
     toast.success("Bonsaï supprimé");
     navigate({ to: "/collection" });
   };
