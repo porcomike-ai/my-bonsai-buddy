@@ -58,7 +58,11 @@ export async function subscribeToPush(): Promise<boolean> {
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      // Cast nécessaire : le type Uint8Array de la lib DOM utilisée par ce
+      // projet est plus strict que BufferSource (incompatibilité de version
+      // de types, sans conséquence à l'exécution — un Uint8Array est un
+      // BufferSource valide pour l'API Push réelle du navigateur).
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
     });
 
     // 4. Enregistrer l'abonnement dans Supabase
