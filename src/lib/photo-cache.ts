@@ -1,60 +1,89 @@
-import { getPhotoBlob, type Photo } from "./supabase-data";
+import { describe, test, expect, vi, beforeEach } from "vitest";
 
-/**
- * Cache mémoire partagé des blobs de photos, pour éviter de retélécharger la
- * même photo plusieurs fois quand elle est affichée à plusieurs endroits de
- * l'app (ex. photo principale d'un bonsaï visible à la fois sur l'accueil,
- * la collection, et sa fiche détail).
- *
- * On met en cache la Promise elle-même (pas seulement le résultat) afin de
- * dédupliquer aussi les requêtes concurrentes lancées au même instant par
- * plusieurs composants pour la même photo.
- *
- * Une limite de taille simple (FIFO) évite une croissance mémoire illimitée
- * sur une session longue avec une grosse collection.
- */
-const MAX_CACHE_ENTRIES = 300;
-const cache = new Map<string, Promise<Blob | undefined>>();
+const { mockGetPhotoBlob } = vi.hoisted(() => ({
+  mockGetPhotoBlob: vi.fn(),
+}));
 
-function rememberKey(key: string) {
-  // Remet la clé en fin d'ordre d'insertion (approximation LRU simple).
-  const value = cache.get(key);
-  if (value) {
-    cache.delete(key);
-    cache.set(key, value);
-  }
-  while (cache.size > MAX_CACHE_ENTRIES) {
-    const oldestKey = cache.keys().next().value;
-    if (oldestKey === undefined) break;
-    cache.delete(oldestKey);
-  }
-}
+vi.mock("./supabase-data", () => ({
+  getPhotoBlob: mockGetPhotoBlob,
+}));
 
-export function getCachedPhotoBlob(
-  photo: Pick<Photo, "storagePath" | "poterieId">,
-): Promise<Blob | undefined> {
-  const key = photo.storagePath;
-  if (!key) return Promise.resolve(undefined);
+import { getCachedPhotoBlob, invalidateCachedPhoto, clearPhotoCache } from "./photo-cache";
 
-  const existing = cache.get(key);
-  if (existing) {
-    rememberKey(key);
-    return existing;
-  }
+describe("photo-cache", () => {
+  beforeEach(() => {
+    clearPhotoCache();
+    mockGetPhotoBlob.mockReset();
+  });
 
-  const promise = getPhotoBlob(photo).catch(() => undefined);
-  cache.set(key, promise);
-  rememberKey(key);
-  return promise;
-}
+  test("récupère bien le blob pour un chemin donné", async () => {
+    const fakeBlob = new Blob(["a"]);
+    mockGetPhotoBlob.mockResolvedValue(fakeBlob);
 
-/** Retire une photo du cache (ex. après suppression ou remplacement). */
-export function invalidateCachedPhoto(storagePath: string | undefined): void {
-  if (!storagePath) return;
-  cache.delete(storagePath);
-}
+    const result = await getCachedPhotoBlob({ storagePath: "u/1/photo.jpg", poterieId: undefined });
 
-/** Vide entièrement le cache (utile après une déconnexion, par exemple). */
-export function clearPhotoCache(): void {
-  cache.clear();
-}
+    expect(result).toBe(fakeBlob);
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+  });
+
+  test("dédoublonne les appels concurrents pour le même chemin", async () => {
+    let resolveBlob: (b: Blob) => void;
+    mockGetPhotoBlob.mockReturnValue(
+      new Promise((resolve) => {
+        resolveBlob = resolve;
+      }),
+    );
+
+    const photo = { storagePath: "u/2/photo.jpg", poterieId: undefined };
+    const p1 = getCachedPhotoBlob(photo);
+    const p2 = getCachedPhotoBlob(photo);
+
+    // Un seul appel réseau doit avoir été déclenché malgré les deux demandes.
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+
+    const fakeBlob = new Blob(["b"]);
+    resolveBlob!(fakeBlob);
+    const [r1, r2] = await Promise.all([p1, p2]);
+    expect(r1).toBe(fakeBlob);
+    expect(r2).toBe(fakeBlob);
+  });
+
+  test("réutilise le cache pour un deuxième appel une fois résolu", async () => {
+    const fakeBlob = new Blob(["c"]);
+    mockGetPhotoBlob.mockResolvedValue(fakeBlob);
+    const photo = { storagePath: "u/3/photo.jpg", poterieId: undefined };
+
+    await getCachedPhotoBlob(photo);
+    await getCachedPhotoBlob(photo);
+
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+  });
+
+  test("des chemins différents ne partagent pas le cache", async () => {
+    mockGetPhotoBlob.mockResolvedValue(new Blob(["d"]));
+
+    await getCachedPhotoBlob({ storagePath: "u/4/a.jpg", poterieId: undefined });
+    await getCachedPhotoBlob({ storagePath: "u/4/b.jpg", poterieId: undefined });
+
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
+  });
+
+  test("invalidateCachedPhoto force un nouveau téléchargement au prochain appel", async () => {
+    mockGetPhotoBlob.mockResolvedValue(new Blob(["e"]));
+    const photo = { storagePath: "u/5/photo.jpg", poterieId: undefined };
+
+    await getCachedPhotoBlob(photo);
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+
+    invalidateCachedPhoto(photo.storagePath);
+
+    await getCachedPhotoBlob(photo);
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
+  });
+
+  test("un storagePath vide ne déclenche aucun appel réseau", async () => {
+    const result = await getCachedPhotoBlob({ storagePath: "", poterieId: undefined });
+    expect(result).toBeUndefined();
+    expect(mockGetPhotoBlob).not.toHaveBeenCalled();
+  });
+});
