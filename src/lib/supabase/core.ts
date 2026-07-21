@@ -80,6 +80,7 @@ export interface Rappel {
   intervalleJours?: number;
   notes?: string;
   actif: boolean;
+  notifiedAt?: string;
 }
 
 export interface Poterie {
