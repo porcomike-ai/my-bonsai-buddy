@@ -7,9 +7,6 @@ const DB_NAME = 'bonsai-photo-cache-db';
 const STORE_NAME = 'photos';
 const DB_VERSION = 1;
 
-/**
- * Ouvre ou initialise la base IndexedDB
- */
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !('indexedDB' in window)) {
@@ -32,13 +29,13 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 /**
- * Récupère un Blob photo depuis le cache local, ou télécharge depuis l'URL si absent.
+ * Récupère un Blob photo depuis le cache local ou télécharge puis met en cache
  */
 export async function getCachedPhotoBlob(urlOrKey: string): Promise<Blob | null> {
   if (!urlOrKey) return null;
 
   try {
-    // 1. Recherche dans CacheStorage API
+    // 1. Recherche dans CacheStorage
     if ('caches' in window) {
       const cache = await caches.open('bonsai-photos-v1');
       const response = await cache.match(urlOrKey);
@@ -66,15 +63,14 @@ export async function getCachedPhotoBlob(urlOrKey: string): Promise<Blob | null>
 
       if (cachedBlob) return cachedBlob;
     } catch {
-      // Ignorer l'erreur IndexedDB et continuer vers le fetch
+      // Poursuivre vers fetch en cas d'erreur IDB
     }
 
-    // 3. Fallback : Téléchargement direct si l'image est une URL web / Supabase Storage
-    if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://') || urlOrKey.startsWith('blob:')) {
-      const res = await fetch(urlOrKey);
+    // 3. Téléchargement direct si URL distante
+    if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://')) {
+      const res = await fetch(urlOrKey, { mode: 'cors' });
       if (res.ok) {
         const freshBlob = await res.blob();
-        // Mettre en cache pour la prochaine fois
         setCachedPhotoBlob(urlOrKey, freshBlob).catch(() => {});
         return freshBlob;
       }
@@ -82,13 +78,25 @@ export async function getCachedPhotoBlob(urlOrKey: string): Promise<Blob | null>
 
     return null;
   } catch (error) {
-    console.warn(`[photo-cache] Erreur de récupération pour ${urlOrKey}:`, error);
+    console.warn(`[photo-cache] Impossible d'extraire la photo pour ${urlOrKey}:`, error);
     return null;
   }
 }
 
 /**
- * Invalide ou supprime une photo spécifique du cache
+ * Alternative retournant directement une URL affichable (Blob URL ou URL d'origine)
+ */
+export async function getCachedPhotoUrl(urlOrKey: string): Promise<string> {
+  if (!urlOrKey) return '';
+  const blob = await getCachedPhotoBlob(urlOrKey);
+  if (blob) {
+    return URL.createObjectURL(blob);
+  }
+  return urlOrKey;
+}
+
+/**
+ * Supprime une entrée du cache
  */
 export async function invalidateCachedPhoto(urlOrKey: string): Promise<void> {
   if (!urlOrKey) return;
@@ -114,7 +122,7 @@ export async function invalidateCachedPhoto(urlOrKey: string): Promise<void> {
 }
 
 /**
- * Enregistre une photo (Blob) dans le cache
+ * Sauvegarde un Blob dans le cache
  */
 export async function setCachedPhotoBlob(urlOrKey: string, blob: Blob): Promise<void> {
   if (!urlOrKey || !blob) return;
@@ -135,12 +143,12 @@ export async function setCachedPhotoBlob(urlOrKey: string, blob: Blob): Promise<
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.warn(`[photo-cache] Impossible de mettre en cache ${urlOrKey} :`, error);
+    console.warn(`[photo-cache] Stockage impossible pour ${urlOrKey} :`, error);
   }
 }
 
 /**
- * Vide intégralement le cache des photos
+ * Réinitialisation complète du cache
  */
 export async function clearPhotoCache(): Promise<void> {
   try {
@@ -162,12 +170,12 @@ export async function clearPhotoCache(): Promise<void> {
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('[photo-cache] Erreur lors du vidage complet du cache :', error);
+    console.error('[photo-cache] Erreur lors du vidage complet :', error);
   }
 }
 
 /**
- * Estimation de la taille occupée
+ * Estimation de la taille globale du stockage
  */
 export async function getPhotoCacheSize(): Promise<number> {
   if (typeof navigator !== 'undefined' && 'storage' in navigator && 'estimate' in navigator.storage) {
