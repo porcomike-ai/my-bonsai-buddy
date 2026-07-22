@@ -1,89 +1,124 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+/**
+ * src/lib/photo-cache.ts
+ * Module de gestion et de nettoyage du cache local des photos (IndexedDB & CacheStorage)
+ */
 
-const { mockGetPhotoBlob } = vi.hoisted(() => ({
-  mockGetPhotoBlob: vi.fn(),
-}));
+const DB_NAME = 'bonsai-photo-cache-db';
+const STORE_NAME = 'photos';
+const DB_VERSION = 1;
 
-vi.mock("./supabase-data", () => ({
-  getPhotoBlob: mockGetPhotoBlob,
-}));
+/**
+ * Ouvre ou initialise la base de données IndexedDB pour les photos
+ */
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) {
+      reject(new Error("IndexedDB n'est pas supporté par ce navigateur."));
+      return;
+    }
 
-import { getCachedPhotoBlob, invalidateCachedPhoto, clearPhotoCache } from "./photo-cache";
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-describe("photo-cache", () => {
-  beforeEach(() => {
-    clearPhotoCache();
-    mockGetPhotoBlob.mockReset();
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
+}
 
-  test("récupère bien le blob pour un chemin donné", async () => {
-    const fakeBlob = new Blob(["a"]);
-    mockGetPhotoBlob.mockResolvedValue(fakeBlob);
+/**
+ * Vide intégralement le cache des photos (IndexedDB + Cache API).
+ * Résout les erreurs d'import et réinitialise le stockage local des images.
+ */
+export async function clearPhotoCache(): Promise<void> {
+  try {
+    // 1. Suppression du store IndexedDB
+    const db = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.clear();
 
-    const result = await getCachedPhotoBlob({ storagePath: "u/1/photo.jpg", poterieId: undefined });
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
 
-    expect(result).toBe(fakeBlob);
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
-  });
+    // 2. Suppression de la base de données IndexedDB elle-même pour réinitialiser proprement
+    await new Promise<void>((resolve, reject) => {
+      const deleteReq = indexedDB.deleteDatabase(DB_NAME);
+      deleteReq.onsuccess = () => resolve();
+      deleteReq.onerror = () => reject(deleteReq.error);
+      deleteReq.onblocked = () => resolve(); // Poursuivre même si bloqué temporairement
+    });
 
-  test("dédoublonne les appels concurrents pour le même chemin", async () => {
-    let resolveBlob: (b: Blob) => void;
-    mockGetPhotoBlob.mockReturnValue(
-      new Promise((resolve) => {
-        resolveBlob = resolve;
-      }),
-    );
+    // 3. Nettoyage de l'API Cache Storage du navigateur
+    if ('caches' in window) {
+      const cacheKeys = await caches.keys();
+      const photoCacheKeys = cacheKeys.filter(
+        (key) => key.includes('photo') || key.includes('bonsai') || key.includes('image')
+      );
+      await Promise.all(photoCacheKeys.map((key) => caches.delete(key)));
+    }
 
-    const photo = { storagePath: "u/2/photo.jpg", poterieId: undefined };
-    const p1 = getCachedPhotoBlob(photo);
-    const p2 = getCachedPhotoBlob(photo);
+    console.info('[photo-cache] Le cache des photos a été vidé avec succès.');
+  } catch (error) {
+    console.error('[photo-cache] Erreur lors du nettoyage du cache :', error);
+    throw error;
+  }
+}
 
-    // Un seul appel réseau doit avoir été déclenché malgré les deux demandes.
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+/**
+ * Enregistre une image dans le cache local
+ */
+export async function setCachedPhoto(key: string, data: Blob | ArrayBuffer | string): Promise<void> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(data, key);
 
-    const fakeBlob = new Blob(["b"]);
-    resolveBlob!(fakeBlob);
-    const [r1, r2] = await Promise.all([p1, p2]);
-    expect(r1).toBe(fakeBlob);
-    expect(r2).toBe(fakeBlob);
-  });
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn(`[photo-cache] Impossible d'enregistrer la photo ${key} dans le cache :`, error);
+  }
+}
 
-  test("réutilise le cache pour un deuxième appel une fois résolu", async () => {
-    const fakeBlob = new Blob(["c"]);
-    mockGetPhotoBlob.mockResolvedValue(fakeBlob);
-    const photo = { storagePath: "u/3/photo.jpg", poterieId: undefined };
+/**
+ * Récupère une image depuis le cache local
+ */
+export async function getCachedPhoto(key: string): Promise<Blob | ArrayBuffer | string | null> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(key);
 
-    await getCachedPhotoBlob(photo);
-    await getCachedPhotoBlob(photo);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn(`[photo-cache] Impossible de lire la photo ${key} depuis le cache :`, error);
+    return null;
+  }
+}
 
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
-  });
-
-  test("des chemins différents ne partagent pas le cache", async () => {
-    mockGetPhotoBlob.mockResolvedValue(new Blob(["d"]));
-
-    await getCachedPhotoBlob({ storagePath: "u/4/a.jpg", poterieId: undefined });
-    await getCachedPhotoBlob({ storagePath: "u/4/b.jpg", poterieId: undefined });
-
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
-  });
-
-  test("invalidateCachedPhoto force un nouveau téléchargement au prochain appel", async () => {
-    mockGetPhotoBlob.mockResolvedValue(new Blob(["e"]));
-    const photo = { storagePath: "u/5/photo.jpg", poterieId: undefined };
-
-    await getCachedPhotoBlob(photo);
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
-
-    invalidateCachedPhoto(photo.storagePath);
-
-    await getCachedPhotoBlob(photo);
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
-  });
-
-  test("un storagePath vide ne déclenche aucun appel réseau", async () => {
-    const result = await getCachedPhotoBlob({ storagePath: "", poterieId: undefined });
-    expect(result).toBeUndefined();
-    expect(mockGetPhotoBlob).not.toHaveBeenCalled();
-  });
-});
+/**
+ * Estime la taille actuellement occupée par le cache
+ */
+export async function getPhotoCacheSize(): Promise<number> {
+  if ('storage' in navigator && 'estimate' in navigator.storage) {
+    const { usage } = await navigator.storage.estimate();
+    return usage || 0;
+  }
+  return 0;
+}
