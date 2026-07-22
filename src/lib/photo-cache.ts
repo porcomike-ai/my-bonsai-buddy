@@ -32,44 +32,57 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 /**
- * Récupère un Blob photo depuis le cache local (IndexedDB / CacheStorage)
+ * Récupère un Blob photo depuis le cache local, ou télécharge depuis l'URL si absent.
  */
 export async function getCachedPhotoBlob(urlOrKey: string): Promise<Blob | null> {
   if (!urlOrKey) return null;
 
   try {
-    // 1. Essai via CacheStorage API
+    // 1. Recherche dans CacheStorage API
     if ('caches' in window) {
       const cache = await caches.open('bonsai-photos-v1');
       const response = await cache.match(urlOrKey);
-      if (response) {
+      if (response && response.ok) {
         return await response.blob();
       }
     }
 
-    // 2. Essai via IndexedDB
-    const db = await openDB();
-    const blob = await new Promise<Blob | null>((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.get(urlOrKey);
+    // 2. Recherche dans IndexedDB
+    try {
+      const db = await openDB();
+      const cachedBlob = await new Promise<Blob | null>((resolve) => {
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(urlOrKey);
 
-      request.onsuccess = () => {
-        const res = request.result;
-        if (res instanceof Blob) {
-          resolve(res);
-        } else if (res) {
-          resolve(new Blob([res]));
-        } else {
-          resolve(null);
-        }
-      };
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () => {
+          const res = request.result;
+          if (res instanceof Blob) resolve(res);
+          else if (res) resolve(new Blob([res]));
+          else resolve(null);
+        };
+        request.onerror = () => resolve(null);
+      });
 
-    return blob;
+      if (cachedBlob) return cachedBlob;
+    } catch {
+      // Ignorer l'erreur IndexedDB et continuer vers le fetch
+    }
+
+    // 3. Fallback : Téléchargement direct si l'image est une URL web / Supabase Storage
+    if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://') || urlOrKey.startsWith('blob:')) {
+      const res = await fetch(urlOrKey);
+      if (res.ok) {
+        const freshBlob = await res.blob();
+        // Mettre en cache pour la prochaine fois
+        setCachedPhotoBlob(urlOrKey, freshBlob).catch(() => {});
+        return freshBlob;
+      }
+    }
+
+    return null;
   } catch (error) {
-    console.warn(`[photo-cache] Impossible de récupérer la photo ${urlOrKey} :`, error);
+    console.warn(`[photo-cache] Erreur de récupération pour ${urlOrKey}:`, error);
     return null;
   }
 }
@@ -81,13 +94,11 @@ export async function invalidateCachedPhoto(urlOrKey: string): Promise<void> {
   if (!urlOrKey) return;
 
   try {
-    // 1. Suppression dans CacheStorage
     if ('caches' in window) {
       const cache = await caches.open('bonsai-photos-v1');
       await cache.delete(urlOrKey);
     }
 
-    // 2. Suppression dans IndexedDB
     const db = await openDB();
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readwrite');
@@ -103,19 +114,17 @@ export async function invalidateCachedPhoto(urlOrKey: string): Promise<void> {
 }
 
 /**
- * Mettre en cache une photo avec son Blob
+ * Enregistre une photo (Blob) dans le cache
  */
 export async function setCachedPhotoBlob(urlOrKey: string, blob: Blob): Promise<void> {
   if (!urlOrKey || !blob) return;
 
   try {
-    // 1. Stockage CacheStorage
     if ('caches' in window) {
       const cache = await caches.open('bonsai-photos-v1');
       await cache.put(urlOrKey, new Response(blob));
     }
 
-    // 2. Stockage IndexedDB
     const db = await openDB();
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readwrite');
@@ -126,16 +135,15 @@ export async function setCachedPhotoBlob(urlOrKey: string, blob: Blob): Promise<
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.warn(`[photo-cache] Impossible de mettre en cache la photo ${urlOrKey} :`, error);
+    console.warn(`[photo-cache] Impossible de mettre en cache ${urlOrKey} :`, error);
   }
 }
 
 /**
- * Vide intégralement l'ensemble des caches photos
+ * Vide intégralement le cache des photos
  */
 export async function clearPhotoCache(): Promise<void> {
   try {
-    // Nettoyage Cache API
     if ('caches' in window) {
       const cacheKeys = await caches.keys();
       const photoKeys = cacheKeys.filter(
@@ -144,7 +152,6 @@ export async function clearPhotoCache(): Promise<void> {
       await Promise.all(photoKeys.map((key) => caches.delete(key)));
     }
 
-    // Nettoyage IndexedDB
     const db = await openDB();
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readwrite');
@@ -160,7 +167,7 @@ export async function clearPhotoCache(): Promise<void> {
 }
 
 /**
- * Obtenir une estimation de la taille occupée par le cache
+ * Estimation de la taille occupée
  */
 export async function getPhotoCacheSize(): Promise<number> {
   if (typeof navigator !== 'undefined' && 'storage' in navigator && 'estimate' in navigator.storage) {
