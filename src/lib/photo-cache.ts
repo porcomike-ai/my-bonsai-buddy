@@ -1,17 +1,17 @@
 /**
  * src/lib/photo-cache.ts
- * Module de cache IndexedDB universel pour Poteries ET Bonsaïs.
- * Prend en charge camelCase (storagePath) et snake_case (storage_path / photo_url).
+ * Gestion résiliente et universelle du cache IndexedDB
  */
 
 const DB_NAME = 'bonsai-photo-cache-db';
 const STORE_NAME = 'photos';
 const DB_VERSION = 1;
 
-// Supabase URL Fallback au cas où seule une clé de stockage relative est passée
-const SUPABASE_URL = typeof window !== 'undefined' && (window as any).env?.VITE_SUPABASE_URL 
-  ? (window as any).env.VITE_SUPABASE_URL 
-  : '';
+// Récupération de l'URL Supabase (Vite)
+const SUPABASE_URL = 
+  (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || 
+  (typeof window !== 'undefined' && (window as any).env?.VITE_SUPABASE_URL) || 
+  '';
 
 export type PhotoKeyInput = 
   | string 
@@ -24,36 +24,37 @@ export type PhotoKeyInput =
       id?: string; 
       poterieId?: string; 
       poterie_id?: string; 
-      path?: string;
+      bucket?: string;
     } 
   | null 
   | undefined;
 
 /**
- * Extrait la clé unique et résout l'URL réseau correspondante pour n'importe quel objet Photo.
+ * Reconstruit la clé de cache et l'URL de téléchargement réseau
  */
 function resolvePhotoInfo(input: PhotoKeyInput): { cacheKey: string | null; fetchUrl: string | null } {
   if (!input) return { cacheKey: null, fetchUrl: null };
 
-  // 1. Si c'est déjà une chaîne de caractères
   if (typeof input === 'string') {
     const isFullUrl = input.startsWith('http://') || input.startsWith('https://') || input.startsWith('blob:') || input.startsWith('data:');
-    return {
-      cacheKey: input,
-      fetchUrl: isFullUrl ? input : null
-    };
+    
+    if (isFullUrl) {
+      return { cacheKey: input, fetchUrl: input };
+    }
+    
+    // Si c't un chemin relatif passé directement en string
+    const targetBucket = input.includes('poterie') ? 'poterie-photos' : 'bonsai-photos';
+    const fullUrl = SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/${targetBucket}/${input}` : null;
+    return { cacheKey: input, fetchUrl: fullUrl };
   }
 
-  // 2. Si c'est un objet (Bonsaï ou Poterie)
   if (typeof input === 'object') {
-    // Clé unique pour le cache IndexedDB
-    const rawPath = input.storage_path || input.storagePath || input.path;
+    const rawPath = input.storagePath || input.storage_path;
     const rawUrl = input.url || input.photo_url || input.photoUrl;
-    const rawId = input.id || input.poterieId || input.poterie_id;
+    const cacheKey = rawPath || rawUrl || input.id || input.poterieId || input.poterie_id || null;
 
-    const cacheKey = rawPath || rawUrl || rawId || null;
+    if (!cacheKey) return { cacheKey: null, fetchUrl: null };
 
-    // Détermination de l'URL pour le Fetch réseau si absent du cache
     let fetchUrl: string | null = null;
 
     if (rawUrl && (rawUrl.startsWith('http') || rawUrl.startsWith('blob:'))) {
@@ -62,8 +63,7 @@ function resolvePhotoInfo(input: PhotoKeyInput): { cacheKey: string | null; fetc
       if (rawPath.startsWith('http')) {
         fetchUrl = rawPath;
       } else if (SUPABASE_URL) {
-        // Reconstitution de l'URL Supabase Storage pour le bucket "bonsai-photos" ou "photos"
-        const bucket = input.poterieId || input.poterie_id ? 'poterie-photos' : 'bonsai-photos';
+        const bucket = input.bucket || (input.poterieId || input.poterie_id ? 'poterie-photos' : 'bonsai-photos');
         fetchUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${rawPath}`;
       }
     }
@@ -95,15 +95,12 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-/**
- * Récupère le Blob d'une photo depuis le cache ou télécharge via l'URL
- */
 export async function getCachedPhotoBlob(input: PhotoKeyInput): Promise<Blob | null> {
   const { cacheKey, fetchUrl } = resolvePhotoInfo(input);
   if (!cacheKey) return null;
 
   try {
-    // 1. Tenter la lecture dans IndexedDB
+    // 1. Recherche dans IndexedDB
     const db = await openDB();
     const cachedBlob = await new Promise<Blob | null>((resolve) => {
       const transaction = db.transaction(STORE_NAME, 'readonly');
@@ -123,13 +120,11 @@ export async function getCachedPhotoBlob(input: PhotoKeyInput): Promise<Blob | n
       return cachedBlob;
     }
 
-    // 2. Si absent du cache, faire un Fetch direct sur l'URL
-    const targetUrl = fetchUrl || (cacheKey.startsWith('http') ? cacheKey : null);
-    if (targetUrl) {
-      const response = await fetch(targetUrl, { mode: 'cors' });
+    // 2. Si absent du cache local, téléchargement via l'URL reconstituée
+    if (fetchUrl) {
+      const response = await fetch(fetchUrl, { mode: 'cors' });
       if (response.ok) {
         const freshBlob = await response.blob();
-        // Mettre en cache en arrière-plan
         setCachedPhotoBlob(cacheKey, freshBlob).catch(() => {});
         return freshBlob;
       }
@@ -142,9 +137,6 @@ export async function getCachedPhotoBlob(input: PhotoKeyInput): Promise<Blob | n
   }
 }
 
-/**
- * Mettre en cache un Blob
- */
 export async function setCachedPhotoBlob(input: PhotoKeyInput, blob: Blob): Promise<void> {
   const { cacheKey } = resolvePhotoInfo(input);
   if (!cacheKey || !blob) return;
@@ -164,9 +156,6 @@ export async function setCachedPhotoBlob(input: PhotoKeyInput, blob: Blob): Prom
   }
 }
 
-/**
- * Invalider/supprimer une photo spécifique
- */
 export async function invalidateCachedPhoto(input: PhotoKeyInput): Promise<void> {
   const { cacheKey } = resolvePhotoInfo(input);
   if (!cacheKey) return;
@@ -186,9 +175,6 @@ export async function invalidateCachedPhoto(input: PhotoKeyInput): Promise<void>
   }
 }
 
-/**
- * Réinitialiser tout le cache
- */
 export async function clearPhotoCache(): Promise<void> {
   try {
     const db = await openDB();
@@ -205,9 +191,6 @@ export async function clearPhotoCache(): Promise<void> {
   }
 }
 
-/**
- * Estimation taille
- */
 export async function getPhotoCacheSize(): Promise<number> {
   if (typeof navigator !== 'undefined' && 'storage' in navigator && 'estimate' in navigator.storage) {
     const { usage } = await navigator.storage.estimate();
