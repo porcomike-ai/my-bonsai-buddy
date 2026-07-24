@@ -10,6 +10,11 @@ export function rowToRappel(r: RappelRow): Rappel {
     intervalleJours: r.intervalle_jours ?? undefined,
     notes: r.notes ?? undefined,
     actif: r.actif,
+    // Lecture seule : géré exclusivement par l'Edge Function
+    // send-due-notifications, jamais écrit depuis l'app (voir saveRappel
+    // ci-dessous, qui omet volontairement ce champ de l'upsert pour ne pas
+    // écraser la valeur posée par le backend à chaque sauvegarde côté client).
+    notifiedAt: r.notified_at ?? undefined,
   };
 }
 
@@ -24,6 +29,11 @@ export async function listRappels(bonsaiId?: string): Promise<Rappel[]> {
 
 export async function saveRappel(r: Rappel): Promise<void> {
   const uidStr = await currentUserId();
+  // IMPORTANT : ne jamais inclure `notified_at` dans ce payload. Ce champ est
+  // géré exclusivement par l'Edge Function send-due-notifications ; PostgREST
+  // ne modifie que les colonnes présentes dans le payload d'un upsert, donc
+  // l'omettre ici préserve sa valeur existante. L'y ajouter réintroduirait le
+  // bug de notifications répétées sur les rappels ponctuels (déjà corrigé).
   const { error } = await db.from("rappels").upsert({
     id: r.id,
     bonsai_id: r.bonsaiId,

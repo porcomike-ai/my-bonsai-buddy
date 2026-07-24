@@ -93,6 +93,7 @@ export interface RappelRow {
   intervalle_jours: number | null;
   notes: string | null;
   actif: boolean;
+  notified_at: string | null;
   created_at: string;
 }
 

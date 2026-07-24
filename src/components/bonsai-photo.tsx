@@ -23,7 +23,7 @@ export function BonsaiPhoto({
     // `photoId` contient désormais le chemin Storage (ex. "{uid}/{bonsaiId}/{photoId}.jpg").
     // Passe par le cache partagé pour éviter de retélécharger une photo déjà
     // vue ailleurs dans l'app (accueil, collection, fiche détail...).
-    getCachedPhotoBlob({ storagePath: photoId, poterieId: null })
+    getCachedPhotoBlob({ storagePath: photoId, poterieId: undefined })
       .then((blob) => {
         if (!cancelled) setBlob(blob);
       })
