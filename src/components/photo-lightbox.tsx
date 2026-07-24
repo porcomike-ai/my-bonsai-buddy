@@ -65,8 +65,8 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
       return;
     }
     let cancelled = false;
-    import("@/lib/supabase-data")
-      .then(({ getPhotoBlob }) => getPhotoBlob(photo))
+    import("@/lib/photo-cache")
+      .then(({ getCachedPhotoBlob }) => getCachedPhotoBlob(photo))
       .then((b) => {
         if (!cancelled) setBlob(b);
       })

@@ -11,7 +11,10 @@ type ConnexionSearch = { redirect?: string };
 
 export const Route = createFileRoute("/connexion")({
   validateSearch: (s: Record<string, unknown>): ConnexionSearch => ({
-    redirect: typeof s.redirect === "string" && s.redirect.startsWith("/") ? s.redirect : undefined,
+    redirect:
+      typeof s.redirect === "string" && s.redirect.startsWith("/") && !s.redirect.startsWith("//")
+        ? s.redirect
+        : undefined,
   }),
   head: () => ({
     meta: [

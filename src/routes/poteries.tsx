@@ -252,7 +252,8 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
     await savePoterie(photoBlob ? { ...p, photoBlob } : p);
-    await qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["poteries"] });
+    qc.invalidateQueries({ queryKey: ["poterie", p.id] });
     toast.success(initial ? "Poterie mise à jour" : "Poterie ajoutée");
     onClose();
     if (!initial) navigate({ to: "/poterie/$id", params: { id: p.id } });

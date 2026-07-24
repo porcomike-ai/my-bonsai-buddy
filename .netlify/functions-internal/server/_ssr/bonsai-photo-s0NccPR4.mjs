@@ -1,0 +1,43 @@
+import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
+import { getCachedPhotoBlob } from "./photo-cache-DhR44897.mjs";
+import { k as useBlobUrl, w as cn } from "./router-lnbQiR3D.mjs";
+import { p as Leaf } from "../_libs/lucide-react.mjs";
+function BonsaiPhoto({
+  photoId,
+  className,
+  fallbackClassName
+}) {
+  const [blob, setBlob] = reactExports.useState();
+  reactExports.useEffect(() => {
+    let cancelled = false;
+    if (!photoId) {
+      setBlob(void 0);
+      return;
+    }
+    getCachedPhotoBlob({ storagePath: photoId, poterieId: null }).then((blob2) => {
+      if (!cancelled) setBlob(blob2);
+    }).catch(() => {
+      if (!cancelled) setBlob(void 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [photoId]);
+  const url = useBlobUrl(blob);
+  if (!url) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        className: cn(
+          "flex items-center justify-center bg-gradient-to-br from-secondary via-muted to-sage/30 text-muted-foreground",
+          fallbackClassName ?? className
+        ),
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Leaf, { className: "h-8 w-8 opacity-40" })
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className });
+}
+export {
+  BonsaiPhoto as B
+};

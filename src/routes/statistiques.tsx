@@ -47,9 +47,9 @@ function StatistiquesPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
   const { data: photos = [] } = useQuery({ queryKey: ["photos-all"], queryFn: listAllPhotos });
-  const { data: journal = [] } = useQuery({ queryKey: ["journal-all"], queryFn: loadAllJournal });
+  const { data: journal = [] } = useQuery({ queryKey: ["journal"], queryFn: loadAllJournal });
   const { data: rappels = [] } = useQuery({
-    queryKey: ["rappels-all"],
+    queryKey: ["rappels"],
     queryFn: () => listRappels(),
   });
 

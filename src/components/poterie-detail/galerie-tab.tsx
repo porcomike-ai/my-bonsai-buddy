@@ -18,9 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/components/confirm-dialog";
 import { useBlobUrl } from "@/lib/blob-url";
+import { getCachedPhotoBlob, invalidateCachedPhoto } from "@/lib/photo-cache";
 import {
   deletePhoto,
-  getPhotoBlob,
   savePoterieGalleryPhoto,
   uid,
   updatePhotoDate,
@@ -122,7 +122,9 @@ export function PoterieGalerieTab({
       confirmLabel: "Supprimer",
     });
     if (!confirmed) return;
+    const target = photos.find((p) => p.id === pid);
     await deletePhoto(pid);
+    invalidateCachedPhoto(target?.storagePath);
     qc.invalidateQueries({ queryKey: ["poterie-photos", poterieId] });
   };
   const updateLegende = async (p: Photo, legende: string) => {
@@ -252,7 +254,7 @@ function usePhotoUrl(photo: Photo): string | undefined {
       setBlob(undefined);
       return;
     }
-    getPhotoBlob({ storagePath, poterieId })
+    getCachedPhotoBlob({ storagePath, poterieId })
       .then((b) => {
         if (!cancelled) setBlob(b);
       })

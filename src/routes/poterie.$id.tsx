@@ -124,7 +124,8 @@ function PoterieDetail() {
     });
     if (!confirmed) return;
     await deletePoterie(id);
-    await qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ["poteries"] });
+    qc.invalidateQueries({ queryKey: ["bonsais"] });
     toast.success("Poterie supprimée");
     navigate({ to: "/poteries" });
   };
@@ -143,7 +144,8 @@ function PoterieDetail() {
           initial={p}
           onClose={() => {
             setEditing(false);
-            qc.invalidateQueries();
+            qc.invalidateQueries({ queryKey: ["poterie", id] });
+            qc.invalidateQueries({ queryKey: ["poteries"] });
           }}
         />
       )}

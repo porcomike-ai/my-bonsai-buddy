@@ -26,77 +26,6 @@ export function triggerTimeFor(e: Evenement): number {
   return ts - minutesBefore * 60_000;
 }
 
-async function fireNotification(e: Evenement) {
-  if (typeof window === "undefined" || !("Notification" in window)) return;
-  if (Notification.permission !== "granted") return;
-  
-  try {
-    const eventDate = new Date(e.dateHeure);
-    const body = e.description
-      ? `${eventDate.toLocaleString("fr-FR")} — ${e.description}`
-      : eventDate.toLocaleString("fr-FR");
-      
-    new Notification(`🌱 ${e.titre}`, {
-      body,
-      tag: `evenement-${e.id}`,
-      icon: "/favicon.ico",
-    });
-  } catch {
-    // ignore
-  }
-
-  // On attend la sauvegarde pour marquer comme notifié
-  try {
-    await saveEvenement({ ...e, notifiedAt: new Date().toISOString() });
-  } catch (err) {
-    console.error("Erreur lors de la sauvegarde du statut de notification", err);
-  }
-}
-
-let intervalId: ReturnType<typeof setInterval> | null = null;
-
-async function check() {
-  try {
-    const now = Date.now();
-    const evs = await listEvenements();
-    
-    for (const e of evs) {
-      // 1. Déjà notifié ? On ignore
-      if (e.notifiedAt) continue;
-      
-      const trigger = triggerTimeFor(e);
-      const eventTime = new Date(e.dateHeure).getTime();
-      
-      // 2. Conditions :
-      // - Le moment du rappel est passé (trigger <= now)
-      // - L'événement n'a pas plus de 24h (pour éviter les vieilles notifs au démarrage)
-      if (trigger <= now && eventTime + 24 * 3600_000 > now) {
-        await fireNotification(e);
-      }
-    }
-  } catch {
-    // ignore
-  }
-}
-
-export function startNotificationScheduler() {
-  if (typeof window === "undefined") return;
-  if (intervalId) return;
-  
-  // Exécution initiale après 2 secondes
-  setTimeout(check, 2000);
-  
-  // Exécution récurrente
-  intervalId = setInterval(check, 30_000);
-  
-  // Rafraîchissement au retour sur l'onglet
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") check();
-  };
-  
-  document.addEventListener("visibilitychange", handleVisibilityChange);
-}
-
 // --- Push notifications (Service Worker) ---
 
 export async function subscribeToPush(): Promise<boolean> {
@@ -116,14 +45,24 @@ export async function subscribeToPush(): Promise<boolean> {
 
     // 2. Enregistrer le service worker
     const registration = await navigator.serviceWorker.register("/sw.js");
-    console.log("Service Worker enregistré:", registration);
+    if (import.meta.env.DEV) console.log("Service Worker enregistré:", registration);
 
     // 3. S'abonner au push
-    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BFIBioio6UseGsO67Zk0hJuGdYjkNuJ69RxTWBN0EfBXeSy3-t_z-zm9bCXYnqU2-u5YbZWW42gh1EQ4ZFyKtDE";
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+      console.error(
+        "VITE_VAPID_PUBLIC_KEY n'est pas défini : impossible de s'abonner aux notifications push.",
+      );
+      return false;
+    }
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as any,
+      // Cast nécessaire : le type Uint8Array de la lib DOM utilisée par ce
+      // projet est plus strict que BufferSource (incompatibilité de version
+      // de types, sans conséquence à l'exécution — un Uint8Array est un
+      // BufferSource valide pour l'API Push réelle du navigateur).
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
     });
 
     // 4. Enregistrer l'abonnement dans Supabase
@@ -133,11 +72,18 @@ export async function subscribeToPush(): Promise<boolean> {
       return false;
     }
 
-    const { error } = await (supabase.from("push_subscriptions" as any) as any).upsert({
+    const p256dhKey = subscription.getKey("p256dh");
+    const authKey = subscription.getKey("auth");
+    if (!p256dhKey || !authKey) {
+      console.error("Clés de chiffrement manquantes sur l'abonnement push.");
+      return false;
+    }
+
+    const { error } = await supabase.from("push_subscriptions").upsert({
       user_id: user.id,
       endpoint: subscription.endpoint,
-      p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh")!))),
-      auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("auth")!))),
+      p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
+      auth: btoa(String.fromCharCode(...new Uint8Array(authKey))),
     }, { onConflict: "endpoint" });
 
     if (error) {
@@ -145,7 +91,7 @@ export async function subscribeToPush(): Promise<boolean> {
       return false;
     }
 
-    console.log("Abonnement push enregistré avec succès");
+    if (import.meta.env.DEV) console.log("Abonnement push enregistré avec succès");
     return true;
   } catch (error) {
     console.error("Erreur lors de l'abonnement push:", error);
@@ -184,7 +130,8 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     if (!subscription) return false;
 
     // Delete from Supabase first
-    const { error } = await (supabase.from("push_subscriptions" as any) as any)
+    const { error } = await supabase
+      .from("push_subscriptions")
       .delete()
       .eq("endpoint", subscription.endpoint);
 
@@ -195,7 +142,7 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 
     // Unsubscribe from browser
     const unsubscribed = await subscription.unsubscribe();
-    console.log("Abonnement push supprimé:", unsubscribed);
+    if (import.meta.env.DEV) console.log("Abonnement push supprimé:", unsubscribed);
     return true;
   } catch (error) {
     console.error("Erreur lors de la désabonnement push:", error);

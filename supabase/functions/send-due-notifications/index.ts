@@ -84,6 +84,9 @@ serve(async (req) => {
     });
 
     // Process reminders - convert to event-like structure
+    // Note : user_id n'est pas encore connu ici (il dépend du bonsaï lié).
+    // Il est résolu juste après via bonsaiUserIdById, pour tous les rappels
+    // à notifier d'un coup plutôt qu'un par un.
     const remindersAsEvents = (reminders || []).map((r: any) => ({
       id: r.id,
       titre: r.type,
@@ -91,7 +94,7 @@ serve(async (req) => {
       date_heure: r.prochaine_date,
       rappel_minutes: 0,
       bonsai_id: r.bonsai_id,
-      user_id: r.bonsai_id ? null : null, // Will be fetched from bonsai
+      user_id: null as string | null,
     }));
 
     const remindersToNotify = remindersAsEvents.filter((e: any) => {
@@ -100,30 +103,43 @@ serve(async (req) => {
       return trigger <= now && eventTime + 24 * 3600_000 > now;
     });
 
-    // Get user IDs for all items to notify
-    const userIds = new Set<string>();
-    
+    // Récupère en une seule requête le user_id de tous les bonsaïs concernés
+    // (événements + rappels à notifier), au lieu d'une requête par item.
+    const bonsaiIds = new Set<string>();
     for (const event of eventsToNotify) {
-      if (event.bonsai_id) {
-        const { data: bonsai } = await supabase
-          .from('bonsais')
-          .select('user_id')
-          .eq('id', event.bonsai_id)
-          .single();
-        if (bonsai?.user_id) userIds.add(bonsai.user_id);
+      if (event.bonsai_id) bonsaiIds.add(event.bonsai_id);
+    }
+    for (const reminder of remindersToNotify) {
+      if (reminder.bonsai_id) bonsaiIds.add(reminder.bonsai_id);
+    }
+
+    const bonsaiUserIdById = new Map<string, string>();
+    if (bonsaiIds.size > 0) {
+      const { data: bonsaisData, error: bonsaisError } = await supabase
+        .from('bonsais')
+        .select('id, user_id')
+        .in('id', Array.from(bonsaiIds));
+
+      if (bonsaisError) {
+        console.error('Error fetching bonsais:', bonsaisError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch bonsais' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      for (const b of bonsaisData || []) {
+        if (b.user_id) bonsaiUserIdById.set(b.id, b.user_id);
       }
     }
 
+    // Résout maintenant le user_id de chaque rappel à partir de la map.
     for (const reminder of remindersToNotify) {
-      if (reminder.bonsai_id) {
-        const { data: bonsai } = await supabase
-          .from('bonsais')
-          .select('user_id')
-          .eq('id', reminder.bonsai_id)
-          .single();
-        if (bonsai?.user_id) userIds.add(bonsai.user_id);
-      }
+      reminder.user_id = reminder.bonsai_id ? bonsaiUserIdById.get(reminder.bonsai_id) ?? null : null;
     }
+
+    // Get user IDs for all items to notify
+    const userIds = new Set<string>(bonsaiUserIdById.values());
 
     // Fetch all push subscriptions for these users
     const { data: subscriptions, error: subError } = await supabase
@@ -161,16 +177,9 @@ serve(async (req) => {
 
     // Send notifications for events
     for (const event of eventsToNotify) {
-      let eventUserId: string | null = null;
-      
-      if (event.bonsai_id) {
-        const { data: bonsai } = await supabase
-          .from('bonsais')
-          .select('user_id')
-          .eq('id', event.bonsai_id)
-          .single();
-        eventUserId = bonsai?.user_id || null;
-      }
+      const eventUserId: string | null = event.bonsai_id
+        ? bonsaiUserIdById.get(event.bonsai_id) ?? null
+        : null;
 
       if (!eventUserId) continue;
 
@@ -219,16 +228,7 @@ serve(async (req) => {
 
     // Send notifications for reminders
     for (const reminder of remindersToNotify) {
-      let reminderUserId: string | null = null;
-      
-      if (reminder.bonsai_id) {
-        const { data: bonsai } = await supabase
-          .from('bonsais')
-          .select('user_id')
-          .eq('id', reminder.bonsai_id)
-          .single();
-        reminderUserId = bonsai?.user_id || null;
-      }
+      const reminderUserId: string | null = reminder.user_id;
 
       if (!reminderUserId) continue;
 
