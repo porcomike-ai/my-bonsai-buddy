@@ -1,89 +1,161 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+/**
+ * src/lib/photo-cache.ts
+ * Gestion du cache IndexedDB pour les photos d'arbres et poteries.
+ */
 
-const { mockGetPhotoBlob } = vi.hoisted(() => ({
-  mockGetPhotoBlob: vi.fn(),
-}));
+const DB_NAME = 'bonsai-photo-cache-db';
+const STORE_NAME = 'photos';
+const DB_VERSION = 1;
 
-vi.mock("./supabase-data", () => ({
-  getPhotoBlob: mockGetPhotoBlob,
-}));
+// Type flexible pour accepter aussi bien une string/URL qu'un objet photo Supabase
+export type PhotoKeyInput = string | { storagePath?: string; url?: string; id?: string; poterieId?: string } | null | undefined;
 
-import { getCachedPhotoBlob, invalidateCachedPhoto, clearPhotoCache } from "./photo-cache";
+/**
+ * Normalise l'entrée utilisateur pour extraire une clé de cache unique sous forme de string.
+ */
+function normalizeCacheKey(input: PhotoKeyInput): string | null {
+  if (!input) return null;
+  if (typeof input === 'string') return input;
+  if (typeof input === 'object') {
+    return input.storagePath || input.url || input.id || input.poterieId || null;
+  }
+  return null;
+}
 
-describe("photo-cache", () => {
-  beforeEach(() => {
-    clearPhotoCache();
-    mockGetPhotoBlob.mockReset();
+/**
+ * Initialise ou ouvre la base IndexedDB
+ */
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || !('indexedDB' in window)) {
+      reject(new Error("IndexedDB non disponible sur cet environnement"));
+      return;
+    }
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
+}
 
-  test("récupère bien le blob pour un chemin donné", async () => {
-    const fakeBlob = new Blob(["a"]);
-    mockGetPhotoBlob.mockResolvedValue(fakeBlob);
+/**
+ * Récupère un Blob photo depuis le cache IndexedDB.
+ * Compatible avec string ou objet { storagePath, poterieId, ... }
+ */
+export async function getCachedPhotoBlob(input: PhotoKeyInput): Promise<Blob | null> {
+  const key = normalizeCacheKey(input);
+  if (!key) return null;
 
-    const result = await getCachedPhotoBlob({ storagePath: "u/1/photo.jpg", poterieId: undefined });
+  try {
+    const db = await openDB();
+    return new Promise<Blob | null>((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(key);
 
-    expect(result).toBe(fakeBlob);
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
-  });
+      request.onsuccess = () => {
+        const res = request.result;
+        if (res instanceof Blob) {
+          resolve(res);
+        } else if (res) {
+          resolve(new Blob([res]));
+        } else {
+          resolve(null);
+        }
+      };
+      request.onerror = () => resolve(null);
+    });
+  } catch (error) {
+    console.warn(`[photo-cache] Erreur de lecture pour ${key} :`, error);
+    return null;
+  }
+}
 
-  test("dédoublonne les appels concurrents pour le même chemin", async () => {
-    let resolveBlob: (b: Blob) => void;
-    mockGetPhotoBlob.mockReturnValue(
-      new Promise((resolve) => {
-        resolveBlob = resolve;
-      }),
-    );
+/**
+ * Enregistre un Blob associé à une photo dans IndexedDB
+ */
+export async function setCachedPhotoBlob(input: PhotoKeyInput, blob: Blob): Promise<void> {
+  const key = normalizeCacheKey(input);
+  if (!key || !blob) return;
 
-    const photo = { storagePath: "u/2/photo.jpg", poterieId: undefined };
-    const p1 = getCachedPhotoBlob(photo);
-    const p2 = getCachedPhotoBlob(photo);
+  try {
+    const db = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(blob, key);
 
-    // Un seul appel réseau doit avoir été déclenché malgré les deux demandes.
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn(`[photo-cache] Erreur d'écriture pour ${key} :`, error);
+  }
+}
 
-    const fakeBlob = new Blob(["b"]);
-    resolveBlob!(fakeBlob);
-    const [r1, r2] = await Promise.all([p1, p2]);
-    expect(r1).toBe(fakeBlob);
-    expect(r2).toBe(fakeBlob);
-  });
+/**
+ * Invalide/supprime une photo spécifique du cache
+ */
+export async function invalidateCachedPhoto(input: PhotoKeyInput): Promise<void> {
+  const key = normalizeCacheKey(input);
+  if (!key) return;
 
-  test("réutilise le cache pour un deuxième appel une fois résolu", async () => {
-    const fakeBlob = new Blob(["c"]);
-    mockGetPhotoBlob.mockResolvedValue(fakeBlob);
-    const photo = { storagePath: "u/3/photo.jpg", poterieId: undefined };
+  try {
+    const db = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(key);
 
-    await getCachedPhotoBlob(photo);
-    await getCachedPhotoBlob(photo);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn(`[photo-cache] Erreur de suppression pour ${key} :`, error);
+  }
+}
 
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
-  });
+/**
+ * Vide intégralement le cache IndexedDB et réinitialise la base
+ */
+export async function clearPhotoCache(): Promise<void> {
+  try {
+    const db = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.clear();
 
-  test("des chemins différents ne partagent pas le cache", async () => {
-    mockGetPhotoBlob.mockResolvedValue(new Blob(["d"]));
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
 
-    await getCachedPhotoBlob({ storagePath: "u/4/a.jpg", poterieId: undefined });
-    await getCachedPhotoBlob({ storagePath: "u/4/b.jpg", poterieId: undefined });
+    // Nettoyage auxiliaire de l'API CacheStorage si présent
+    if ('caches' in window) {
+      const cacheKeys = await caches.keys();
+      const photoKeys = cacheKeys.filter((k) => k.includes('bonsai') || k.includes('photo'));
+      await Promise.all(photoKeys.map((k) => caches.delete(k)));
+    }
+  } catch (error) {
+    console.error('[photo-cache] Erreur lors de la réinitialisation du cache :', error);
+  }
+}
 
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
-  });
-
-  test("invalidateCachedPhoto force un nouveau téléchargement au prochain appel", async () => {
-    mockGetPhotoBlob.mockResolvedValue(new Blob(["e"]));
-    const photo = { storagePath: "u/5/photo.jpg", poterieId: undefined };
-
-    await getCachedPhotoBlob(photo);
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
-
-    invalidateCachedPhoto(photo.storagePath);
-
-    await getCachedPhotoBlob(photo);
-    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
-  });
-
-  test("un storagePath vide ne déclenche aucun appel réseau", async () => {
-    const result = await getCachedPhotoBlob({ storagePath: "", poterieId: undefined });
-    expect(result).toBeUndefined();
-    expect(mockGetPhotoBlob).not.toHaveBeenCalled();
-  });
-});
+/**
+ * Récupère l'estimation de l'espace occupé par l'application
+ */
+export async function getPhotoCacheSize(): Promise<number> {
+  if (typeof navigator !== 'undefined' && 'storage' in navigator && 'estimate' in navigator.storage) {
+    const { usage } = await navigator.storage.estimate();
+    return usage || 0;
+  }
+  return 0;
+}
