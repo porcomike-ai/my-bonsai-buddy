@@ -1,34 +1,37 @@
 /**
  * src/lib/photo-cache.ts
- * Gestion du cache IndexedDB pour les photos d'arbres et poteries.
+ * Gestion résiliente du cache IndexedDB avec Fetch & Auto-Cache
  */
 
 const DB_NAME = 'bonsai-photo-cache-db';
 const STORE_NAME = 'photos';
 const DB_VERSION = 1;
 
-// Type flexible pour accepter aussi bien une string/URL qu'un objet photo Supabase
-export type PhotoKeyInput = string | { storagePath?: string; url?: string; id?: string; poterieId?: string } | null | undefined;
+export type PhotoKeyInput = string | { storagePath?: string; url?: string; id?: string; poterieId?: string; photoUrl?: string } | null | undefined;
 
 /**
- * Normalise l'entrée utilisateur pour extraire une clé de cache unique sous forme de string.
+ * Extrait une clé texte ou une URL exploitable à partir de n'importe quel objet Photo
  */
-function normalizeCacheKey(input: PhotoKeyInput): string | null {
-  if (!input) return null;
-  if (typeof input === 'string') return input;
-  if (typeof input === 'object') {
-    return input.storagePath || input.url || input.id || input.poterieId || null;
+function normalizeCacheKey(input: PhotoKeyInput): { key: string | null; fetchUrl: string | null } {
+  if (!input) return { key: null, fetchUrl: null };
+
+  if (typeof input === 'string') {
+    return { key: input, fetchUrl: input.startsWith('http') ? input : null };
   }
-  return null;
+
+  if (typeof input === 'object') {
+    const key = input.storagePath || input.url || input.photoUrl || input.id || input.poterieId || null;
+    const fetchUrl = input.url || input.photoUrl || (input.storagePath && input.storagePath.startsWith('http') ? input.storagePath : null);
+    return { key, fetchUrl };
+  }
+
+  return { key: null, fetchUrl: null };
 }
 
-/**
- * Initialise ou ouvre la base IndexedDB
- */
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !('indexedDB' in window)) {
-      reject(new Error("IndexedDB non disponible sur cet environnement"));
+      reject(new Error("IndexedDB non disponible"));
       return;
     }
 
@@ -47,43 +50,57 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 /**
- * Récupère un Blob photo depuis le cache IndexedDB.
- * Compatible avec string ou objet { storagePath, poterieId, ... }
+ * Récupère un Blob. Si absent du cache, le télécharge via l'URL et le met en cache automatiquement.
  */
 export async function getCachedPhotoBlob(input: PhotoKeyInput): Promise<Blob | null> {
-  const key = normalizeCacheKey(input);
+  const { key, fetchUrl } = normalizeCacheKey(input);
   if (!key) return null;
 
   try {
+    // 1. Tenter de lire dans IndexedDB
     const db = await openDB();
-    return new Promise<Blob | null>((resolve) => {
+    const cachedBlob = await new Promise<Blob | null>((resolve) => {
       const transaction = db.transaction(STORE_NAME, 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(key);
 
       request.onsuccess = () => {
         const res = request.result;
-        if (res instanceof Blob) {
-          resolve(res);
-        } else if (res) {
-          resolve(new Blob([res]));
-        } else {
-          resolve(null);
-        }
+        if (res instanceof Blob) resolve(res);
+        else if (res) resolve(new Blob([res]));
+        else resolve(null);
       };
       request.onerror = () => resolve(null);
     });
+
+    if (cachedBlob) {
+      return cachedBlob;
+    }
+
+    // 2. Si absent du cache mais qu'on a une URL valide, on télécharge et met en cache
+    const urlToFetch = fetchUrl || (key.startsWith('http') ? key : null);
+    if (urlToFetch) {
+      const response = await fetch(urlToFetch, { mode: 'cors' });
+      if (response.ok) {
+        const freshBlob = await response.blob();
+        // Sauvegarde en tâche de fond
+        setCachedPhotoBlob(key, freshBlob).catch(() => {});
+        return freshBlob;
+      }
+    }
+
+    return null;
   } catch (error) {
-    console.warn(`[photo-cache] Erreur de lecture pour ${key} :`, error);
+    console.warn(`[photo-cache] Erreur pour ${key} :`, error);
     return null;
   }
 }
 
 /**
- * Enregistre un Blob associé à une photo dans IndexedDB
+ * Sauvegarde directe d'un Blob dans IndexedDB
  */
 export async function setCachedPhotoBlob(input: PhotoKeyInput, blob: Blob): Promise<void> {
-  const key = normalizeCacheKey(input);
+  const { key } = normalizeCacheKey(input);
   if (!key || !blob) return;
 
   try {
@@ -102,10 +119,10 @@ export async function setCachedPhotoBlob(input: PhotoKeyInput, blob: Blob): Prom
 }
 
 /**
- * Invalide/supprime une photo spécifique du cache
+ * Suppression d'une entrée spécifique
  */
 export async function invalidateCachedPhoto(input: PhotoKeyInput): Promise<void> {
-  const key = normalizeCacheKey(input);
+  const { key } = normalizeCacheKey(input);
   if (!key) return;
 
   try {
@@ -124,7 +141,7 @@ export async function invalidateCachedPhoto(input: PhotoKeyInput): Promise<void>
 }
 
 /**
- * Vide intégralement le cache IndexedDB et réinitialise la base
+ * Nettoyage complet
  */
 export async function clearPhotoCache(): Promise<void> {
   try {
@@ -137,20 +154,13 @@ export async function clearPhotoCache(): Promise<void> {
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
-
-    // Nettoyage auxiliaire de l'API CacheStorage si présent
-    if ('caches' in window) {
-      const cacheKeys = await caches.keys();
-      const photoKeys = cacheKeys.filter((k) => k.includes('bonsai') || k.includes('photo'));
-      await Promise.all(photoKeys.map((k) => caches.delete(k)));
-    }
   } catch (error) {
-    console.error('[photo-cache] Erreur lors de la réinitialisation du cache :', error);
+    console.error('[photo-cache] Erreur lors de la réinitialisation :', error);
   }
 }
 
 /**
- * Récupère l'estimation de l'espace occupé par l'application
+ * Taille estimée
  */
 export async function getPhotoCacheSize(): Promise<number> {
   if (typeof navigator !== 'undefined' && 'storage' in navigator && 'estimate' in navigator.storage) {
