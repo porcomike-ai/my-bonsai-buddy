@@ -14,32 +14,49 @@ export function BonsaiPhoto({
   fallbackClassName?: string;
 }) {
   const [blob, setBlob] = useState<Blob | undefined>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   useEffect(() => {
     let cancelled = false;
+    
     if (!photoId) {
       setBlob(undefined);
       return;
     }
-    // `photoId` contient désormais le chemin Storage (ex. "{uid}/{bonsaiId}/{photoId}.jpg").
-    // Passe par le cache partagé pour éviter de retélécharger une photo déjà
-    // vue ailleurs dans l'app (accueil, collection, fiche détail...).
-    getCachedPhotoBlob({ storagePath: photoId, poterieId: undefined })
-      .then((blob) => {
-        if (!cancelled) setBlob(blob);
+
+    setIsLoading(true);
+
+    // On transmet le path ET le type de bucket pour que le photo-cache puisse construire l'URL Supabase si besoin
+    getCachedPhotoBlob({ 
+      storagePath: photoId, 
+      bucket: "bonsai-photos" 
+    })
+      .then((resBlob) => {
+        if (!cancelled) {
+          setBlob(resBlob ?? undefined);
+          setIsLoading(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setBlob(undefined);
+        if (!cancelled) {
+          setBlob(undefined);
+          setIsLoading(false);
+        }
       });
+
     return () => {
       cancelled = true;
     };
   }, [photoId]);
+
   const url = useBlobUrl(blob);
+
   if (!url) {
     return (
       <div
         className={cn(
-          "flex items-center justify-center bg-gradient-to-br from-secondary via-muted to-sage/30 text-muted-foreground",
+          "flex items-center justify-center bg-gradient-to-br from-secondary via-muted to-sage/30 text-muted-foreground transition-opacity duration-300",
+          isLoading ? "animate-pulse" : "",
           fallbackClassName ?? className,
         )}
       >
@@ -47,5 +64,14 @@ export function BonsaiPhoto({
       </div>
     );
   }
-  return <img src={url} alt="" loading="lazy" decoding="async" className={className} />;
+
+  return (
+    <img 
+      src={url} 
+      alt="" 
+      loading="lazy" 
+      decoding="async" 
+      className={className} 
+    />
+  );
 }
