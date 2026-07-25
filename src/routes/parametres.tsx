@@ -1,15 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ExportZipDialog } from "@/components/export-zip-dialog";
 import { toast } from "sonner";
 import {
   exportSupabaseBackup,
   importSupabaseBackup,
+  getBackupSummary,
   type SupabaseBackupPayload,
+  type BackupProgress,
   listBonsais,
   listPhotos,
   saveBonsai,
@@ -19,6 +23,8 @@ import {
   saveRappel,
   saveEvenement,
 } from "@/lib/supabase-data";
+import { saveBlobToDisk } from "@/lib/save-file";
+import { formatBytes } from "@/lib/image-utils";
 import * as idb from "@/lib/db";
 import { useAuth } from "@/components/supabase-auth-provider";
 import { subscribeToPush, notificationStatus, checkPushSubscription, unsubscribeFromPush } from "@/lib/notifications";
@@ -31,7 +37,6 @@ import {
   Info,
   LogOut,
   Database,
-  Wand as Wand2,
   Bell,
   BellOff,
   AlertCircle,
@@ -74,6 +79,16 @@ function ParametresPage() {
   const [enablingPush, setEnablingPush] = useState(false);
   const [disablingPush, setDisablingPush] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
+  const [compressPhotos, setCompressPhotos] = useState(false);
+  const [backupProgress, setBackupProgress] = useState<BackupProgress | null>(null);
+
+  // Récapitulatif du contenu de la sauvegarde (nombre d'arbres, photos, etc.),
+  // affiché avant de lancer l'export pour que l'utilisateur sache ce qu'il
+  // télécharge. Requête légère : ne télécharge aucune photo, juste les lignes.
+  const { data: backupSummary } = useQuery({
+    queryKey: ["backup-summary"],
+    queryFn: getBackupSummary,
+  });
 
   // Détecte la présence d'anciennes données dans IndexedDB (côté client uniquement).
   // On utilise le module idb (IndexedDB) et son listBonsais — les données Supabase
@@ -188,8 +203,12 @@ function ParametresPage() {
 
   const doLocalExport = async () => {
     setBusy("export");
+    setBackupProgress({ phase: "donnees", current: 0, total: 1 });
     try {
-      const payload = await exportSupabaseBackup();
+      const payload = await exportSupabaseBackup({
+        compressPhotos,
+        onProgress: setBackupProgress,
+      });
       const json = JSON.stringify(payload);
       let blob: Blob;
       if (typeof CompressionStream !== "undefined") {
@@ -203,30 +222,28 @@ function ParametresPage() {
       }
       const ext =
         blob.type.includes("gzip") || typeof CompressionStream !== "undefined" ? "json.gz" : "json";
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast.success("Sauvegarde téléchargée");
+      const filename = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.${ext}`;
+
+      const result = await saveBlobToDisk(blob, filename, {
+        mimeType: ext === "json.gz" ? "application/gzip" : "application/json",
+        extension: `.${ext}`,
+        description: "Sauvegarde Bonsaï Studio",
+      });
+
+      if (result !== "cancelled") {
+        toast.success(`Sauvegarde téléchargée (${formatBytes(blob.size)})`);
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setBusy(null);
+      setBackupProgress(null);
     }
   };
 
   const doLocalImport = async (file: File) => {
-    const confirmed = await confirm({
-      title: "Importer cette sauvegarde ?",
-      description: "Les données Supabase actuelles seront remplacées par le contenu du fichier.",
-      confirmLabel: "Importer",
-    });
-    if (!confirmed) return;
     setBusy("import");
+    let payload: SupabaseBackupPayload;
     try {
       const buf = await file.arrayBuffer();
       const bytes = new Uint8Array(buf);
@@ -240,14 +257,36 @@ function ParametresPage() {
       } else {
         text = new TextDecoder().decode(bytes);
       }
-      const payload = JSON.parse(text) as SupabaseBackupPayload;
-      await importSupabaseBackup(payload);
+      payload = JSON.parse(text) as SupabaseBackupPayload;
+    } catch (e) {
+      toast.error("Fichier invalide : " + (e as Error).message);
+      setBusy(null);
+      return;
+    }
+
+    // On lit et on parse le fichier avant de demander confirmation, pour
+    // pouvoir afficher ce que la sauvegarde contient réellement plutôt qu'un
+    // message générique.
+    const confirmed = await confirm({
+      title: "Importer cette sauvegarde ?",
+      description: `Cette sauvegarde contient ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s), ${payload.poteries.length} poterie(s), ${payload.journal.length} entrée(s) de journal et ${payload.rappels.length} rappel(s). Les données Supabase actuelles seront remplacées (par id).`,
+      confirmLabel: "Importer",
+    });
+    if (!confirmed) {
+      setBusy(null);
+      return;
+    }
+
+    setBackupProgress({ phase: "donnees", current: 0, total: 1 });
+    try {
+      await importSupabaseBackup(payload, { onProgress: setBackupProgress });
       await qc.invalidateQueries();
       toast.success("Sauvegarde restaurée depuis le fichier");
     } catch (e) {
-      toast.error("Fichier invalide : " + (e as Error).message);
+      toast.error("Échec de l'import : " + (e as Error).message);
     } finally {
       setBusy(null);
+      setBackupProgress(null);
     }
   };
 
@@ -504,8 +543,36 @@ function ParametresPage() {
               comprises), lue depuis Supabase. Utile pour archiver ou transférer vers un autre
               appareil.
             </p>
+            {backupSummary && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Contenu actuel : <strong className="text-foreground">{backupSummary.bonsais}</strong>{" "}
+                arbre(s), <strong className="text-foreground">{backupSummary.photos}</strong> photo(s),{" "}
+                {backupSummary.poteries} poterie(s), {backupSummary.journal} entrée(s) de journal,{" "}
+                {backupSummary.rappels} rappel(s), {backupSummary.evenements} évènement(s).
+              </p>
+            )}
           </div>
         </div>
+
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-border bg-muted/30 p-3">
+          <Checkbox
+            id="compress-photos"
+            checked={compressPhotos}
+            onCheckedChange={(v) => setCompressPhotos(v === true)}
+            disabled={busy !== null}
+          />
+          <label htmlFor="compress-photos" className="cursor-pointer text-sm leading-snug">
+            <span className="font-medium">Réduire la taille des photos</span>
+            <span className="mt-0.5 block text-muted-foreground">
+              Redimensionne (max 1280 px) et recompresse les photos en JPEG qualité 70 % avant de
+              les inclure dans le fichier, pour une sauvegarde plus légère. Décoché (par défaut) :
+              les photos sont sauvegardées dans leur résolution d'origine. Dans tous les cas, vos
+              photos restent stockées intactes dans Supabase Storage — seul le fichier exporté est
+              concerné.
+            </span>
+          </label>
+        </div>
+
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <Button
             variant="outline"
@@ -547,6 +614,30 @@ function ParametresPage() {
             />
           </label>
         </div>
+
+        {busy !== null && backupProgress && (
+          <div className="mt-4">
+            <p className="mb-1 text-sm text-muted-foreground">
+              {busy === "export"
+                ? backupProgress.phase === "photos"
+                  ? "Téléchargement et encodage des photos…"
+                  : backupProgress.phase === "poteries"
+                    ? "Traitement des photos de poteries…"
+                    : "Collecte des données…"
+                : backupProgress.phase === "photos"
+                  ? "Import des photos…"
+                  : backupProgress.phase === "poteries"
+                    ? "Import des poteries…"
+                    : "Import des données…"}
+            </p>
+            <Progress
+              value={Math.round((backupProgress.current / backupProgress.total) * 100)}
+            />
+            <p className="mt-1 text-right text-xs text-muted-foreground">
+              {backupProgress.current} / {backupProgress.total}
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Export ZIP par arbre (photos + fiche texte) */}
@@ -566,29 +657,6 @@ function ParametresPage() {
         </div>
         <div className="mt-5">
           <ExportZipDialog />
-        </div>
-      </section>
-
-      {/* Réduire la taille de la sauvegarde */}
-      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <Wand2 className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-display text-xl font-semibold">
-              Réduire la taille de la sauvegarde
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Les photos sont <strong>recompressées automatiquement</strong> côté navigateur lors de
-              l'export local (max 1280 px, JPEG qualité 70 %) pour limiter la taille du fichier de
-              sauvegarde.
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Vos photos restent stockées intactes dans Supabase Storage — seuls les exports en
-              bénéficient.
-            </p>
-          </div>
         </div>
       </section>
 
