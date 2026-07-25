@@ -434,18 +434,20 @@ function ParametresPage() {
 
       {/* Déconnexion Supabase */}
       <section className="mt-10 rounded-3xl border border-border bg-card p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <LogOut className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-display text-xl font-semibold">Compte</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {user ? `Connecté en tant que ${user.email}` : "Non connecté."}
-            </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3 sm:flex-1">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <LogOut className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-display text-xl font-semibold">Compte</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {user ? `Connecté en tant que ${user.email}` : "Non connecté."}
+              </p>
+            </div>
           </div>
           {user && (
-            <Button variant="outline" onClick={doSignOut}>
+            <Button variant="outline" onClick={doSignOut} className="w-full sm:w-auto">
               <LogOut className="mr-2 h-4 w-4" />
               Se déconnecter
             </Button>
@@ -477,29 +479,38 @@ function ParametresPage() {
               </p>
             </div>
           </div>
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {pushEnabled === null ? (
-              <Button disabled className="opacity-50">
+              <Button disabled className="w-full opacity-50 sm:w-auto">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Vérification...
               </Button>
             ) : pushEnabled ? (
               <>
-                <Button variant="outline" onClick={doDisablePush} disabled={disablingPush}>
+                <Button
+                  variant="outline"
+                  onClick={doDisablePush}
+                  disabled={disablingPush}
+                  className="w-full sm:w-auto"
+                >
                   <BellOff className="mr-2 h-4 w-4" />
                   {disablingPush ? "Désactivation..." : "Désactiver les notifications"}
                 </Button>
-                <Button onClick={doSendTestNotification} disabled={sendingTest}>
+                <Button
+                  onClick={doSendTestNotification}
+                  disabled={sendingTest}
+                  className="w-full sm:w-auto"
+                >
                   {sendingTest ? "Envoi..." : "Envoyer une notification de test"}
                 </Button>
               </>
             ) : notificationStatus() === "unsupported" ? (
-              <Button variant="outline" disabled className="opacity-50">
+              <Button variant="outline" disabled className="w-full opacity-50 sm:w-auto">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Non supporté
               </Button>
             ) : (
-              <Button onClick={doEnablePush} disabled={enablingPush || !user}>
+              <Button onClick={doEnablePush} disabled={enablingPush || !user} className="w-full sm:w-auto">
                 <Bell className="mr-2 h-4 w-4" />
                 {enablingPush ? "Activation..." : "Activer les notifications"}
               </Button>
