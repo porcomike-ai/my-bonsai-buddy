@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/components/confirm-dialog";
+import { ExportZipDialog } from "@/components/export-zip-dialog";
+import { ExportPoterieZipDialog } from "@/components/export-poterie-zip-dialog";
 import { toast } from "sonner";
 import {
   exportSupabaseBackup,
   importSupabaseBackup,
+  getBackupSummary,
   type SupabaseBackupPayload,
+  type BackupProgress,
   listBonsais,
   listPhotos,
   saveBonsai,
@@ -18,6 +24,8 @@ import {
   saveRappel,
   saveEvenement,
 } from "@/lib/supabase-data";
+import { pickSaveTarget, writeToSaveTarget } from "@/lib/save-file";
+import { formatBytes } from "@/lib/image-utils";
 import * as idb from "@/lib/db";
 import { useAuth } from "@/components/supabase-auth-provider";
 import { subscribeToPush, notificationStatus, checkPushSubscription, unsubscribeFromPush } from "@/lib/notifications";
@@ -30,10 +38,10 @@ import {
   Info,
   LogOut,
   Database,
-  Wand as Wand2,
   Bell,
   BellOff,
   AlertCircle,
+  FolderArchive,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -72,6 +80,16 @@ function ParametresPage() {
   const [enablingPush, setEnablingPush] = useState(false);
   const [disablingPush, setDisablingPush] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
+  const [compressPhotos, setCompressPhotos] = useState(false);
+  const [backupProgress, setBackupProgress] = useState<BackupProgress | null>(null);
+
+  // Récapitulatif du contenu de la sauvegarde (nombre d'arbres, photos, etc.),
+  // affiché avant de lancer l'export pour que l'utilisateur sache ce qu'il
+  // télécharge. Requête légère : ne télécharge aucune photo, juste les lignes.
+  const { data: backupSummary } = useQuery({
+    queryKey: ["backup-summary"],
+    queryFn: getBackupSummary,
+  });
 
   // Détecte la présence d'anciennes données dans IndexedDB (côté client uniquement).
   // On utilise le module idb (IndexedDB) et son listBonsais — les données Supabase
@@ -185,12 +203,33 @@ function ParametresPage() {
   };
 
   const doLocalExport = async () => {
+    // Le nom de fichier et l'extension ne dépendent d'aucune donnée async
+    // (juste de la disponibilité de CompressionStream) : on les calcule tout
+    // de suite pour pouvoir ouvrir le sélecteur d'emplacement immédiatement,
+    // pendant que le clic est encore "actif" côté navigateur.
+    const willGzip = typeof CompressionStream !== "undefined";
+    const ext = willGzip ? "gz" : "json";
+    const filename = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.json${
+      willGzip ? ".gz" : ""
+    }`;
+
+    const target = await pickSaveTarget(filename, {
+      mimeType: willGzip ? "application/gzip" : "application/json",
+      extension: `.${ext}`,
+      description: "Sauvegarde Bonsaï Studio",
+    });
+    if (target.kind === "cancelled") return;
+
     setBusy("export");
+    setBackupProgress({ phase: "donnees", current: 0, total: 1 });
     try {
-      const payload = await exportSupabaseBackup();
+      const payload = await exportSupabaseBackup({
+        compressPhotos,
+        onProgress: setBackupProgress,
+      });
       const json = JSON.stringify(payload);
       let blob: Blob;
-      if (typeof CompressionStream !== "undefined") {
+      if (willGzip) {
         const enc = new TextEncoder().encode(json);
         const stream = new Response(new Blob([enc])).body!.pipeThrough(
           new CompressionStream("gzip"),
@@ -199,32 +238,20 @@ function ParametresPage() {
       } else {
         blob = new Blob([json], { type: "application/json" });
       }
-      const ext =
-        blob.type.includes("gzip") || typeof CompressionStream !== "undefined" ? "json.gz" : "json";
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast.success("Sauvegarde téléchargée");
+
+      await writeToSaveTarget(target, blob);
+      toast.success(`Sauvegarde téléchargée (${formatBytes(blob.size)})`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setBusy(null);
+      setBackupProgress(null);
     }
   };
 
   const doLocalImport = async (file: File) => {
-    const confirmed = await confirm({
-      title: "Importer cette sauvegarde ?",
-      description: "Les données Supabase actuelles seront remplacées par le contenu du fichier.",
-      confirmLabel: "Importer",
-    });
-    if (!confirmed) return;
     setBusy("import");
+    let payload: SupabaseBackupPayload;
     try {
       const buf = await file.arrayBuffer();
       const bytes = new Uint8Array(buf);
@@ -238,14 +265,36 @@ function ParametresPage() {
       } else {
         text = new TextDecoder().decode(bytes);
       }
-      const payload = JSON.parse(text) as SupabaseBackupPayload;
-      await importSupabaseBackup(payload);
+      payload = JSON.parse(text) as SupabaseBackupPayload;
+    } catch (e) {
+      toast.error("Fichier invalide : " + (e as Error).message);
+      setBusy(null);
+      return;
+    }
+
+    // On lit et on parse le fichier avant de demander confirmation, pour
+    // pouvoir afficher ce que la sauvegarde contient réellement plutôt qu'un
+    // message générique.
+    const confirmed = await confirm({
+      title: "Importer cette sauvegarde ?",
+      description: `Cette sauvegarde contient ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s), ${payload.poteries.length} poterie(s) (${payload.poteriePhotos?.length ?? 0} photo(s) de galerie), ${payload.journal.length} entrée(s) de journal et ${payload.rappels.length} rappel(s). Les données Supabase actuelles seront remplacées (par id).`,
+      confirmLabel: "Importer",
+    });
+    if (!confirmed) {
+      setBusy(null);
+      return;
+    }
+
+    setBackupProgress({ phase: "donnees", current: 0, total: 1 });
+    try {
+      await importSupabaseBackup(payload, { onProgress: setBackupProgress });
       await qc.invalidateQueries();
       toast.success("Sauvegarde restaurée depuis le fichier");
     } catch (e) {
-      toast.error("Fichier invalide : " + (e as Error).message);
+      toast.error("Échec de l'import : " + (e as Error).message);
     } finally {
       setBusy(null);
+      setBackupProgress(null);
     }
   };
 
@@ -386,18 +435,20 @@ function ParametresPage() {
 
       {/* Déconnexion Supabase */}
       <section className="mt-10 rounded-3xl border border-border bg-card p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <LogOut className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-display text-xl font-semibold">Compte</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {user ? `Connecté en tant que ${user.email}` : "Non connecté."}
-            </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3 sm:flex-1">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <LogOut className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-display text-xl font-semibold">Compte</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {user ? `Connecté en tant que ${user.email}` : "Non connecté."}
+              </p>
+            </div>
           </div>
           {user && (
-            <Button variant="outline" onClick={doSignOut}>
+            <Button variant="outline" onClick={doSignOut} className="w-full sm:w-auto">
               <LogOut className="mr-2 h-4 w-4" />
               Se déconnecter
             </Button>
@@ -429,29 +480,38 @@ function ParametresPage() {
               </p>
             </div>
           </div>
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {pushEnabled === null ? (
-              <Button disabled className="opacity-50">
+              <Button disabled className="w-full opacity-50 sm:w-auto">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Vérification...
               </Button>
             ) : pushEnabled ? (
               <>
-                <Button variant="outline" onClick={doDisablePush} disabled={disablingPush}>
+                <Button
+                  variant="outline"
+                  onClick={doDisablePush}
+                  disabled={disablingPush}
+                  className="w-full sm:w-auto"
+                >
                   <BellOff className="mr-2 h-4 w-4" />
                   {disablingPush ? "Désactivation..." : "Désactiver les notifications"}
                 </Button>
-                <Button onClick={doSendTestNotification} disabled={sendingTest}>
+                <Button
+                  onClick={doSendTestNotification}
+                  disabled={sendingTest}
+                  className="w-full sm:w-auto"
+                >
                   {sendingTest ? "Envoi..." : "Envoyer une notification de test"}
                 </Button>
               </>
             ) : notificationStatus() === "unsupported" ? (
-              <Button variant="outline" disabled className="opacity-50">
+              <Button variant="outline" disabled className="w-full opacity-50 sm:w-auto">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Non supporté
               </Button>
             ) : (
-              <Button onClick={doEnablePush} disabled={enablingPush || !user}>
+              <Button onClick={doEnablePush} disabled={enablingPush || !user} className="w-full sm:w-auto">
                 <Bell className="mr-2 h-4 w-4" />
                 {enablingPush ? "Activation..." : "Activer les notifications"}
               </Button>
@@ -502,8 +562,37 @@ function ParametresPage() {
               comprises), lue depuis Supabase. Utile pour archiver ou transférer vers un autre
               appareil.
             </p>
+            {backupSummary && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Contenu actuel : <strong className="text-foreground">{backupSummary.bonsais}</strong>{" "}
+                arbre(s), <strong className="text-foreground">{backupSummary.photos}</strong> photo(s),{" "}
+                {backupSummary.poteries} poterie(s) ({backupSummary.poteriePhotos} photo(s) de
+                galerie), {backupSummary.journal} entrée(s) de journal,{" "}
+                {backupSummary.rappels} rappel(s), {backupSummary.evenements} évènement(s).
+              </p>
+            )}
           </div>
         </div>
+
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-border bg-muted/30 p-3">
+          <Checkbox
+            id="compress-photos"
+            checked={compressPhotos}
+            onCheckedChange={(v) => setCompressPhotos(v === true)}
+            disabled={busy !== null}
+          />
+          <label htmlFor="compress-photos" className="cursor-pointer text-sm leading-snug">
+            <span className="font-medium">Réduire la taille des photos</span>
+            <span className="mt-0.5 block text-muted-foreground">
+              Redimensionne (max 1280 px) et recompresse les photos en JPEG qualité 70 % avant de
+              les inclure dans le fichier, pour une sauvegarde plus légère. Décoché (par défaut) :
+              les photos sont sauvegardées dans leur résolution d'origine. Dans tous les cas, vos
+              photos restent stockées intactes dans Supabase Storage — seul le fichier exporté est
+              concerné.
+            </span>
+          </label>
+        </div>
+
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <Button
             variant="outline"
@@ -545,28 +634,69 @@ function ParametresPage() {
             />
           </label>
         </div>
+
+        {busy !== null && backupProgress && (
+          <div className="mt-4">
+            <p className="mb-1 text-sm text-muted-foreground">
+              {busy === "export"
+                ? backupProgress.phase === "photos"
+                  ? "Téléchargement et encodage des photos…"
+                  : backupProgress.phase === "poteries"
+                    ? "Traitement des photos de poteries…"
+                    : "Collecte des données…"
+                : backupProgress.phase === "photos"
+                  ? "Import des photos…"
+                  : backupProgress.phase === "poteries"
+                    ? "Import des poteries…"
+                    : "Import des données…"}
+            </p>
+            <Progress
+              value={Math.round((backupProgress.current / backupProgress.total) * 100)}
+            />
+            <p className="mt-1 text-right text-xs text-muted-foreground">
+              {backupProgress.current} / {backupProgress.total}
+            </p>
+          </div>
+        )}
       </section>
 
-      {/* Réduire la taille de la sauvegarde */}
+      {/* Export ZIP par arbre (photos + fiche texte) */}
       <section className="mt-6 rounded-3xl border border-border bg-card p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <Wand2 className="h-5 w-5" />
+            <FolderArchive className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h2 className="font-display text-xl font-semibold">
-              Réduire la taille de la sauvegarde
-            </h2>
+            <h2 className="font-display text-xl font-semibold">Export ZIP par arbre</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Les photos sont <strong>recompressées automatiquement</strong> côté navigateur lors de
-              l'export local (max 1280 px, JPEG qualité 70 %) pour limiter la taille du fichier de
-              sauvegarde.
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Vos photos restent stockées intactes dans Supabase Storage — seuls les exports en
-              bénéficient.
+              Exportez toute la collection ou une sélection d'arbres : un dossier par arbre,
+              contenant ses photos (nommées par date) et une fiche texte avec ses caractéristiques
+              et l'historique complet de ses événements.
             </p>
           </div>
+        </div>
+        <div className="mt-5">
+          <ExportZipDialog />
+        </div>
+      </section>
+
+      {/* Export ZIP par poterie (photos + fiche texte) */}
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <FolderArchive className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Export ZIP par poterie</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Exportez toutes les poteries ou une sélection : un dossier par poterie, contenant sa
+              photo principale, ses photos de galerie (nommées par date) et une fiche texte avec
+              ses caractéristiques et les arbres actuellement plantés dedans.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <ExportPoterieZipDialog />
         </div>
       </section>
 

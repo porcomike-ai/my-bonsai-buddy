@@ -41,6 +41,25 @@ export async function listAllPhotos(): Promise<Photo[]> {
   return rows.map(rowToPhoto);
 }
 
+/**
+ * Équivalent de `listAllPhotos` mais pour les photos de galerie de poterie
+ * (mêmes lignes de la table `photos`, avec `poterie_id` renseigné au lieu de
+ * `bonsai_id`). Utilisé par la sauvegarde locale, qui doit couvrir toute la
+ * collection — galeries de poterie comprises, pas seulement leur photo
+ * principale.
+ */
+export async function listAllPoteriePhotos(): Promise<Photo[]> {
+  const rows = await fetchAllRows<PhotoRow>((from, to) =>
+    db
+      .from("photos")
+      .select("*")
+      .not("poterie_id", "is", null)
+      .order("date", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map(rowToPhoto);
+}
+
 export async function getPhoto(id: string): Promise<Photo | undefined> {
   const { data, error } = await db.from("photos").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
