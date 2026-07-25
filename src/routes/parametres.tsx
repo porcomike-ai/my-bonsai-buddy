@@ -276,7 +276,7 @@ function ParametresPage() {
     // message générique.
     const confirmed = await confirm({
       title: "Importer cette sauvegarde ?",
-      description: `Cette sauvegarde contient ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s), ${payload.poteries.length} poterie(s), ${payload.journal.length} entrée(s) de journal et ${payload.rappels.length} rappel(s). Les données Supabase actuelles seront remplacées (par id).`,
+      description: `Cette sauvegarde contient ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s), ${payload.poteries.length} poterie(s) (${payload.poteriePhotos?.length ?? 0} photo(s) de galerie), ${payload.journal.length} entrée(s) de journal et ${payload.rappels.length} rappel(s). Les données Supabase actuelles seront remplacées (par id).`,
       confirmLabel: "Importer",
     });
     if (!confirmed) {
@@ -565,7 +565,8 @@ function ParametresPage() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Contenu actuel : <strong className="text-foreground">{backupSummary.bonsais}</strong>{" "}
                 arbre(s), <strong className="text-foreground">{backupSummary.photos}</strong> photo(s),{" "}
-                {backupSummary.poteries} poterie(s), {backupSummary.journal} entrée(s) de journal,{" "}
+                {backupSummary.poteries} poterie(s) ({backupSummary.poteriePhotos} photo(s) de
+                galerie), {backupSummary.journal} entrée(s) de journal,{" "}
                 {backupSummary.rappels} rappel(s), {backupSummary.evenements} évènement(s).
               </p>
             )}
