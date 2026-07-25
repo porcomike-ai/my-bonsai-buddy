@@ -10,11 +10,13 @@ import {
   saveBonsai,
   savePhoto,
   uid,
+  listBonsais,
   listPoteries,
   type Bonsai,
   type BonsaiStyle,
   type BonsaiEtape,
 } from "@/lib/supabase-data";
+import { folderNameError } from "@/lib/folder-name";
 import { fileToBlob } from "@/lib/blob-url";
 import { STYLES, ETAPES, getAllEspeces, addCustomEspece } from "@/lib/bonsai-meta";
 import { Input } from "@/components/ui/input";
@@ -26,7 +28,14 @@ import { ImagePlus } from "lucide-react";
 import { AddPhotoDialog, useFileInput, type PhotoSource } from "@/components/add-photo-dialog";
 
 const schema = z.object({
-  nom: z.string().min(1, "Donnez un nom à votre bonsaï"),
+  nom: z.string()
+    .min(1, "Donnez un nom à votre bonsaï")
+    // Ce nom sert de nom de dossier lors de l'export ZIP par arbre : on
+    // bloque à la saisie les caractères non supportés par les systèmes de
+    // fichiers plutôt que de les corriger silencieusement à l'export.
+    .refine((val) => folderNameError(val) === null, (val) => ({
+      message: folderNameError(val) ?? "Nom invalide",
+    })),
   espece: z.string().min(1, "Indiquez l'espèce"),
   style: z.enum([
     "chokkan",
@@ -77,6 +86,7 @@ export function BonsaiForm({
   const qc = useQueryClient();
   const { user } = useAuth();
   const { data: poteries = [] } = useQuery({ queryKey: ["poteries"], queryFn: listPoteries });
+  const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -116,6 +126,23 @@ export function BonsaiForm({
 
   const especesList = useMemo(() => getAllEspeces(), []);
 
+  // Comparaison insensible aux accents et à la casse : "Pin Noir" et "pin  noir"
+  // (espaces multiples) sont considérés comme le même nom.
+  const normalizeNom = (s: string) =>
+    s
+      .trim()
+      .toLocaleLowerCase("fr")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+
+  const findDuplicateName = (nom: string): string | null => {
+    const norm = normalizeNom(nom);
+    if (!norm) return null;
+    const match = bonsais.find((b) => b.id !== initial?.id && normalizeNom(b.nom) === norm);
+    return match?.nom ?? null;
+  };
+
   const toggleEspeceLang = () => {
     const next = especeLang === "latin" ? "fr" : "latin";
     setEspeceLang(next);
@@ -144,6 +171,15 @@ export function BonsaiForm({
     if (!user) {
       toast.error("Vous devez être connecté pour ajouter un bonsaï à votre collection");
       navigate({ to: "/connexion" });
+      return;
+    }
+
+    const duplicate = findDuplicateName(values.nom);
+    if (duplicate) {
+      form.setError("nom", {
+        type: "manual",
+        message: `Un autre arbre s'appelle déjà "${duplicate}" — choisissez un nom unique`,
+      });
       return;
     }
 
@@ -224,7 +260,31 @@ export function BonsaiForm({
       <div className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nom" error={form.formState.errors.nom?.message}>
-            <Input {...form.register("nom")} placeholder="Vieux pin du jardin" />
+            <Input
+              {...form.register("nom", {
+                onChange: (e) => {
+                  if (form.formState.errors.nom?.type === "manual") {
+                    if (!findDuplicateName(e.target.value)) form.clearErrors("nom");
+                  }
+                },
+                onBlur: (e) => {
+                  // La validation des caractères interdits est déjà gérée par
+                  // le schéma zod (au submit et au blur via zodResolver) ; on
+                  // ajoute ici la vérification d'unicité, qui dépend de la
+                  // liste des arbres existants et ne peut pas vivre dans un
+                  // schéma zod statique.
+                  if (form.formState.errors.nom) return; // ne pas écraser une erreur de format déjà affichée
+                  const duplicate = findDuplicateName(e.target.value);
+                  if (duplicate) {
+                    form.setError("nom", {
+                      type: "manual",
+                      message: `Un autre arbre s'appelle déjà "${duplicate}" — choisissez un nom unique`,
+                    });
+                  }
+                },
+              })}
+              placeholder="Vieux pin du jardin"
+            />
           </Field>
           <Field
             label="Espèce"
