@@ -42,13 +42,21 @@ export function ExportZipDialog() {
     enabled: open,
   });
 
+  // Tri alphabétique (insensible à la casse/accents) pour faciliter la
+  // recherche visuelle dans la liste de sélection, plutôt que l'ordre
+  // "création la plus récente d'abord" utilisé ailleurs dans l'app.
+  const sorted = useMemo(
+    () => [...bonsais].sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" })),
+    [bonsais],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return bonsais;
-    return bonsais.filter(
+    if (!q) return sorted;
+    return sorted.filter(
       (b) => b.nom.toLowerCase().includes(q) || b.espece.toLowerCase().includes(q),
     );
-  }, [bonsais, search]);
+  }, [sorted, search]);
 
   const toggle = (id: string) => {
     setSelectedIds((prev) => {
@@ -87,7 +95,7 @@ export function ExportZipDialog() {
 
   const doExport = async () => {
     const cible =
-      portee === "toute" ? bonsais : bonsais.filter((b) => selectedIds.has(b.id));
+      portee === "toute" ? sorted : sorted.filter((b) => selectedIds.has(b.id));
 
     if (cible.length === 0) {
       toast.error("Sélectionnez au moins un arbre à exporter");
