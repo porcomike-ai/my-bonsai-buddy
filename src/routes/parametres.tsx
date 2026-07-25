@@ -23,7 +23,7 @@ import {
   saveRappel,
   saveEvenement,
 } from "@/lib/supabase-data";
-import { saveBlobToDisk } from "@/lib/save-file";
+import { pickSaveTarget, writeToSaveTarget } from "@/lib/save-file";
 import { formatBytes } from "@/lib/image-utils";
 import * as idb from "@/lib/db";
 import { useAuth } from "@/components/supabase-auth-provider";
@@ -202,6 +202,23 @@ function ParametresPage() {
   };
 
   const doLocalExport = async () => {
+    // Le nom de fichier et l'extension ne dépendent d'aucune donnée async
+    // (juste de la disponibilité de CompressionStream) : on les calcule tout
+    // de suite pour pouvoir ouvrir le sélecteur d'emplacement immédiatement,
+    // pendant que le clic est encore "actif" côté navigateur.
+    const willGzip = typeof CompressionStream !== "undefined";
+    const ext = willGzip ? "gz" : "json";
+    const filename = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.json${
+      willGzip ? ".gz" : ""
+    }`;
+
+    const target = await pickSaveTarget(filename, {
+      mimeType: willGzip ? "application/gzip" : "application/json",
+      extension: `.${ext}`,
+      description: "Sauvegarde Bonsaï Studio",
+    });
+    if (target.kind === "cancelled") return;
+
     setBusy("export");
     setBackupProgress({ phase: "donnees", current: 0, total: 1 });
     try {
@@ -211,7 +228,7 @@ function ParametresPage() {
       });
       const json = JSON.stringify(payload);
       let blob: Blob;
-      if (typeof CompressionStream !== "undefined") {
+      if (willGzip) {
         const enc = new TextEncoder().encode(json);
         const stream = new Response(new Blob([enc])).body!.pipeThrough(
           new CompressionStream("gzip"),
@@ -220,19 +237,9 @@ function ParametresPage() {
       } else {
         blob = new Blob([json], { type: "application/json" });
       }
-      const ext =
-        blob.type.includes("gzip") || typeof CompressionStream !== "undefined" ? "json.gz" : "json";
-      const filename = `bonsai-studio-${new Date().toISOString().slice(0, 10)}.${ext}`;
 
-      const result = await saveBlobToDisk(blob, filename, {
-        mimeType: ext === "json.gz" ? "application/gzip" : "application/json",
-        extension: `.${ext}`,
-        description: "Sauvegarde Bonsaï Studio",
-      });
-
-      if (result !== "cancelled") {
-        toast.success(`Sauvegarde téléchargée (${formatBytes(blob.size)})`);
-      }
+      await writeToSaveTarget(target, blob);
+      toast.success(`Sauvegarde téléchargée (${formatBytes(blob.size)})`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
