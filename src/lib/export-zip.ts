@@ -22,6 +22,7 @@ import {
   type Bonsai,
 } from "./supabase-data";
 import { styleLabel, etapeLabel, soinLabel } from "./bonsai-meta";
+import { sanitizeForFilesystem } from "./folder-name";
 
 export interface ExportProgress {
   /** Étape en cours, 1-indexée. */
@@ -36,16 +37,13 @@ export interface ExportProgress {
 
 /**
  * Nettoie un nom pour en faire un nom de dossier/fichier valide sur
- * Windows/macOS/Linux : retire les caractères interdits, réduit les espaces
- * multiples, et tronque pour éviter des chemins trop longs dans le zip.
+ * Windows/macOS/Linux. Filet de sécurité pour des arbres nommés avant
+ * l'ajout de la validation à la saisie (voir `src/lib/folder-name.ts`) ou
+ * importés depuis une sauvegarde — dans l'usage normal, `bonsai.nom` est
+ * déjà garanti valide par le formulaire.
  */
 function sanitizeFilename(name: string): string {
-  const cleaned = name
-    .normalize("NFC")
-    .replace(/[/\\?%*:|"<>]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
-  return (cleaned || "sans-nom").slice(0, 120);
+  return sanitizeForFilesystem(name);
 }
 
 /** Formate une date ISO (ou "date inconnue") en libellé lisible pour un nom de fichier. */
