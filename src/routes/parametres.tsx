@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/confirm-dialog";
+import { ExportZipDialog } from "@/components/export-zip-dialog";
 import { toast } from "sonner";
 import {
   exportSupabaseBackup,
@@ -34,6 +35,7 @@ import {
   Bell,
   BellOff,
   AlertCircle,
+  FolderArchive,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -544,6 +546,26 @@ function ParametresPage() {
               }}
             />
           </label>
+        </div>
+      </section>
+
+      {/* Export ZIP par arbre (photos + fiche texte) */}
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <FolderArchive className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Export ZIP par arbre</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Exportez toute la collection ou une sélection d'arbres : un dossier par arbre,
+              contenant ses photos (nommées par date) et une fiche texte avec ses caractéristiques
+              et l'historique complet de ses événements.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <ExportZipDialog />
         </div>
       </section>
 
