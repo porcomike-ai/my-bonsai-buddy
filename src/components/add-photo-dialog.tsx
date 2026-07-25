@@ -16,6 +16,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { readExifDate, dateFromFilename } from "@/lib/photo-metadata";
 import { fileToBlob, saveBlobToDevice } from "@/lib/blob-url";
+import { toast } from "sonner";
 
 export type PhotoSource = "camera" | "gallery";
 
@@ -156,26 +157,32 @@ export function AddPhotoDialog({
     setBusy(true);
     try {
       await onConfirm({ blob, date: selectedDate, legende: legende.trim() });
-
-      // Si la photo vient de l'appareil photo (pas d'un import depuis la
-      // galerie, où elle existe déjà), on en sauvegarde aussi une copie sur
-      // l'appareil. On ne bloque jamais l'enregistrement principal si cette
-      // sauvegarde échoue ou est annulée par l'utilisateur.
-      if (source === "camera") {
-        try {
-          await saveBlobToDevice(blob, `bonsai-${Date.now()}.jpg`);
-        } catch {
-          /* sauvegarde locale non critique */
-        }
-      }
-
-      // Reset local state so next queued photo starts fresh; parent controls open/close.
-      setLegende("");
-      setBlob(null);
-      setPreview(undefined);
-    } finally {
+    } catch (e) {
+      toast.error(
+        "Échec de l'enregistrement de la photo : " +
+          (e instanceof Error ? e.message : "erreur inconnue"),
+      );
       setBusy(false);
+      return; // on garde la photo/légende en l'état : rien n'a été sauvegardé
     }
+
+    // Si la photo vient de l'appareil photo (pas d'un import depuis la
+    // galerie, où elle existe déjà), on en sauvegarde aussi une copie sur
+    // l'appareil. On ne bloque jamais l'enregistrement principal si cette
+    // sauvegarde échoue ou est annulée par l'utilisateur.
+    if (source === "camera") {
+      try {
+        await saveBlobToDevice(blob, `bonsai-${Date.now()}.jpg`);
+      } catch {
+        /* sauvegarde locale non critique */
+      }
+    }
+
+    // Reset local state so next queued photo starts fresh; parent controls open/close.
+    setLegende("");
+    setBlob(null);
+    setPreview(undefined);
+    setBusy(false);
   };
 
   return (
