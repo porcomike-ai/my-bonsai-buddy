@@ -14,6 +14,7 @@ import { listRappels, saveRappel } from "./rappel";
 import { listPoteries, savePoterie } from "./poterie";
 import { getPoteriePhoto } from "./photo";
 import { listEvenements, saveEvenement } from "./evenement";
+import { resizeImageToBlob } from "../image-utils";
 
 export interface SupabaseBackupPayload {
   version: 1;
@@ -26,6 +27,47 @@ export interface SupabaseBackupPayload {
   journal: JournalEntry[];
   rappels: Rappel[];
   evenements?: Evenement[];
+}
+
+/** Progression d'un export ou d'un import de sauvegarde locale. */
+export interface BackupProgress {
+  /** Étape en cours. "photos"/"poteries" sont les postes coûteux (Storage). */
+  phase: "donnees" | "photos" | "poteries";
+  current: number;
+  total: number;
+}
+
+export interface BackupSummary {
+  bonsais: number;
+  photos: number;
+  poteries: number;
+  journal: number;
+  rappels: number;
+  evenements: number;
+}
+
+/**
+ * Compte rapide des enregistrements concernés par une sauvegarde, sans
+ * télécharger aucune photo (juste les métadonnées) — utilisé pour afficher un
+ * récapitulatif avant de lancer l'export réel.
+ */
+export async function getBackupSummary(): Promise<BackupSummary> {
+  const [bonsais, photos, poteries, journal, rappels, evenements] = await Promise.all([
+    listBonsais(),
+    listAllPhotos(),
+    listPoteries(),
+    listJournal(),
+    listRappels(),
+    listEvenements(),
+  ]);
+  return {
+    bonsais: bonsais.length,
+    photos: photos.length,
+    poteries: poteries.length,
+    journal: journal.length,
+    rappels: rappels.length,
+    evenements: evenements.length,
+  };
 }
 
 export async function blobToBase64(blob: Blob): Promise<{ data: string; type: string }> {
@@ -45,12 +87,28 @@ export function base64ToBlob(data: string, type: string): Blob {
   return new Blob([buf], { type });
 }
 
+export interface ExportBackupOptions {
+  onProgress?: (p: BackupProgress) => void;
+  /**
+   * Si vrai, chaque photo est redimensionnée (max 1280 px) et recompressée
+   * en JPEG qualité 70 % avant d'être encodée en base64. Réduit sensiblement
+   * la taille du fichier de sauvegarde, au prix d'une perte de qualité —
+   * désactivé par défaut pour ne jamais dégrader les photos sans consentement
+   * explicite.
+   */
+  compressPhotos?: boolean;
+}
+
 /**
  * Exporte toutes les données Supabase de l'utilisateur courant dans un payload
  * JSON compatible avec l'ancien format BackupPayload (version 1).
  * Les photos sont téléchargées depuis Storage puis encodées en base64.
  */
-export async function exportSupabaseBackup(): Promise<SupabaseBackupPayload> {
+export async function exportSupabaseBackup(
+  options: ExportBackupOptions = {},
+): Promise<SupabaseBackupPayload> {
+  const { onProgress, compressPhotos = false } = options;
+
   const [bonsais, poteries, journal, rappels, evenements] = await Promise.all([
     listBonsais(),
     listPoteries(),
@@ -65,12 +123,19 @@ export async function exportSupabaseBackup(): Promise<SupabaseBackupPayload> {
   // le chemin le plus coûteux (export complet de la collection).
   const allPhotos = await listAllPhotos();
 
+  const total = allPhotos.length + poteries.length;
+  let current = 0;
+  onProgress?.({ phase: "donnees", current, total: total || 1 });
+
   const photosEnc = await Promise.all(
     allPhotos.map(async (p) => {
       const blob = await getPhotoBlob(p);
-      const { data, type } = blob
-        ? await blobToBase64(blob)
+      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const { data, type } = finalBlob
+        ? await blobToBase64(finalBlob)
         : { data: "", type: "application/octet-stream" };
+      current += 1;
+      onProgress?.({ phase: "photos", current, total: total || 1 });
       const { storagePath: _drop, ...rest } = p;
       void _drop;
       return { ...rest, blobBase64: data, blobType: type };
@@ -82,8 +147,11 @@ export async function exportSupabaseBackup(): Promise<SupabaseBackupPayload> {
       const { photoPath: _drop, ...rest } = p;
       void _drop;
       const blob = await getPoteriePhoto(p);
+      current += 1;
+      onProgress?.({ phase: "poteries", current, total: total || 1 });
       if (!blob) return rest;
-      const { data, type } = await blobToBase64(blob);
+      const finalBlob = compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const { data, type } = await blobToBase64(finalBlob);
       return { ...rest, photoBlobBase64: data, photoBlobType: type };
     }),
   );
@@ -100,19 +168,52 @@ export async function exportSupabaseBackup(): Promise<SupabaseBackupPayload> {
   };
 }
 
+export interface ImportBackupOptions {
+  onProgress?: (p: BackupProgress) => void;
+}
+
 /**
  * Importe un payload JSON (format BackupPayload v1) dans Supabase.
  * Écrase les données existantes (upsert par id). Les photos en base64 sont
  * uploadées vers Storage.
  */
-export async function importSupabaseBackup(payload: SupabaseBackupPayload): Promise<void> {
+export async function importSupabaseBackup(
+  payload: SupabaseBackupPayload,
+  options: ImportBackupOptions = {},
+): Promise<void> {
   if (payload.version !== 1) throw new Error("Version de sauvegarde non prise en charge");
+  const { onProgress } = options;
+
+  const total =
+    payload.bonsais.length +
+    payload.journal.length +
+    payload.rappels.length +
+    (payload.evenements?.length ?? 0) +
+    payload.poteries.length +
+    payload.photos.length;
+  let current = 0;
+  const step = (phase: BackupProgress["phase"]) => {
+    current += 1;
+    onProgress?.({ phase, current, total: total || 1 });
+  };
 
   // --- Upsert des enregistrements non binaires ---
-  for (const b of payload.bonsais) await saveBonsai(b);
-  for (const j of payload.journal) await saveJournal(j);
-  for (const r of payload.rappels) await saveRappel(r);
-  for (const e of payload.evenements ?? []) await saveEvenement(e);
+  for (const b of payload.bonsais) {
+    await saveBonsai(b);
+    step("donnees");
+  }
+  for (const j of payload.journal) {
+    await saveJournal(j);
+    step("donnees");
+  }
+  for (const r of payload.rappels) {
+    await saveRappel(r);
+    step("donnees");
+  }
+  for (const e of payload.evenements ?? []) {
+    await saveEvenement(e);
+    step("donnees");
+  }
 
   // --- Poteries (avec photo éventuelle) ---
   for (const p of payload.poteries) {
@@ -125,6 +226,7 @@ export async function importSupabaseBackup(payload: SupabaseBackupPayload): Prom
       poterie.photoBlob = base64ToBlob(photoBlobBase64, photoBlobType || "image/jpeg");
     }
     await savePoterie(poterie);
+    step("poteries");
   }
 
   // --- Photos (upload vers Storage) ---
@@ -133,8 +235,12 @@ export async function importSupabaseBackup(payload: SupabaseBackupPayload): Prom
       blobBase64: string;
       blobType: string;
     } & Omit<Photo, "storagePath">;
-    if (!blobBase64) continue;
+    if (!blobBase64) {
+      step("photos");
+      continue;
+    }
     const blob = base64ToBlob(blobBase64, blobType);
     await savePhoto({ ...rest, blob });
+    step("photos");
   }
 }
