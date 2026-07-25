@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ExportZipDialog } from "@/components/export-zip-dialog";
+import { ExportPoterieZipDialog } from "@/components/export-poterie-zip-dialog";
 import { toast } from "sonner";
 import {
   exportSupabaseBackup,
@@ -676,6 +677,26 @@ function ParametresPage() {
         </div>
         <div className="mt-5">
           <ExportZipDialog />
+        </div>
+      </section>
+
+      {/* Export ZIP par poterie (photos + fiche texte) */}
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <FolderArchive className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Export ZIP par poterie</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Exportez toutes les poteries ou une sélection : un dossier par poterie, contenant sa
+              photo principale, ses photos de galerie (nommées par date) et une fiche texte avec
+              ses caractéristiques et les arbres actuellement plantés dedans.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <ExportPoterieZipDialog />
         </div>
       </section>
 
