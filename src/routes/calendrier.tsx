@@ -290,15 +290,23 @@ function EvenementsSection({
       return;
     }
     const iso = new Date(dateHeure).toISOString();
-    await saveEvenement({
-      id: uid(),
-      titre: titre.trim(),
-      description: description.trim() || undefined,
-      dateHeure: iso,
-      rappelMinutes: rappelMinutes ? Number(rappelMinutes) : undefined,
-      bonsaiId: bonsaiId || undefined,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await saveEvenement({
+        id: uid(),
+        titre: titre.trim(),
+        description: description.trim() || undefined,
+        dateHeure: iso,
+        rappelMinutes: rappelMinutes ? Number(rappelMinutes) : undefined,
+        bonsaiId: bonsaiId || undefined,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      toast.error(
+        "Échec de l'enregistrement de l'évènement : " +
+          (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return; // on garde le formulaire ouvert et rempli : rien n'a été sauvegardé
+    }
     qc.invalidateQueries({ queryKey: ["evenements"] });
     setOpen(false);
     setTitre("");
@@ -322,15 +330,23 @@ function EvenementsSection({
       return;
     }
     const iso = new Date(dateHeure).toISOString();
-    await saveEvenement({
-      id: editingId,
-      titre: titre.trim(),
-      description: description.trim() || undefined,
-      dateHeure: iso,
-      rappelMinutes: rappelMinutes ? Number(rappelMinutes) : undefined,
-      bonsaiId: bonsaiId || undefined,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await saveEvenement({
+        id: editingId,
+        titre: titre.trim(),
+        description: description.trim() || undefined,
+        dateHeure: iso,
+        rappelMinutes: rappelMinutes ? Number(rappelMinutes) : undefined,
+        bonsaiId: bonsaiId || undefined,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      toast.error(
+        "Échec de la mise à jour de l'évènement : " +
+          (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return; // on garde le formulaire ouvert et rempli : rien n'a été sauvegardé
+    }
     qc.invalidateQueries({ queryKey: ["evenements"] });
     setOpen(false);
     setEditingId(null);

@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ExportZipDialog } from "@/components/export-zip-dialog";
+import { ExportPoterieZipDialog } from "@/components/export-poterie-zip-dialog";
 import { toast } from "sonner";
 import {
   exportSupabaseBackup,
@@ -276,7 +277,7 @@ function ParametresPage() {
     // message générique.
     const confirmed = await confirm({
       title: "Importer cette sauvegarde ?",
-      description: `Cette sauvegarde contient ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s), ${payload.poteries.length} poterie(s), ${payload.journal.length} entrée(s) de journal et ${payload.rappels.length} rappel(s). Les données Supabase actuelles seront remplacées (par id).`,
+      description: `Cette sauvegarde contient ${payload.bonsais.length} arbre(s), ${payload.photos.length} photo(s), ${payload.poteries.length} poterie(s) (${payload.poteriePhotos?.length ?? 0} photo(s) de galerie), ${payload.journal.length} entrée(s) de journal et ${payload.rappels.length} rappel(s). Les données Supabase actuelles seront remplacées (par id).`,
       confirmLabel: "Importer",
     });
     if (!confirmed) {
@@ -565,7 +566,8 @@ function ParametresPage() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Contenu actuel : <strong className="text-foreground">{backupSummary.bonsais}</strong>{" "}
                 arbre(s), <strong className="text-foreground">{backupSummary.photos}</strong> photo(s),{" "}
-                {backupSummary.poteries} poterie(s), {backupSummary.journal} entrée(s) de journal,{" "}
+                {backupSummary.poteries} poterie(s) ({backupSummary.poteriePhotos} photo(s) de
+                galerie), {backupSummary.journal} entrée(s) de journal,{" "}
                 {backupSummary.rappels} rappel(s), {backupSummary.evenements} évènement(s).
               </p>
             )}
@@ -675,6 +677,26 @@ function ParametresPage() {
         </div>
         <div className="mt-5">
           <ExportZipDialog />
+        </div>
+      </section>
+
+      {/* Export ZIP par poterie (photos + fiche texte) */}
+      <section className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <FolderArchive className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display text-xl font-semibold">Export ZIP par poterie</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Exportez toutes les poteries ou une sélection : un dossier par poterie, contenant sa
+              photo principale, ses photos de galerie (nommées par date) et une fiche texte avec
+              ses caractéristiques et les arbres actuellement plantés dedans.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <ExportPoterieZipDialog />
         </div>
       </section>
 

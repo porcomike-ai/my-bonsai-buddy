@@ -94,6 +94,7 @@ serve(async (req) => {
       date_heure: r.prochaine_date,
       rappel_minutes: 0,
       bonsai_id: r.bonsai_id,
+      intervalle_jours: r.intervalle_jours,
       user_id: null as string | null,
     }));
 
@@ -138,8 +139,15 @@ serve(async (req) => {
       reminder.user_id = reminder.bonsai_id ? bonsaiUserIdById.get(reminder.bonsai_id) ?? null : null;
     }
 
-    // Get user IDs for all items to notify
+    // Get user IDs for all items to notify. Inclut aussi directement les
+    // user_id des évènements (colonne propre à evenements, indépendante des
+    // bonsaïs) : sans ça, un utilisateur n'ayant que des évènements de
+    // calendrier généraux (sans bonsai_id) n'aurait jamais ses abonnements
+    // push récupérés, même après résolution correcte de eventUserId ci-dessus.
     const userIds = new Set<string>(bonsaiUserIdById.values());
+    for (const event of eventsToNotify) {
+      if (event.user_id) userIds.add(event.user_id);
+    }
 
     // Fetch all push subscriptions for these users
     const { data: subscriptions, error: subError } = await supabase
@@ -177,9 +185,13 @@ serve(async (req) => {
 
     // Send notifications for events
     for (const event of eventsToNotify) {
-      const eventUserId: string | null = event.bonsai_id
-        ? bonsaiUserIdById.get(event.bonsai_id) ?? null
-        : null;
+      // Les évènements ont leur propre colonne user_id (posée à l'insert,
+      // evenement.ts), indépendante de bonsai_id qui est optionnel (un
+      // évènement de calendrier général n'est lié à aucun arbre). La dériver
+      // via bonsaiUserIdById — nécessaire pour les rappels, qui eux n'ont pas
+      // cette colonne — ne fonctionne pas pour ce cas et laissait ces
+      // évènements sans notification, indéfiniment.
+      const eventUserId: string | null = event.user_id ?? null;
 
       if (!eventUserId) continue;
 
@@ -267,17 +279,13 @@ serve(async (req) => {
       }
 
       // Update reminder: mark as notified for one-time, or advance date for recurring
-      const { data: reminderData } = await supabase
-        .from('rappels')
-        .select('intervalle_jours')
-        .eq('id', reminder.id)
-        .single();
-
-      if (reminderData?.intervalle_jours) {
+      // intervalle_jours est déjà disponible sur `reminder` (conservé dans
+      // remindersAsEvents) — plus besoin d'une requête individuelle ici.
+      if (reminder.intervalle_jours) {
         // Recurring reminder: advance to next date
         const nextDate = new Date(reminder.date_heure);
-        nextDate.setDate(nextDate.getDate() + reminderData.intervalle_jours);
-        
+        nextDate.setDate(nextDate.getDate() + reminder.intervalle_jours);
+
         await supabase
           .from('rappels')
           .update({ prochaine_date: nextDate.toISOString() })

@@ -8,10 +8,10 @@
 
 import type { Bonsai, Photo, JournalEntry, Rappel, Poterie, Evenement } from "./core";
 import { listBonsais, saveBonsai } from "./bonsai";
-import { listAllPhotos, getPhotoBlob, savePhoto } from "./photo";
+import { listAllPhotos, listAllPoteriePhotos, getPhotoBlob, savePhoto } from "./photo";
 import { listJournal, saveJournal } from "./journal";
 import { listRappels, saveRappel } from "./rappel";
-import { listPoteries, savePoterie } from "./poterie";
+import { listPoteries, savePoterie, savePoterieGalleryPhoto } from "./poterie";
 import { getPoteriePhoto } from "./photo";
 import { listEvenements, saveEvenement } from "./evenement";
 import { resizeImageToBlob } from "../image-utils";
@@ -24,6 +24,9 @@ export interface SupabaseBackupPayload {
     Omit<Poterie, "photoPath"> & { photoBlobBase64?: string; photoBlobType?: string }
   >;
   photos: Array<Omit<Photo, "storagePath"> & { blobBase64: string; blobType: string }>;
+  /** Photos de galerie de poterie (distinctes de la photo principale ci-dessus).
+   * Optionnel : absent des sauvegardes créées avant l'ajout de ce champ. */
+  poteriePhotos?: Array<Omit<Photo, "storagePath"> & { blobBase64: string; blobType: string }>;
   journal: JournalEntry[];
   rappels: Rappel[];
   evenements?: Evenement[];
@@ -41,6 +44,7 @@ export interface BackupSummary {
   bonsais: number;
   photos: number;
   poteries: number;
+  poteriePhotos: number;
   journal: number;
   rappels: number;
   evenements: number;
@@ -52,18 +56,21 @@ export interface BackupSummary {
  * récapitulatif avant de lancer l'export réel.
  */
 export async function getBackupSummary(): Promise<BackupSummary> {
-  const [bonsais, photos, poteries, journal, rappels, evenements] = await Promise.all([
-    listBonsais(),
-    listAllPhotos(),
-    listPoteries(),
-    listJournal(),
-    listRappels(),
-    listEvenements(),
-  ]);
+  const [bonsais, photos, poteries, poteriePhotos, journal, rappels, evenements] =
+    await Promise.all([
+      listBonsais(),
+      listAllPhotos(),
+      listPoteries(),
+      listAllPoteriePhotos(),
+      listJournal(),
+      listRappels(),
+      listEvenements(),
+    ]);
   return {
     bonsais: bonsais.length,
     photos: photos.length,
     poteries: poteries.length,
+    poteriePhotos: poteriePhotos.length,
     journal: journal.length,
     rappels: rappels.length,
     evenements: evenements.length,
@@ -122,13 +129,32 @@ export async function exportSupabaseBackup(
   // déjà utilisée par la page Statistiques, pour éviter le pattern N+1 sur
   // le chemin le plus coûteux (export complet de la collection).
   const allPhotos = await listAllPhotos();
+  // Photos de galerie de poterie : distinctes de la photo principale de
+  // chaque poterie (poteriesEnc ci-dessous), sans quoi elles ne sont jamais
+  // sauvegardées ni restaurées.
+  const allPoteriePhotos = await listAllPoteriePhotos();
 
-  const total = allPhotos.length + poteries.length;
+  const total = allPhotos.length + allPoteriePhotos.length + poteries.length;
   let current = 0;
   onProgress?.({ phase: "donnees", current, total: total || 1 });
 
   const photosEnc = await Promise.all(
     allPhotos.map(async (p) => {
+      const blob = await getPhotoBlob(p);
+      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const { data, type } = finalBlob
+        ? await blobToBase64(finalBlob)
+        : { data: "", type: "application/octet-stream" };
+      current += 1;
+      onProgress?.({ phase: "photos", current, total: total || 1 });
+      const { storagePath: _drop, ...rest } = p;
+      void _drop;
+      return { ...rest, blobBase64: data, blobType: type };
+    }),
+  );
+
+  const poteriePhotosEnc = await Promise.all(
+    allPoteriePhotos.map(async (p) => {
       const blob = await getPhotoBlob(p);
       const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
       const { data, type } = finalBlob
@@ -162,6 +188,7 @@ export async function exportSupabaseBackup(
     bonsais,
     poteries: poteriesEnc,
     photos: photosEnc,
+    poteriePhotos: poteriePhotosEnc,
     journal,
     rappels,
     evenements,
@@ -190,7 +217,8 @@ export async function importSupabaseBackup(
     payload.rappels.length +
     (payload.evenements?.length ?? 0) +
     payload.poteries.length +
-    payload.photos.length;
+    payload.photos.length +
+    (payload.poteriePhotos?.length ?? 0);
   let current = 0;
   const step = (phase: BackupProgress["phase"]) => {
     current += 1;
@@ -198,6 +226,14 @@ export async function importSupabaseBackup(
   };
 
   // --- Upsert des enregistrements non binaires ---
+  // Note : `b.photoPrincipale` (core.ts) est un chemin Storage qui embarque
+  // l'UID du propriétaire au moment de l'export (bonsaiPhotoPath). Il est
+  // réécrit tel quel ici, sans recalcul — ce qui suppose une restauration
+  // vers le MÊME compte/projet Supabase que celui qui a produit la
+  // sauvegarde (le cas d'usage courant : réimport après purge locale,
+  // changement d'appareil sur le même compte). Restaurer vers un compte
+  // différent laisserait `photo_principale_path` pointer vers un chemin
+  // qui n'existe plus dans le nouveau bucket.
   for (const b of payload.bonsais) {
     await saveBonsai(b);
     step("donnees");
@@ -241,6 +277,21 @@ export async function importSupabaseBackup(
     }
     const blob = base64ToBlob(blobBase64, blobType);
     await savePhoto({ ...rest, blob });
+    step("photos");
+  }
+
+  // --- Photos de galerie de poterie (upload vers Storage) ---
+  for (const p of payload.poteriePhotos ?? []) {
+    const { blobBase64, blobType, ...rest } = p as {
+      blobBase64: string;
+      blobType: string;
+    } & Omit<Photo, "storagePath">;
+    if (!blobBase64) {
+      step("photos");
+      continue;
+    }
+    const blob = base64ToBlob(blobBase64, blobType);
+    await savePoterieGalleryPhoto({ ...rest, blob });
     step("photos");
   }
 }
