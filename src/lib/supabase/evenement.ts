@@ -40,6 +40,37 @@ export async function saveEvenement(e: Evenement): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Met à jour les champs éditables d'un évènement existant, SANS jamais
+ * toucher `created_at` ni `notified_at`.
+ *
+ * IMPORTANT : ne jamais inclure ces deux colonnes dans ce payload.
+ * `notified_at` est géré exclusivement par l'Edge Function
+ * send-due-notifications (même principe que `saveRappel`, voir
+ * rappel.ts) ; PostgREST ne modifie que les colonnes présentes dans le
+ * payload d'un upsert, donc les omettre ici préserve leurs valeurs
+ * existantes. Les réintroduire réintroduirait le bug corrigé le
+ * 25/07/2026 : éditer un évènement (ex. corriger une faute dans le
+ * titre) remettait `notified_at` à null (risque de renotification) et
+ * écrasait la date de création d'origine.
+ */
+export async function updateEvenement(
+  id: string,
+  patch: Pick<Evenement, "titre" | "description" | "dateHeure" | "rappelMinutes" | "bonsaiId">,
+): Promise<void> {
+  const { error } = await db
+    .from("evenements")
+    .update({
+      titre: patch.titre,
+      description: patch.description ?? null,
+      date_heure: patch.dateHeure,
+      rappel_minutes: patch.rappelMinutes ?? null,
+      bonsai_id: patch.bonsaiId ?? null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteEvenement(id: string): Promise<void> {
   const { error } = await db.from("evenements").delete().eq("id", id);
   if (error) throw error;

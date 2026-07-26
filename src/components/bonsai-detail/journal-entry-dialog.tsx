@@ -92,30 +92,38 @@ export function JournalEntryDialog({
       shouldUpdateStatus = confirmed;
     }
 
-    if (entry) {
-      await saveJournal({
-        id: entry.id,
-        bonsaiId,
-        type: journalType,
-        date: new Date(journalDate).toISOString(),
-        notes: journalNotes || undefined,
-      });
-      toast.success("Entrée mise à jour");
-    } else {
-      await saveJournal({
-        id: uid(),
-        bonsaiId,
-        type: journalType,
-        date: new Date(journalDate).toISOString(),
-        notes: journalNotes || undefined,
-      });
-      toast.success("Entrée ajoutée");
-    }
+    try {
+      if (entry) {
+        await saveJournal({
+          id: entry.id,
+          bonsaiId,
+          type: journalType,
+          date: new Date(journalDate).toISOString(),
+          notes: journalNotes || undefined,
+        });
+        toast.success("Entrée mise à jour");
+      } else {
+        await saveJournal({
+          id: uid(),
+          bonsaiId,
+          type: journalType,
+          date: new Date(journalDate).toISOString(),
+          notes: journalNotes || undefined,
+        });
+        toast.success("Entrée ajoutée");
+      }
 
-    // Mettre à jour le statut de l'arbre si confirmé.
-    if (shouldUpdateStatus) {
-      await onUpdateBonsai({ ...bonsai, dansCollection: false });
-      toast.info("Arbre retiré de la collection");
+      // Mettre à jour le statut de l'arbre si confirmé.
+      if (shouldUpdateStatus) {
+        await onUpdateBonsai({ ...bonsai, dansCollection: false });
+        toast.info("Arbre retiré de la collection");
+      }
+    } catch (e) {
+      toast.error(
+        "Échec de l'enregistrement de l'entrée : " +
+          (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return; // on garde le formulaire ouvert et rempli : rien n'a été sauvegardé
     }
 
     qc.invalidateQueries({ queryKey: ["journal"] });
@@ -186,7 +194,15 @@ export function JournalEntryDialog({
                       confirmLabel: "Supprimer",
                     });
                     if (confirmed) {
-                      await deleteJournal(entry.id);
+                      try {
+                        await deleteJournal(entry.id);
+                      } catch (e) {
+                        toast.error(
+                          "Échec de la suppression : " +
+                            (e instanceof Error ? e.message : "erreur inconnue"),
+                        );
+                        return;
+                      }
                       qc.invalidateQueries({ queryKey: ["journal"] });
                       onOpenChange(false);
                       toast.success("Entrée supprimée");

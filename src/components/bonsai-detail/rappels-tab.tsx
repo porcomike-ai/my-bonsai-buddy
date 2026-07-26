@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SOINS_SELECTABLE, soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 import {
+  deleteJournal,
   deleteRappel,
   saveJournal,
   saveRappel,
@@ -32,14 +33,21 @@ export function RappelsTab({
   const [intervalle, setIntervalle] = useState("");
 
   const add = async () => {
-    await saveRappel({
-      id: uid(),
-      bonsaiId,
-      type,
-      prochaineDate: new Date(date).toISOString(),
-      intervalleJours: intervalle ? Number(intervalle) : undefined,
-      actif: true,
-    });
+    try {
+      await saveRappel({
+        id: uid(),
+        bonsaiId,
+        type,
+        prochaineDate: new Date(date).toISOString(),
+        intervalleJours: intervalle ? Number(intervalle) : undefined,
+        actif: true,
+      });
+    } catch (e) {
+      toast.error(
+        "Échec de la création du rappel : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["rappels"] });
     setOpen(false);
     setIntervalle("");
@@ -47,28 +55,70 @@ export function RappelsTab({
   };
 
   const markDone = async (r: Rappel) => {
-    await saveJournal({
-      id: uid(),
-      bonsaiId,
-      type: r.type,
-      date: new Date().toISOString(),
-      rappelId: r.id,
-    });
-    if (r.intervalleJours) {
-      await saveRappel({
-        ...r,
-        prochaineDate: addDays(new Date(), r.intervalleJours).toISOString(),
+    const journalId = uid();
+    try {
+      await saveJournal({
+        id: journalId,
+        bonsaiId,
+        type: r.type,
+        date: new Date().toISOString(),
+        rappelId: r.id,
       });
-    } else {
-      await saveRappel({ ...r, actif: false });
+    } catch (e) {
+      toast.error(
+        "Échec de l'enregistrement du soin : " +
+          (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
     }
+
+    try {
+      if (r.intervalleJours) {
+        await saveRappel({
+          ...r,
+          prochaineDate: addDays(new Date(), r.intervalleJours).toISOString(),
+        });
+      } else {
+        await saveRappel({ ...r, actif: false });
+      }
+    } catch (e) {
+      // Le journal a déjà été enregistré à ce stade. On annule cette entrée
+      // (rollback compensatoire, même principe que le rollback Storage dans
+      // savePhoto — voir src/lib/supabase/photo.ts) pour ne pas laisser un
+      // "soin" fantôme si l'utilisateur retente l'action en pensant que rien
+      // n'a été fait.
+      try {
+        await deleteJournal(journalId);
+        toast.error(
+          "Échec de la mise à jour du rappel, le soin n'a pas été enregistré : " +
+            (e instanceof Error ? e.message : "erreur inconnue"),
+        );
+      } catch {
+        // Le rollback lui-même a échoué : le journal contient bien l'entrée
+        // mais le rappel n'a pas été mis à jour. Ne surtout pas suggérer de
+        // retenter (ça créerait un vrai doublon) — on informe explicitement.
+        qc.invalidateQueries({ queryKey: ["journal"] });
+        toast.error(
+          "Le soin a été enregistré mais la mise à jour du rappel a échoué, et l'annulation automatique aussi. Vérifiez le journal avant de retenter.",
+        );
+      }
+      return;
+    }
+
     qc.invalidateQueries({ queryKey: ["rappels"] });
     qc.invalidateQueries({ queryKey: ["journal"] });
     toast.success("Soin effectué");
   };
 
   const remove = async (rid: string) => {
-    await deleteRappel(rid);
+    try {
+      await deleteRappel(rid);
+    } catch (e) {
+      toast.error(
+        "Échec de la suppression : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["rappels"] });
   };
 

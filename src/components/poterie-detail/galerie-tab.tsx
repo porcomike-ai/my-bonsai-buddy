@@ -123,7 +123,14 @@ export function PoterieGalerieTab({
     });
     if (!confirmed) return;
     const target = photos.find((p) => p.id === pid);
-    await deletePhoto(pid);
+    try {
+      await deletePhoto(pid);
+    } catch (e) {
+      toast.error(
+        "Échec de la suppression : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     invalidateCachedPhoto(target?.storagePath);
     qc.invalidateQueries({ queryKey: ["poterie-photos", poterieId] });
   };

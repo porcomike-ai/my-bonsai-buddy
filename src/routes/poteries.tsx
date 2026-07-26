@@ -251,7 +251,14 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
       photoPath: initial?.photoPath,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
-    await savePoterie(photoBlob ? { ...p, photoBlob } : p);
+    try {
+      await savePoterie(photoBlob ? { ...p, photoBlob } : p);
+    } catch (err) {
+      toast.error(
+        "Échec de l'enregistrement : " + (err instanceof Error ? err.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["poteries"] });
     qc.invalidateQueries({ queryKey: ["poterie", p.id] });
     toast.success(initial ? "Poterie mise à jour" : "Poterie ajoutée");
