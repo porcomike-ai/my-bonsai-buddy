@@ -304,7 +304,11 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
           type="file"
           accept="image/*"
           className="absolute inset-0 cursor-pointer opacity-0"
-          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) onFile(f);
+          }}
         />
       </label>
 
