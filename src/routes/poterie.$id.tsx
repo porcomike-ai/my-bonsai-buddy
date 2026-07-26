@@ -123,7 +123,14 @@ function PoterieDetail() {
       confirmLabel: "Supprimer",
     });
     if (!confirmed) return;
-    await deletePoterie(id);
+    try {
+      await deletePoterie(id);
+    } catch (e) {
+      toast.error(
+        "Échec de la suppression : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["poteries"] });
     qc.invalidateQueries({ queryKey: ["bonsais"] });
     toast.success("Poterie supprimée");
