@@ -55,6 +55,17 @@ export async function deletePoterie(id: string): Promise<void> {
     const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
     await db.storage.from(POTERIE_BUCKET).remove(paths);
   }
+  // bonsais.poterie_id n'a pas de contrainte FK/CASCADE en base (colonne uuid
+  // nue, voir create_bonsai_studio_schema.sql) : sans ce nettoyage explicite,
+  // tout bonsaï encore "planté" dans cette poterie garderait un poterie_id
+  // pointant vers une ligne supprimée. Fait avant le delete plutôt qu'après
+  // pour ne pas laisser de fenêtre où la poterie est déjà partie mais les
+  // bonsaïs pas encore mis à jour si une erreur survient entre les deux.
+  const { error: unlinkError } = await db
+    .from("bonsais")
+    .update({ poterie_id: null })
+    .eq("poterie_id", id);
+  if (unlinkError) throw unlinkError;
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 }
