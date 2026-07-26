@@ -24,6 +24,12 @@ type SortOption =
   | "acquisition-asc"
   | "valeur-desc";
 
+// Radix <Select.Item> interdit une value="" (réservée pour "aucune sélection"
+// / placeholder) — on utilise ce sentinel pour "tous les styles" et on le
+// traduit en "" au niveau du state applicatif (styleFilter reste "" en
+// interne, comme avant, pour ne rien changer à la logique de filtrage).
+const ALL_STYLES = "__all__";
+
 export const Route = createFileRoute("/collection")({
   head: () => ({
     meta: [
@@ -149,32 +155,42 @@ function CollectionPage() {
             className="h-11 rounded-full bg-card pl-10"
           />
         </div>
-        <select
-          value={styleFilter}
-          onChange={(e) => setStyleFilter(e.target.value)}
-          aria-label="Filtrer par style de bonsaï"
-          className="h-11 rounded-full border border-input bg-card px-4 text-sm"
+        <Select
+          value={styleFilter || ALL_STYLES}
+          onValueChange={(v) => setStyleFilter(v === ALL_STYLES ? "" : v)}
         >
-          <option value="">Tous les styles</option>
-          {STYLES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <select
+          <SelectTrigger
+            aria-label="Filtrer par style de bonsaï"
+            className="h-11 w-auto min-w-[160px] rounded-full border-input bg-card px-4 text-sm"
+          >
+            <SelectValue placeholder="Tous les styles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_STYLES}>Tous les styles</SelectItem>
+            {STYLES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
           value={statutFilter}
-          onChange={(e) =>
-            setStatutFilter(e.target.value as "actifs" | "sortis" | "tous" | "favoris")
-          }
-          aria-label="Filtrer par statut dans la collection"
-          className="h-11 rounded-full border border-input bg-card px-4 text-sm"
+          onValueChange={(v) => setStatutFilter(v as "actifs" | "sortis" | "tous" | "favoris")}
         >
-          <option value="actifs">Dans la collection</option>
-          <option value="favoris">Favoris</option>
-          <option value="sortis">Sortis de la collection</option>
-          <option value="tous">Tous</option>
-        </select>
+          <SelectTrigger
+            aria-label="Filtrer par statut dans la collection"
+            className="h-11 w-auto min-w-[180px] rounded-full border-input bg-card px-4 text-sm"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="actifs">Dans la collection</SelectItem>
+            <SelectItem value="favoris">Favoris</SelectItem>
+            <SelectItem value="sortis">Sortis de la collection</SelectItem>
+            <SelectItem value="tous">Tous</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
           <SelectTrigger
             aria-label="Trier les bonsaïs"

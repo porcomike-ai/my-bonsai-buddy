@@ -3,7 +3,7 @@ import { c as composeEventHandlers } from "./radix-ui__primitive.mjs";
 import { c as createContextScope } from "./radix-ui__react-context.mjs";
 import { R as Root, I as Item, c as createRovingFocusGroupScope } from "./radix-ui__react-roving-focus.mjs";
 import { P as Presence } from "./radix-ui__react-presence.mjs";
-import { a as Primitive } from "./radix-ui__react-primitive.mjs";
+import { P as Primitive } from "./radix-ui__react-primitive.mjs";
 import { u as useDirection } from "./radix-ui__react-direction.mjs";
 import { u as useControllableState } from "./@radix-ui/react-use-controllable-state+[...].mjs";
 import { u as useId } from "./radix-ui__react-id.mjs";
@@ -121,7 +121,12 @@ var TabsTrigger = reactExports.forwardRef(
               }
             }),
             onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
-              if ([" ", "Enter"].includes(event.key)) context.onValueChange(value);
+              if (disabled || event.target !== event.currentTarget) {
+                return;
+              }
+              if ([" ", "Enter"].includes(event.key)) {
+                context.onValueChange(value);
+              }
             }),
             onFocus: composeEventHandlers(props.onFocus, () => {
               const isAutomaticActivation = context.activationMode !== "manual";

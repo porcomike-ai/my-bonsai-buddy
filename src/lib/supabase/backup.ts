@@ -148,7 +148,6 @@ export async function exportSupabaseBackup(
       current += 1;
       onProgress?.({ phase: "photos", current, total: total || 1 });
       const { storagePath: _drop, ...rest } = p;
-      void _drop;
       return { ...rest, blobBase64: data, blobType: type };
     }),
   );
@@ -163,7 +162,6 @@ export async function exportSupabaseBackup(
       current += 1;
       onProgress?.({ phase: "photos", current, total: total || 1 });
       const { storagePath: _drop, ...rest } = p;
-      void _drop;
       return { ...rest, blobBase64: data, blobType: type };
     }),
   );
@@ -171,7 +169,6 @@ export async function exportSupabaseBackup(
   const poteriesEnc = await Promise.all(
     poteries.map(async (p) => {
       const { photoPath: _drop, ...rest } = p;
-      void _drop;
       const blob = await getPoteriePhoto(p);
       current += 1;
       onProgress?.({ phase: "poteries", current, total: total || 1 });
@@ -211,6 +208,21 @@ export async function importSupabaseBackup(
   if (payload.version !== 1) throw new Error("Version de sauvegarde non prise en charge");
   const { onProgress } = options;
 
+  // Taille de lot pour paralléliser l'import : chaque phase (bonsaïs, journal,
+  // rappels, évenements, poteries, photos) reste strictement séquentielle
+  // par rapport aux autres (ex. les photos référencent bonsai_id avec une FK
+  // NOT NULL, donc tous les bonsaïs doivent exister avant qu'on touche aux
+  // photos), mais À L'INTÉRIEUR d'une même phase les upserts sont
+  // indépendants entre eux et peuvent partir en parallèle par lots. Avant ce
+  // correctif, une sauvegarde de 400 arbres + 2000 photos générait des
+  // milliers de requêtes réseau strictement séquentielles.
+  const IMPORT_BATCH_SIZE = 15;
+  async function runBatched<T>(items: T[], fn: (item: T) => Promise<void>): Promise<void> {
+    for (let i = 0; i < items.length; i += IMPORT_BATCH_SIZE) {
+      await Promise.all(items.slice(i, i + IMPORT_BATCH_SIZE).map(fn));
+    }
+  }
+
   const total =
     payload.bonsais.length +
     payload.journal.length +
@@ -234,25 +246,25 @@ export async function importSupabaseBackup(
   // changement d'appareil sur le même compte). Restaurer vers un compte
   // différent laisserait `photo_principale_path` pointer vers un chemin
   // qui n'existe plus dans le nouveau bucket.
-  for (const b of payload.bonsais) {
+  await runBatched(payload.bonsais, async (b) => {
     await saveBonsai(b);
     step("donnees");
-  }
-  for (const j of payload.journal) {
+  });
+  await runBatched(payload.journal, async (j) => {
     await saveJournal(j);
     step("donnees");
-  }
-  for (const r of payload.rappels) {
+  });
+  await runBatched(payload.rappels, async (r) => {
     await saveRappel(r);
     step("donnees");
-  }
-  for (const e of payload.evenements ?? []) {
+  });
+  await runBatched(payload.evenements ?? [], async (e) => {
     await saveEvenement(e);
     step("donnees");
-  }
+  });
 
   // --- Poteries (avec photo éventuelle) ---
-  for (const p of payload.poteries) {
+  await runBatched(payload.poteries, async (p) => {
     const { photoBlobBase64, photoBlobType, ...rest } = p as {
       photoBlobBase64?: string;
       photoBlobType?: string;
@@ -263,35 +275,35 @@ export async function importSupabaseBackup(
     }
     await savePoterie(poterie);
     step("poteries");
-  }
+  });
 
   // --- Photos (upload vers Storage) ---
-  for (const p of payload.photos) {
+  await runBatched(payload.photos, async (p) => {
     const { blobBase64, blobType, ...rest } = p as {
       blobBase64: string;
       blobType: string;
     } & Omit<Photo, "storagePath">;
     if (!blobBase64) {
       step("photos");
-      continue;
+      return;
     }
     const blob = base64ToBlob(blobBase64, blobType);
     await savePhoto({ ...rest, blob });
     step("photos");
-  }
+  });
 
   // --- Photos de galerie de poterie (upload vers Storage) ---
-  for (const p of payload.poteriePhotos ?? []) {
+  await runBatched(payload.poteriePhotos ?? [], async (p) => {
     const { blobBase64, blobType, ...rest } = p as {
       blobBase64: string;
       blobType: string;
     } & Omit<Photo, "storagePath">;
     if (!blobBase64) {
       step("photos");
-      continue;
+      return;
     }
     const blob = base64ToBlob(blobBase64, blobType);
     await savePoterieGalleryPhoto({ ...rest, blob });
     step("photos");
-  }
+  });
 }

@@ -95,7 +95,14 @@ export function BonsaiForm({
 
   const [especeLang, setEspeceLang] = useState<"latin" | "fr">(() => {
     if (typeof window === "undefined") return "latin";
-    return (localStorage.getItem("bonsai.espece.lang") as "latin" | "fr") ?? "latin";
+    try {
+      return (localStorage.getItem("bonsai.espece.lang") as "latin" | "fr") ?? "latin";
+    } catch {
+      // Stockage indisponible (politique navigateur/extension) : on retombe
+      // silencieusement sur la valeur par défaut plutôt que de planter le
+      // rendu du formulaire.
+      return "latin";
+    }
   });
 
   // Cleanup preview URL on unmount
@@ -146,7 +153,12 @@ export function BonsaiForm({
   const toggleEspeceLang = () => {
     const next = especeLang === "latin" ? "fr" : "latin";
     setEspeceLang(next);
-    if (typeof window !== "undefined") localStorage.setItem("bonsai.espece.lang", next);
+    try {
+      if (typeof window !== "undefined") localStorage.setItem("bonsai.espece.lang", next);
+    } catch {
+      // Stockage indisponible : la préférence ne persiste pas pour cette
+      // session, mais le changement de langue reste appliqué en mémoire.
+    }
     const current = form.getValues("espece").trim();
     const match = especesList.find((e) => e.latin === current || e.fr === current);
     if (match) form.setValue("espece", next === "latin" ? match.latin : match.fr);
@@ -252,7 +264,14 @@ export function BonsaiForm({
             type="file"
             accept="image/*"
             className="absolute inset-0 cursor-pointer opacity-0"
-            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              // Réinitialise la valeur DOM de l'input : sans ça, resélectionner
+              // exactement le même fichier ne redéclenche pas onChange (la
+              // valeur de l'input n'a pas changé du point de vue du navigateur).
+              e.target.value = "";
+              if (f) onFile(f);
+            }}
           />
         </label>
       </div>

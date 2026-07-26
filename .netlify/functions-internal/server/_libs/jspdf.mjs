@@ -11,8 +11,8 @@ var hasRequiredJspdf_node_min;
 function requireJspdf_node_min() {
   if (hasRequiredJspdf_node_min) return jspdf_node_min.exports;
   hasRequiredJspdf_node_min = 1;
-  (function(module, exports$1) {
-    Object.defineProperty(exports$1, "__esModule", { value: true });
+  (function(module, exports) {
+    Object.defineProperty(exports, "__esModule", { value: true });
     var t = /* @__PURE__ */ requireNode(), e = require$$1, r = /* @__PURE__ */ (function() {
       return "undefined" != typeof window ? window : "undefined" != typeof commonjsGlobal ? commonjsGlobal : "undefined" != typeof self ? self : this;
     })();
@@ -7299,7 +7299,7 @@ function requireJspdf_node_min() {
         }
         return "" + r2;
       }, e2;
-    })(), exports$1.AcroForm = yt, exports$1.AcroFormAppearance = vt, exports$1.AcroFormButton = lt, exports$1.AcroFormCheckBox = pt, exports$1.AcroFormChoiceField = ot, exports$1.AcroFormComboBox = ct, exports$1.AcroFormEditBox = ut, exports$1.AcroFormListBox = st, exports$1.AcroFormPasswordField = mt, exports$1.AcroFormPushButton = ht, exports$1.AcroFormRadioButton = ft, exports$1.AcroFormTextField = gt, exports$1.GState = P, exports$1.ShadingPattern = F, exports$1.TilingPattern = I, exports$1.default = C, exports$1.jsPDF = C;
+    })(), exports.AcroForm = yt, exports.AcroFormAppearance = vt, exports.AcroFormButton = lt, exports.AcroFormCheckBox = pt, exports.AcroFormChoiceField = ot, exports.AcroFormComboBox = ct, exports.AcroFormEditBox = ut, exports.AcroFormListBox = st, exports.AcroFormPasswordField = mt, exports.AcroFormPushButton = ht, exports.AcroFormRadioButton = ft, exports.AcroFormTextField = gt, exports.GState = P, exports.ShadingPattern = F, exports.TilingPattern = I, exports.default = C, exports.jsPDF = C;
   })(jspdf_node_min, jspdf_node_min.exports);
   return jspdf_node_min.exports;
 }

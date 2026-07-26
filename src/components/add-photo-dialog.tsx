@@ -76,37 +76,46 @@ export function AddPhotoDialog({
     let createdUrl: string | undefined;
 
     (async () => {
-      // Prévisualisation.
-      const url = URL.createObjectURL(file);
-      createdUrl = url;
-      if (!cancelled) setPreview(url);
+      try {
+        // Prévisualisation.
+        const url = URL.createObjectURL(file);
+        createdUrl = url;
+        if (!cancelled) setPreview(url);
 
-      // Compression/normalisation via fileToBlob.
-      const processed = await fileToBlob(file);
-      if (cancelled) return;
-      setBlob(processed);
-
-      // Pour la galerie : extraction EXIF + nom de fichier en parallèle.
-      if (source === "gallery") {
-        const [exif, fromName] = await Promise.all([
-          readExifDate(file),
-          Promise.resolve(dateFromFilename(file.name)),
-        ]);
+        // Compression/normalisation via fileToBlob.
+        const processed = await fileToBlob(file);
         if (cancelled) return;
-        setExifDate(exif);
-        setFilenameDate(fromName);
+        setBlob(processed);
 
-        // Sélection auto : EXIF > nom de fichier > aujourd'hui.
-        if (exif) setSelectedMode("exif");
-        else if (fromName) setSelectedMode("filename");
-        else setSelectedMode("custom");
-      } else {
-        // Appareil photo : date du jour.
-        setSelectedMode("today");
+        // Pour la galerie : extraction EXIF + nom de fichier en parallèle.
+        if (source === "gallery") {
+          const [exif, fromName] = await Promise.all([
+            readExifDate(file),
+            Promise.resolve(dateFromFilename(file.name)),
+          ]);
+          if (cancelled) return;
+          setExifDate(exif);
+          setFilenameDate(fromName);
+
+          // Sélection auto : EXIF > nom de fichier > aujourd'hui.
+          if (exif) setSelectedMode("exif");
+          else if (fromName) setSelectedMode("filename");
+          else setSelectedMode("custom");
+        } else {
+          // Appareil photo : date du jour.
+          setSelectedMode("today");
+        }
+
+        // Date personnalisée par défaut = aujourd'hui.
+        setCustomDate(new Date().toISOString().slice(0, 10));
+      } catch (e) {
+        if (cancelled) return;
+        toast.error(
+          "Impossible de lire cette image : " +
+            (e instanceof Error ? e.message : "fichier illisible ou corrompu"),
+        );
+        onOpenChange(false);
       }
-
-      // Date personnalisée par défaut = aujourd'hui.
-      setCustomDate(new Date().toISOString().slice(0, 10));
     })();
 
     return () => {

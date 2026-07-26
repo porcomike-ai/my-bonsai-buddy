@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "./react.mjs";
 import { c as composeEventHandlers } from "./radix-ui__primitive.mjs";
 import { c as createCollection } from "./radix-ui__react-collection.mjs";
-import { u as useComposedRefs, c as composeRefs } from "./radix-ui__react-compose-refs.mjs";
+import { u as useComposedRefs } from "./radix-ui__react-compose-refs.mjs";
 import { c as createContextScope } from "./radix-ui__react-context.mjs";
 import { u as useDirection } from "./radix-ui__react-direction.mjs";
 import { D as DismissableLayer } from "./@radix-ui/react-dismissable-layer+[...].mjs";
@@ -10,9 +10,9 @@ import { F as FocusScope } from "./radix-ui__react-focus-scope.mjs";
 import { R as Root2, A as Anchor, c as createPopperScope, C as Content, a as Arrow } from "./radix-ui__react-popper.mjs";
 import { P as Portal$1 } from "./radix-ui__react-portal.mjs";
 import { P as Presence } from "./radix-ui__react-presence.mjs";
-import { a as Primitive, d as dispatchDiscreteCustomEvent } from "./radix-ui__react-primitive.mjs";
+import { P as Primitive, d as dispatchDiscreteCustomEvent } from "./radix-ui__react-primitive.mjs";
 import { c as createRovingFocusGroupScope, I as Item, R as Root } from "./radix-ui__react-roving-focus.mjs";
-import { g as createSlot } from "./radix-ui__react-slot.mjs";
+import { c as createSlot } from "./radix-ui__react-slot.mjs";
 import { u as useCallbackRef } from "./@radix-ui/react-use-callback-ref+[...].mjs";
 import { h as hideOthers } from "./aria-hidden.mjs";
 import { R as ReactRemoveScroll } from "./react-remove-scroll.mjs";
@@ -60,6 +60,14 @@ var Menu = (props) => {
       document.removeEventListener("pointermove", handlePointer, { capture: true });
     };
   }, []);
+  reactExports.useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const handleBlur = () => handleOpenChange(false);
+    window.addEventListener("blur", handleBlur);
+    return () => window.removeEventListener("blur", handleBlur);
+  }, [open, handleOpenChange]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     MenuProvider,
     {
@@ -392,8 +400,13 @@ var MenuItem = reactExports.forwardRef(
           if (!isPointerDownRef.current) event.currentTarget?.click();
         }),
         onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+          if (disabled || event.target !== event.currentTarget) {
+            return;
+          }
           const isTypingAhead = contentContext.searchRef.current !== "";
-          if (disabled || isTypingAhead && event.key === " ") return;
+          if (isTypingAhead && event.key === " ") {
+            return;
+          }
           if (SELECTION_KEYS.includes(event.key)) {
             event.currentTarget.click();
             event.preventDefault();
@@ -595,16 +608,17 @@ var MenuSubTrigger = reactExports.forwardRef(
         onPointerGraceIntentChange(null);
       };
     }, [pointerGraceTimerRef, onPointerGraceIntentChange]);
+    const composedRefs = useComposedRefs(forwardedRef, subContext.onTriggerChange);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(MenuAnchor, { asChild: true, ...scope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       MenuItemImpl,
       {
         id: subContext.triggerId,
         "aria-haspopup": "menu",
         "aria-expanded": context.open,
-        "aria-controls": subContext.contentId,
+        "aria-controls": context.open ? subContext.contentId : void 0,
         "data-state": getOpenState(context.open),
         ...props,
-        ref: composeRefs(forwardedRef, subContext.onTriggerChange),
+        ref: composedRefs,
         onClick: (event) => {
           props.onClick?.(event);
           if (props.disabled || event.defaultPrevented) return;
@@ -661,8 +675,13 @@ var MenuSubTrigger = reactExports.forwardRef(
           })
         ),
         onKeyDown: composeEventHandlers(props.onKeyDown, (event) => {
+          if (props.disabled || event.target !== event.currentTarget) {
+            return;
+          }
           const isTypingAhead = contentContext.searchRef.current !== "";
-          if (props.disabled || isTypingAhead && event.key === " ") return;
+          if (isTypingAhead && event.key === " ") {
+            return;
+          }
           if (SUB_OPEN_KEYS[rootContext.dir].includes(event.key)) {
             context.onOpenChange(true);
             context.content?.focus();
@@ -678,7 +697,7 @@ var SUB_CONTENT_NAME = "MenuSubContent";
 var MenuSubContent = reactExports.forwardRef(
   (props, forwardedRef) => {
     const portalContext = usePortalContext(CONTENT_NAME, props.__scopeMenu);
-    const { forceMount = portalContext.forceMount, ...subContentProps } = props;
+    const { forceMount = portalContext.forceMount, align = "start", ...subContentProps } = props;
     const context = useMenuContext(CONTENT_NAME, props.__scopeMenu);
     const rootContext = useMenuRootContext(CONTENT_NAME, props.__scopeMenu);
     const subContext = useMenuSubContext(SUB_CONTENT_NAME, props.__scopeMenu);
@@ -691,7 +710,7 @@ var MenuSubContent = reactExports.forwardRef(
         "aria-labelledby": subContext.triggerId,
         ...subContentProps,
         ref: composedRefs,
-        align: "start",
+        align,
         side: rootContext.dir === "rtl" ? "left" : "right",
         disableOutsidePointerEvents: false,
         disableOutsideScroll: false,
