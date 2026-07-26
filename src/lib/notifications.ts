@@ -1,4 +1,4 @@
-import { listEvenements, saveEvenement, type Evenement } from "./supabase-data";
+import type { Evenement } from "./supabase-data";
 import { supabase } from "@/integrations/supabase/client";
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
