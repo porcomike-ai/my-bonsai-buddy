@@ -22,10 +22,18 @@ import type {
 // Le `supabase` exporté est un Proxy paresseux qui efface le type générique
 // de createClient<Database>(). Les types `*Row` importés ci-dessus servent
 // à caster explicitement les résultats des requêtes.
+//
+// `from` reprend directement `typeof supabase.from` (au lieu d'un
+// `(table: string) => ...` fait main) pour garder la vérification à la
+// compilation des noms de table : `supabase` est déjà `createClient<Database>`
+// (voir client.ts), donc `typeof supabase.from` porte déjà l'union littérale
+// des noms de table réels. Un `db.from("bonssais")` (faute de frappe) est
+// maintenant une erreur de compilation, plus une erreur silencieuse détectée
+// seulement au runtime.
 export const db = supabase as unknown as {
   auth: typeof supabase.auth;
   storage: typeof supabase.storage;
-  from: (table: string) => ReturnType<typeof supabase.from>;
+  from: typeof supabase.from;
 };
 
 // --- Types domaine (compatibles avec l'ancienne API db.ts) ---
@@ -133,9 +141,18 @@ export function ageActuel(
 
   const acquisition = new Date(b.dateAcquisition);
   let annees = today.getFullYear() - acquisition.getFullYear();
+
+  // Cas limite 29 février : dans une année non bissextile, acquisition.getDate()
+  // vaut 29 mais aucun jour "28 < 29" ne devient jamais vrai à égalité de mois —
+  // le bonsaï resterait perpétuellement compté comme "pas encore anniversaire"
+  // le 28 février. On ramène l'anniversaire au 28 février dans ce cas précis,
+  // convention la plus courante (l'autre étant le 1er mars).
+  const acqMonth = acquisition.getMonth();
+  const acqDate =
+    acqMonth === 1 && acquisition.getDate() === 29 ? 28 : acquisition.getDate();
+
   const pasEncoreAnniversaire =
-    today.getMonth() < acquisition.getMonth() ||
-    (today.getMonth() === acquisition.getMonth() && today.getDate() < acquisition.getDate());
+    today.getMonth() < acqMonth || (today.getMonth() === acqMonth && today.getDate() < acqDate);
   if (pasEncoreAnniversaire) annees -= 1;
 
   return b.ageEstime + Math.max(0, annees);
@@ -236,11 +253,34 @@ export function rowToPhoto(r: PhotoRow): Photo {
 
 // --- Storage helpers ---
 
+// currentUserId() est appelée à chaque écriture (savePhoto, saveJournal,
+// saveRappel, saveEvenement, savePoterie, saveBonsai) et utilisait
+// systématiquement db.auth.getUser(), qui fait un aller-retour réseau réel
+// vers l'API Auth de Supabase (contrairement à getSession(), qui lit la
+// session en mémoire/localStorage sans requête). Une simple création de
+// bonsaï avec photo déclenchait donc 2 requêtes Auth séquentielles en plus
+// des écritures elles-mêmes.
+//
+// On met en cache le dernier UID résolu. Le cache est tenu à jour par
+// onAuthStateChange (connexion, déconnexion, refresh de token) pour ne
+// jamais servir un UID d'une session expirée ou d'un autre utilisateur —
+// et de toute façon, même un cache momentanément désynchronisé ne peut pas
+// causer d'écriture sous une mauvaise identité : les policies RLS
+// (`WITH CHECK (auth.uid() = user_id)`) revalident côté serveur la valeur
+// réelle du JWT envoyé, indépendamment de ce que ce cache client calcule.
+let cachedUserId: string | undefined;
+
+db.auth.onAuthStateChange((event, session) => {
+  cachedUserId = event === "SIGNED_OUT" ? undefined : session?.user?.id;
+});
+
 export async function currentUserId(): Promise<string> {
+  if (cachedUserId) return cachedUserId;
   const {
     data: { user },
   } = await db.auth.getUser();
   if (!user) throw new Error("Non authentifié");
+  cachedUserId = user.id;
   return user.id;
 }
 
@@ -319,16 +359,23 @@ export const FETCH_CHUNK_SIZE = 1000;
 export async function fetchAllRows<T>(
   runQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
 ): Promise<T[]> {
+  // Plafond de sécurité : à FETCH_CHUNK_SIZE lignes par page, 1000 itérations
+  // représentent déjà largement plus de données qu'un usage normal de l'app
+  // n'en produira jamais. Protège contre une boucle infinie si l'API venait
+  // à toujours renvoyer une page pleine (bug côté backend).
+  const MAX_ITERATIONS = 1000;
   const all: T[] = [];
   let from = 0;
-  for (;;) {
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
     const to = from + FETCH_CHUNK_SIZE - 1;
     const { data, error } = await runQuery(from, to);
     if (error) throw error;
     const rows = data ?? [];
     all.push(...rows);
-    if (rows.length < FETCH_CHUNK_SIZE) break;
+    if (rows.length < FETCH_CHUNK_SIZE) return all;
     from += FETCH_CHUNK_SIZE;
   }
-  return all;
+  throw new Error(
+    `fetchAllRows: plafond de ${MAX_ITERATIONS} itérations atteint sans fin de pagination — abandon.`,
+  );
 }

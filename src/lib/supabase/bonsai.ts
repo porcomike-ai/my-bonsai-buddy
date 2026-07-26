@@ -4,6 +4,7 @@ import {
   fetchAllRows,
   rowToBonsai,
   bonsaiToRow,
+  currentUserId,
   BONSAI_BUCKET,
   type Bonsai,
 } from "./core";
@@ -26,11 +27,8 @@ export async function getBonsai(id: string): Promise<Bonsai | undefined> {
 }
 
 export async function saveBonsai(b: Bonsai): Promise<void> {
-  const {
-    data: { user },
-  } = await db.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-  const { error } = await db.from("bonsais").upsert({ ...bonsaiToRow(b), user_id: user.id });
+  const uidStr = await currentUserId();
+  const { error } = await db.from("bonsais").upsert({ ...bonsaiToRow(b), user_id: uidStr });
   if (error) throw error;
 }
 
