@@ -270,7 +270,16 @@ export function rowToPhoto(r: PhotoRow): Photo {
 // réelle du JWT envoyé, indépendamment de ce que ce cache client calcule.
 let cachedUserId: string | undefined;
 
-db.auth.onAuthStateChange((event, session) => {
+// Optional chaining : certains mocks de test ne fournissent qu'un sous-
+// ensemble de l'objet `auth` (ex. juste `getUser`), sans `onAuthStateChange`.
+// Sans ce garde, l'appel plantait au chargement du module entier — avant même
+// qu'un test ne s'exécute — dans tout fichier qui mocke
+// "@/integrations/supabase/client" sans reproduire toute la surface de l'API
+// GoTrueClient. En production, le vrai client Supabase a toujours cette
+// méthode ; le cache reste alors simplement non tenu à jour en environnement
+// de test minimalement mocké, ce qui est sans conséquence (currentUserId()
+// retombe sur getUser() à chaque appel dans ce cas).
+db.auth.onAuthStateChange?.((event, session) => {
   cachedUserId = event === "SIGNED_OUT" ? undefined : session?.user?.id;
 });
 
