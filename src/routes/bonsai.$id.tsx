@@ -112,7 +112,14 @@ function BonsaiDetail() {
       confirmLabel: "Supprimer",
     });
     if (!confirmed) return;
-    await deleteBonsai(id);
+    try {
+      await deleteBonsai(id);
+    } catch (e) {
+      toast.error(
+        "Échec de la suppression : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["bonsais"] });
     qc.invalidateQueries({ queryKey: ["photos-all"] });
     qc.invalidateQueries({ queryKey: ["journal"] });
@@ -122,7 +129,14 @@ function BonsaiDetail() {
   };
 
   const toggleFavori = async () => {
-    await saveBonsai({ ...b, favori: !b.favori });
+    try {
+      await saveBonsai({ ...b, favori: !b.favori });
+    } catch (e) {
+      toast.error(
+        "Échec de la mise à jour : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["bonsai", id] });
     qc.invalidateQueries({ queryKey: ["bonsais"] });
     toast.success(b.favori ? "Retiré des favoris" : "Ajouté aux favoris");
@@ -131,12 +145,27 @@ function BonsaiDetail() {
   const setMainPhoto = async (pid: string) => {
     const photo = photos.find((p) => p.id === pid);
     if (!photo) return;
-    await saveBonsai({ ...b, photoPrincipale: photo.storagePath });
+    try {
+      await saveBonsai({ ...b, photoPrincipale: photo.storagePath });
+    } catch (e) {
+      toast.error(
+        "Échec de la mise à jour de la photo principale : " +
+          (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["bonsai", id] });
   };
 
   const updateBonsai = async (updated: typeof b) => {
-    await saveBonsai(updated);
+    try {
+      await saveBonsai(updated);
+    } catch (e) {
+      toast.error(
+        "Échec de la mise à jour : " + (e instanceof Error ? e.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["bonsai", id] });
   };
 
