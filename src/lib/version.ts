@@ -1,3 +1,3 @@
 // Version de l'application — mettre à jour à chaque release notable
-export const APP_VERSION = "1.5.4";
-export const APP_VERSION_DATE = "2026-07-25";
+export const APP_VERSION = "1.5.5";
+export const APP_VERSION_DATE = "2026-07-26";

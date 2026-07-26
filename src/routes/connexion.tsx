@@ -9,12 +9,27 @@ import { toast } from "sonner";
 
 type ConnexionSearch = { redirect?: string };
 
+/**
+ * N'autorise que les chemins strictement internes.
+ *
+ * L'ancienne validation (`startsWith("/") && !startsWith("//")`) ne suffit
+ * pas : les navigateurs normalisent "\" en "/" dans les URLs relatives, donc
+ * une valeur comme "/\evil.com?x=1" passe ce test (commence par "/", pas par
+ * "//") mais se résout en "https://evil.com/?x=1" une fois transmise à
+ * window.location — un open redirect confirmé (testé via new URL()). On
+ * rejette donc explicitement tout backslash, et on exige que le second
+ * caractère soit un caractère de chemin normal, jamais "/" ni "\".
+ */
+export function isSafeRedirect(path: string): boolean {
+  if (!path.startsWith("/")) return false;
+  if (path.includes("\\")) return false;
+  if (path.startsWith("//")) return false;
+  return true;
+}
+
 export const Route = createFileRoute("/connexion")({
   validateSearch: (s: Record<string, unknown>): ConnexionSearch => ({
-    redirect:
-      typeof s.redirect === "string" && s.redirect.startsWith("/") && !s.redirect.startsWith("//")
-        ? s.redirect
-        : undefined,
+    redirect: typeof s.redirect === "string" && isSafeRedirect(s.redirect) ? s.redirect : undefined,
   }),
   head: () => ({
     meta: [
@@ -40,8 +55,19 @@ function ConnexionPage() {
   const goRedirect = () => {
     const target = redirect ?? "/";
     // window.location for full URL fidelity (preserves query strings like ?authorization_id=…)
-    if (target.includes("?") || target.startsWith("/.")) window.location.assign(target);
-    else navigate({ to: target, replace: true });
+    if (target.includes("?") || target.startsWith("/.")) {
+      // Défense en profondeur : même si isSafeRedirect() a déjà validé `target`
+      // en amont, on revérifie ici avec le vrai parseur d'URL avant tout appel
+      // à window.location, pour ne jamais dépendre d'une seule ligne de garde.
+      const resolved = new URL(target, window.location.origin);
+      if (resolved.origin !== window.location.origin) {
+        window.location.assign("/");
+        return;
+      }
+      window.location.assign(target);
+    } else {
+      navigate({ to: target, replace: true });
+    }
   };
 
   // Déjà connecté → on quitte la page d'auth
