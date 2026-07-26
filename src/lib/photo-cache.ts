@@ -145,6 +145,13 @@ export function getCachedPhotoBlob(
     if (blob) {
       // Fire-and-forget : n'attend pas l'écriture disque pour afficher la photo.
       void writeToIndexedDB(key, blob);
+    } else {
+      // Échec réseau : on ne garde pas cet échec en cache mémoire, sinon tout
+      // appel futur pour la même photo recevrait immédiatement le même
+      // `undefined` pour le reste de la session, sans jamais retenter. On ne
+      // supprime que si personne n'a déjà remplacé l'entrée entre-temps
+      // (retry manuel via setCachedPhotoBlob, invalidation concurrente).
+      if (memoryCache.get(key) === promise) memoryCache.delete(key);
     }
     return blob;
   })();

@@ -17,9 +17,11 @@ export function useBlobUrl(blob: Blob | undefined | null): string | undefined {
 export async function fileToBlob(file: File): Promise<Blob> {
   // Resize/compress if large
   if (file.size < 800_000) return file;
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("Échec de lecture du fichier"));
+    img.onerror = () => reject(new Error("Image illisible ou corrompue"));
     reader.onload = () => {
       img.onload = () => {
         const max = 1600;
