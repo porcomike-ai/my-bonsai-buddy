@@ -19,6 +19,11 @@
 
 const FORBIDDEN_CHARS_REGEX = /[\\/:*?"<>|]/;
 const CONTROL_CHARS_REGEX = /[\x00-\x1f]/;
+// Variantes globales pour sanitizeForFilesystem() : .replace() avec une regex
+// non-globale ne remplace que la PREMIÈRE occurrence, laissant les caractères
+// interdits suivants intacts dans le nom (bug corrigé le 25/07/2026).
+const FORBIDDEN_CHARS_REGEX_G = /[\\/:*?"<>|]/g;
+const CONTROL_CHARS_REGEX_G = /[\x00-\x1f]/g;
 // eslint-disable-next-line no-control-regex -- volontaire, on veut bien détecter les caractères de contrôle
 const RESERVED_WINDOWS_NAMES = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 const MAX_LENGTH = 120;
@@ -61,8 +66,8 @@ export function folderNameError(raw: string): string | null {
 export function sanitizeForFilesystem(raw: string): string {
   let cleaned = raw
     .normalize("NFC")
-    .replace(FORBIDDEN_CHARS_REGEX, "-")
-    .replace(CONTROL_CHARS_REGEX, "")
+    .replace(FORBIDDEN_CHARS_REGEX_G, "-")
+    .replace(CONTROL_CHARS_REGEX_G, "")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/[. ]+$/, "");
