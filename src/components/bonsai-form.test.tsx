@@ -21,6 +21,7 @@ vi.mock("@/lib/supabase-data", () => {
     return {
       saveBonsai: vi.fn(async () => ({})), // Déclaré comme une fonction fléchée explicite
       listPoteries: vi.fn(async () => []),
+      listBonsais: vi.fn(async () => []),
       uid: () => "mock-id",
       // Ajoutez ici tous les autres exports utilisés par le composant si nécessaire
     };
