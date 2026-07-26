@@ -9,6 +9,7 @@ import {
   uid,
   listEvenements,
   saveEvenement,
+  updateEvenement,
   deleteEvenement,
   type Evenement,
 } from "@/lib/supabase-data";
@@ -331,14 +332,12 @@ function EvenementsSection({
     }
     const iso = new Date(dateHeure).toISOString();
     try {
-      await saveEvenement({
-        id: editingId,
+      await updateEvenement(editingId, {
         titre: titre.trim(),
         description: description.trim() || undefined,
         dateHeure: iso,
         rappelMinutes: rappelMinutes ? Number(rappelMinutes) : undefined,
         bonsaiId: bonsaiId || undefined,
-        createdAt: new Date().toISOString(),
       });
     } catch (e) {
       toast.error(
