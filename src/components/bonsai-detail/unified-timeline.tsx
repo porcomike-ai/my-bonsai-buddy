@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, ArrowUpDown } from "lucide-react";
+import { toast } from "sonner";
 
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,14 @@ export function UnifiedTimeline({
       confirmLabel: "Supprimer",
     });
     if (!confirmed) return;
-    await deleteJournal(e.id);
+    try {
+      await deleteJournal(e.id);
+    } catch (err) {
+      toast.error(
+        "Échec de la suppression : " + (err instanceof Error ? err.message : "erreur inconnue"),
+      );
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["journal"] });
   };
 
@@ -111,7 +119,14 @@ export function UnifiedTimeline({
     });
     if (!confirmed) return;
     const target = photos.find((p) => p.id === pid);
-    await deletePhoto(pid);
+    try {
+      await deletePhoto(pid);
+    } catch (err) {
+      toast.error(
+        "Échec de la suppression : " + (err instanceof Error ? err.message : "erreur inconnue"),
+      );
+      return;
+    }
     invalidateCachedPhoto(target?.storagePath);
     qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
   };
