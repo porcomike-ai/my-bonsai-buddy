@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "./react.mjs";
 import { u as useComposedRefs } from "./radix-ui__react-compose-refs.mjs";
-import { P as Primitive } from "./radix-ui__react-primitive.mjs";
+import { a as Primitive } from "./radix-ui__react-primitive.mjs";
 import { u as useCallbackRef } from "./@radix-ui/react-use-callback-ref+[...].mjs";
 var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
 var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
@@ -18,7 +18,7 @@ var FocusScope = reactExports.forwardRef((props, forwardedRef) => {
   const onMountAutoFocus = useCallbackRef(onMountAutoFocusProp);
   const onUnmountAutoFocus = useCallbackRef(onUnmountAutoFocusProp);
   const lastFocusedElementRef = reactExports.useRef(null);
-  const composedRefs = useComposedRefs(forwardedRef, setContainer);
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContainer(node));
   const focusScope = reactExports.useRef({
     paused: false,
     pause() {
@@ -148,12 +148,8 @@ function getTabbableCandidates(container) {
   return nodes;
 }
 function findVisible(elements, container) {
-  const canUseCheckVisibility = typeof container.checkVisibility === "function" && container.checkVisibility({ checkVisibilityCSS: true });
   for (const element of elements) {
-    const hidden = canUseCheckVisibility ? !element.checkVisibility({ checkVisibilityCSS: true }) : isHidden(element, { upTo: container });
-    if (!hidden) {
-      return element;
-    }
+    if (!isHidden(element, { upTo: container })) return element;
   }
 }
 function isHidden(node, { upTo }) {

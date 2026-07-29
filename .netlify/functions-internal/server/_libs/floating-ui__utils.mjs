@@ -91,12 +91,12 @@ function getOppositePlacement(placement) {
   return oppositeSideMap[side] + placement.slice(side.length);
 }
 function expandPaddingObject(padding) {
-  var _padding$top, _padding$right, _padding$bottom, _padding$left;
   return {
-    top: (_padding$top = padding.top) != null ? _padding$top : 0,
-    right: (_padding$right = padding.right) != null ? _padding$right : 0,
-    bottom: (_padding$bottom = padding.bottom) != null ? _padding$bottom : 0,
-    left: (_padding$left = padding.left) != null ? _padding$left : 0
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    ...padding
   };
 }
 function getPaddingObject(padding) {
@@ -251,7 +251,7 @@ function getParentNode(node) {
 function getNearestOverflowAncestor(node) {
   const parentNode = getParentNode(node);
   if (isLastTraversableNode(parentNode)) {
-    return (node.ownerDocument || node).body;
+    return node.ownerDocument ? node.ownerDocument.body : node.body;
   }
   if (isHTMLElement(parentNode) && isOverflowElement(parentNode)) {
     return parentNode;
@@ -280,17 +280,17 @@ function getFrameElement(win) {
   return win.parent && Object.getPrototypeOf(win.parent) ? win.frameElement : null;
 }
 export {
-  isTopLayer as A,
-  getParentNode as B,
-  isLastTraversableNode as C,
-  isTableElement as D,
-  isContainingBlock as E,
-  getContainingBlock as F,
-  getNodeName as G,
-  isOverflowElement as H,
-  getNodeScroll as I,
-  isWebKit as J,
-  getFrameElement as K,
+  getParentNode as A,
+  isLastTraversableNode as B,
+  isTableElement as C,
+  isContainingBlock as D,
+  getContainingBlock as E,
+  getNodeName as F,
+  isOverflowElement as G,
+  getNodeScroll as H,
+  getFrameElement as I,
+  floor as J,
+  isWebKit as K,
   getAlignmentAxis as a,
   getSide as b,
   getAlignment as c,
@@ -298,23 +298,23 @@ export {
   evaluate as e,
   getAxisLength as f,
   getSideAxis as g,
-  getOppositePlacement as h,
-  getExpandedPlacements as i,
-  getOppositeAxisPlacements as j,
-  getAlignmentSides as k,
-  max as l,
+  clamp as h,
+  getOppositePlacement as i,
+  getExpandedPlacements as j,
+  getOppositeAxisPlacements as k,
+  getAlignmentSides as l,
   min as m,
-  clamp as n,
+  max as n,
   getOppositeAxis as o,
-  getOverflowAncestors as p,
-  isElement as q,
+  isElement as p,
+  getDocumentElement as q,
   rectToClientRect as r,
   sides as s,
-  getDocumentElement as t,
-  getWindow as u,
-  floor as v,
-  isHTMLElement as w,
-  createCoords as x,
-  round as y,
-  getComputedStyle as z
+  getOverflowAncestors as t,
+  getComputedStyle as u,
+  isHTMLElement as v,
+  createCoords as w,
+  round as x,
+  getWindow as y,
+  isTopLayer as z
 };

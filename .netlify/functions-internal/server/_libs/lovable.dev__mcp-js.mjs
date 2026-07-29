@@ -21,12 +21,6 @@ function firstForwardedValue(request, header) {
   const value = request.headers.get(header)?.split(",")[0]?.trim();
   return value ? value : void 0;
 }
-function extractTextContent(content) {
-  if (!content)
-    return void 0;
-  const text = content.filter((block) => block.type === "text").map((block) => block.text).join("\n").trim();
-  return text.length > 0 ? text : void 0;
-}
 var ToolContext = class {
   #auth;
   constructor(auth2) {
@@ -175,7 +169,7 @@ function parseSafeUrl(subject, raw, ErrorClass = Error) {
   return url;
 }
 var OAUTH_PROTECTED_RESOURCE_METADATA_PATH = "/.well-known/oauth-protected-resource";
-var version = "0.20.1";
+var version = "0.20.0";
 var JSON_HEADERS = { "Content-Type": "application/json" };
 function headResponse(response) {
   return new Response(null, { status: response.status, statusText: response.statusText, headers: response.headers });
@@ -310,8 +304,7 @@ var BaseMetricRecorder = class {
       method: ev.method,
       outcome: ev.outcome,
       durationMs: ev.durationMs,
-      stack: this.stack,
-      ...ev.errorText !== void 0 && { errorText: ev.errorText }
+      stack: this.stack
     });
     if (!this.config.enabled)
       return;
@@ -857,8 +850,7 @@ function adaptToolToSdkCallback(tool, auth2, recorder) {
       tool: tool.name,
       method: "tools/call",
       outcome: result.isError ? "tool_error" : "ok",
-      durationMs: nowMs() - start,
-      errorText: result.isError ? extractTextContent(result.content) : void 0
+      durationMs: nowMs() - start
     });
     return { content: result.content ?? [], structuredContent: result.structuredContent, isError: result.isError };
   };
@@ -1065,8 +1057,7 @@ function createInvokeToolHandler(mcp, options = {}) {
       tool: tool.name,
       method: "tools/call",
       outcome: result.isError ? "tool_error" : "ok",
-      durationMs: nowMs() - start,
-      errorText: result.isError ? extractTextContent(result.content) : void 0
+      durationMs: nowMs() - start
     });
     return Response.json({
       content: result.content ?? [],
