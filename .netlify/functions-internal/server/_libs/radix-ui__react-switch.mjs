@@ -5,151 +5,72 @@ import { c as createContextScope } from "./radix-ui__react-context.mjs";
 import { u as useControllableState } from "./@radix-ui/react-use-controllable-state+[...].mjs";
 import { u as usePrevious } from "./radix-ui__react-use-previous.mjs";
 import { u as useSize } from "./radix-ui__react-use-size.mjs";
-import { P as Primitive } from "./radix-ui__react-primitive.mjs";
+import { a as Primitive } from "./radix-ui__react-primitive.mjs";
 var SWITCH_NAME = "Switch";
 var [createSwitchContext] = createContextScope(SWITCH_NAME);
-var [SwitchProviderImpl, useSwitchContext] = createSwitchContext(SWITCH_NAME);
-function SwitchProvider(props) {
-  const {
-    __scopeSwitch,
-    checked: checkedProp,
-    children,
-    defaultChecked,
-    disabled,
-    form,
-    name,
-    onCheckedChange,
-    required,
-    value = "on",
-    // @ts-expect-error
-    internal_do_not_use_render
-  } = props;
-  const [checked, setChecked] = useControllableState({
-    prop: checkedProp,
-    defaultProp: defaultChecked ?? false,
-    onChange: onCheckedChange,
-    caller: SWITCH_NAME
-  });
-  const [control, setControl] = reactExports.useState(null);
-  const [bubbleInput, setBubbleInput] = reactExports.useState(null);
-  const hasConsumerStoppedPropagationRef = reactExports.useRef(false);
-  const isFormControl = control ? !!form || !!control.closest("form") : (
-    // We set this to true by default so that events bubble to forms without JS (SSR)
-    true
-  );
-  const context = {
-    checked,
-    setChecked,
-    disabled,
-    control,
-    setControl,
-    name,
-    form,
-    value,
-    hasConsumerStoppedPropagationRef,
-    required,
-    defaultChecked,
-    isFormControl,
-    bubbleInput,
-    setBubbleInput
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(SwitchProviderImpl, { scope: __scopeSwitch, ...context, children: isFunction(internal_do_not_use_render) ? internal_do_not_use_render(context) : children });
-}
-var TRIGGER_NAME = "SwitchTrigger";
-var SwitchTrigger = reactExports.forwardRef(
-  ({ __scopeSwitch, onClick, ...switchProps }, forwardedRef) => {
-    const {
-      control,
-      form,
-      value,
-      disabled,
-      checked,
-      required,
-      setControl,
-      setChecked,
-      hasConsumerStoppedPropagationRef,
-      isFormControl,
-      bubbleInput
-    } = useSwitchContext(TRIGGER_NAME, __scopeSwitch);
-    const composedRefs = useComposedRefs(forwardedRef, setControl);
-    const initialCheckedStateRef = reactExports.useRef(checked);
-    reactExports.useEffect(() => {
-      const associatedForm = form ? control?.ownerDocument.getElementById(form) : control?.form;
-      if (associatedForm instanceof HTMLFormElement) {
-        const reset = () => setChecked(initialCheckedStateRef.current);
-        associatedForm.addEventListener("reset", reset);
-        return () => associatedForm.removeEventListener("reset", reset);
-      }
-    }, [control, form, setChecked]);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Primitive.button,
-      {
-        type: "button",
-        role: "switch",
-        "aria-checked": checked,
-        "aria-required": required,
-        "data-state": getState(checked),
-        "data-disabled": disabled ? "" : void 0,
-        disabled,
-        value,
-        ...switchProps,
-        ref: composedRefs,
-        onClick: composeEventHandlers(onClick, (event) => {
-          setChecked((prevChecked) => !prevChecked);
-          if (bubbleInput && isFormControl) {
-            hasConsumerStoppedPropagationRef.current = event.isPropagationStopped();
-            if (!hasConsumerStoppedPropagationRef.current) event.stopPropagation();
-          }
-        })
-      }
-    );
-  }
-);
-SwitchTrigger.displayName = TRIGGER_NAME;
+var [SwitchProvider, useSwitchContext] = createSwitchContext(SWITCH_NAME);
 var Switch = reactExports.forwardRef(
   (props, forwardedRef) => {
     const {
       __scopeSwitch,
       name,
-      checked,
+      checked: checkedProp,
       defaultChecked,
       required,
       disabled,
-      value,
+      value = "on",
       onCheckedChange,
       form,
       ...switchProps
     } = props;
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      SwitchProvider,
-      {
-        __scopeSwitch,
-        checked,
-        defaultChecked,
-        disabled,
-        required,
-        onCheckedChange,
-        name,
-        form,
-        value,
-        internal_do_not_use_render: ({ isFormControl }) => /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            SwitchTrigger,
-            {
-              ...switchProps,
-              ref: forwardedRef,
-              __scopeSwitch
+    const [button, setButton] = reactExports.useState(null);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setButton(node));
+    const hasConsumerStoppedPropagationRef = reactExports.useRef(false);
+    const isFormControl = button ? form || !!button.closest("form") : true;
+    const [checked, setChecked] = useControllableState({
+      prop: checkedProp,
+      defaultProp: defaultChecked ?? false,
+      onChange: onCheckedChange,
+      caller: SWITCH_NAME
+    });
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(SwitchProvider, { scope: __scopeSwitch, checked, disabled, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Primitive.button,
+        {
+          type: "button",
+          role: "switch",
+          "aria-checked": checked,
+          "aria-required": required,
+          "data-state": getState(checked),
+          "data-disabled": disabled ? "" : void 0,
+          disabled,
+          value,
+          ...switchProps,
+          ref: composedRefs,
+          onClick: composeEventHandlers(props.onClick, (event) => {
+            setChecked((prevChecked) => !prevChecked);
+            if (isFormControl) {
+              hasConsumerStoppedPropagationRef.current = event.isPropagationStopped();
+              if (!hasConsumerStoppedPropagationRef.current) event.stopPropagation();
             }
-          ),
-          isFormControl && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            SwitchBubbleInput,
-            {
-              __scopeSwitch
-            }
-          )
-        ] })
-      }
-    );
+          })
+        }
+      ),
+      isFormControl && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        SwitchBubbleInput,
+        {
+          control: button,
+          bubbles: !hasConsumerStoppedPropagationRef.current,
+          name,
+          value,
+          checked,
+          required,
+          disabled,
+          form,
+          style: { transform: "translateX(-100%)" }
+        }
+      )
+    ] });
   }
 );
 Switch.displayName = SWITCH_NAME;
@@ -172,25 +93,19 @@ var SwitchThumb = reactExports.forwardRef(
 SwitchThumb.displayName = THUMB_NAME;
 var BUBBLE_INPUT_NAME = "SwitchBubbleInput";
 var SwitchBubbleInput = reactExports.forwardRef(
-  ({ __scopeSwitch, ...props }, forwardedRef) => {
-    const {
-      control,
-      hasConsumerStoppedPropagationRef,
-      checked,
-      defaultChecked,
-      required,
-      disabled,
-      name,
-      value,
-      form,
-      bubbleInput,
-      setBubbleInput
-    } = useSwitchContext(BUBBLE_INPUT_NAME, __scopeSwitch);
-    const composedRefs = useComposedRefs(forwardedRef, setBubbleInput);
+  ({
+    __scopeSwitch,
+    control,
+    checked,
+    bubbles = true,
+    ...props
+  }, forwardedRef) => {
+    const ref = reactExports.useRef(null);
+    const composedRefs = useComposedRefs(ref, forwardedRef);
     const prevChecked = usePrevious(checked);
     const controlSize = useSize(control);
     reactExports.useEffect(() => {
-      const input = bubbleInput;
+      const input = ref.current;
       if (!input) return;
       const inputProto = window.HTMLInputElement.prototype;
       const descriptor = Object.getOwnPropertyDescriptor(
@@ -198,25 +113,18 @@ var SwitchBubbleInput = reactExports.forwardRef(
         "checked"
       );
       const setChecked = descriptor.set;
-      const bubbles = !hasConsumerStoppedPropagationRef.current;
       if (prevChecked !== checked && setChecked) {
         const event = new Event("click", { bubbles });
         setChecked.call(input, checked);
         input.dispatchEvent(event);
       }
-    }, [bubbleInput, prevChecked, checked, hasConsumerStoppedPropagationRef]);
-    const defaultCheckedRef = reactExports.useRef(checked);
+    }, [prevChecked, checked, bubbles]);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Primitive.input,
+      "input",
       {
         type: "checkbox",
         "aria-hidden": true,
-        defaultChecked: defaultChecked ?? defaultCheckedRef.current,
-        required,
-        disabled,
-        name,
-        value,
-        form,
+        defaultChecked: checked,
         ...props,
         tabIndex: -1,
         ref: composedRefs,
@@ -226,24 +134,19 @@ var SwitchBubbleInput = reactExports.forwardRef(
           position: "absolute",
           pointerEvents: "none",
           opacity: 0,
-          margin: 0,
-          // We transform because the input is absolutely positioned but we have
-          // rendered it **after** the button. This pulls it back to sit on top
-          // of the button.
-          transform: "translateX(-100%)"
+          margin: 0
         }
       }
     );
   }
 );
 SwitchBubbleInput.displayName = BUBBLE_INPUT_NAME;
-function isFunction(value) {
-  return typeof value === "function";
-}
 function getState(checked) {
   return checked ? "checked" : "unchecked";
 }
+var Root = Switch;
+var Thumb = SwitchThumb;
 export {
-  Switch as S,
-  SwitchThumb as a
+  Root as R,
+  Thumb as T
 };

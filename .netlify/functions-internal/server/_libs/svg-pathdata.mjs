@@ -4,9 +4,9 @@ var hasRequiredSVGPathData;
 function requireSVGPathData() {
   if (hasRequiredSVGPathData) return SVGPathData$1.exports;
   hasRequiredSVGPathData = 1;
-  (function(module, exports) {
+  (function(module, exports$1) {
     !(function(t, r) {
-      r(exports);
+      r(exports$1);
     })(SVGPathData, (function(t) {
       var r = function(t2, e2) {
         return (r = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(t3, r2) {

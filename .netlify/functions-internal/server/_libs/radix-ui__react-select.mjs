@@ -10,11 +10,10 @@ import { D as DismissableLayer } from "./@radix-ui/react-dismissable-layer+[...]
 import { u as useFocusGuards } from "./radix-ui__react-focus-guards.mjs";
 import { F as FocusScope } from "./radix-ui__react-focus-scope.mjs";
 import { u as useId } from "./radix-ui__react-id.mjs";
-import { A as Anchor, c as createPopperScope, C as Content, R as Root2, a as Arrow } from "./radix-ui__react-popper.mjs";
-import { P as Portal } from "./radix-ui__react-portal.mjs";
-import { P as Presence } from "./radix-ui__react-presence.mjs";
-import { P as Primitive } from "./radix-ui__react-primitive.mjs";
-import { c as createSlot } from "./radix-ui__react-slot.mjs";
+import { A as Anchor, c as createPopperScope, C as Content, R as Root2$1, a as Arrow } from "./radix-ui__react-popper.mjs";
+import { P as Portal$1 } from "./radix-ui__react-portal.mjs";
+import { a as Primitive } from "./radix-ui__react-primitive.mjs";
+import { d as createSlot } from "./radix-ui__react-slot.mjs";
 import { u as useCallbackRef } from "./@radix-ui/react-use-callback-ref+[...].mjs";
 import { u as useControllableState } from "./@radix-ui/react-use-controllable-state+[...].mjs";
 import { u as useLayoutEffect2 } from "./@radix-ui/react-use-layout-effect+[...].mjs";
@@ -31,10 +30,9 @@ var [createSelectContext] = createContextScope(SELECT_NAME, [
   createPopperScope
 ]);
 var usePopperScope = createPopperScope();
-var [SelectProviderImpl, useSelectContext] = createSelectContext(SELECT_NAME);
+var [SelectProvider, useSelectContext] = createSelectContext(SELECT_NAME);
 var [SelectNativeOptionsProvider, useSelectNativeOptionsContext] = createSelectContext(SELECT_NAME);
-var PROVIDER_NAME = "SelectProvider";
-function SelectProvider(props) {
+var Select = (props) => {
   const {
     __scopeSelect,
     children,
@@ -49,9 +47,7 @@ function SelectProvider(props) {
     autoComplete,
     disabled,
     required,
-    form,
-    // @ts-expect-error internal render prop used by `Select` to compose its default parts
-    internal_do_not_use_render
+    form
   } = props;
   const popperScope = usePopperScope(__scopeSelect);
   const [trigger, setTrigger] = reactExports.useState(null);
@@ -71,81 +67,68 @@ function SelectProvider(props) {
     caller: SELECT_NAME
   });
   const triggerPointerDownPosRef = reactExports.useRef(null);
-  const initialValueRef = reactExports.useRef(value);
-  reactExports.useEffect(() => {
-    const associatedForm = form ? trigger?.ownerDocument.getElementById(form) : trigger?.form;
-    if (associatedForm instanceof HTMLFormElement) {
-      const reset = () => setValue(initialValueRef.current);
-      associatedForm.addEventListener("reset", reset);
-      return () => associatedForm.removeEventListener("reset", reset);
-    }
-  }, [form, trigger, setValue]);
-  const isFormControl = trigger ? !!form || !!trigger.closest("form") : true;
+  const isFormControl = trigger ? form || !!trigger.closest("form") : true;
   const [nativeOptionsSet, setNativeOptionsSet] = reactExports.useState(/* @__PURE__ */ new Set());
-  const contentId = useId();
   const nativeSelectKey = Array.from(nativeOptionsSet).map((option) => option.props.value).join(";");
-  const handleNativeOptionAdd = reactExports.useCallback((option) => {
-    setNativeOptionsSet((prev) => new Set(prev).add(option));
-  }, []);
-  const handleNativeOptionRemove = reactExports.useCallback((option) => {
-    setNativeOptionsSet((prev) => {
-      const optionsSet = new Set(prev);
-      optionsSet.delete(option);
-      return optionsSet;
-    });
-  }, []);
-  const context = {
-    required,
-    trigger,
-    onTriggerChange: setTrigger,
-    valueNode,
-    onValueNodeChange: setValueNode,
-    valueNodeHasChildren,
-    onValueNodeHasChildrenChange: setValueNodeHasChildren,
-    contentId,
-    value,
-    onValueChange: setValue,
-    open,
-    onOpenChange: setOpen,
-    dir: direction,
-    triggerPointerDownPosRef,
-    disabled,
-    name,
-    autoComplete,
-    form,
-    nativeOptions: nativeOptionsSet,
-    nativeSelectKey,
-    isFormControl
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectProviderImpl, { scope: __scopeSelect, ...context, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection.Provider, { scope: __scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-    SelectNativeOptionsProvider,
-    {
-      scope: __scopeSelect,
-      onNativeOptionAdd: handleNativeOptionAdd,
-      onNativeOptionRemove: handleNativeOptionRemove,
-      children: isFunction(internal_do_not_use_render) ? internal_do_not_use_render(context) : children
-    }
-  ) }) }) });
-}
-SelectProvider.displayName = PROVIDER_NAME;
-var Select = (props) => {
-  const { __scopeSelect, children, ...providerProps } = props;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$1, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
     SelectProvider,
     {
-      __scopeSelect,
-      ...providerProps,
-      internal_do_not_use_render: ({ isFormControl }) => /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-        children,
-        isFormControl ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+      required,
+      scope: __scopeSelect,
+      trigger,
+      onTriggerChange: setTrigger,
+      valueNode,
+      onValueNodeChange: setValueNode,
+      valueNodeHasChildren,
+      onValueNodeHasChildrenChange: setValueNodeHasChildren,
+      contentId: useId(),
+      value,
+      onValueChange: setValue,
+      open,
+      onOpenChange: setOpen,
+      dir: direction,
+      triggerPointerDownPosRef,
+      disabled,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Collection.Provider, { scope: __scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          SelectNativeOptionsProvider,
+          {
+            scope: props.__scopeSelect,
+            onNativeOptionAdd: reactExports.useCallback((option) => {
+              setNativeOptionsSet((prev) => new Set(prev).add(option));
+            }, []),
+            onNativeOptionRemove: reactExports.useCallback((option) => {
+              setNativeOptionsSet((prev) => {
+                const optionsSet = new Set(prev);
+                optionsSet.delete(option);
+                return optionsSet;
+              });
+            }, []),
+            children
+          }
+        ) }),
+        isFormControl ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
           SelectBubbleInput,
           {
-            __scopeSelect
-          }
+            "aria-hidden": true,
+            required,
+            tabIndex: -1,
+            name,
+            autoComplete,
+            value,
+            onChange: (event) => setValue(event.target.value),
+            disabled,
+            form,
+            children: [
+              value === void 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "" }) : null,
+              Array.from(nativeOptionsSet)
+            ]
+          },
+          nativeSelectKey
         ) : null
-      ] })
+      ]
     }
-  );
+  ) });
 };
 Select.displayName = SELECT_NAME;
 var TRIGGER_NAME = "SelectTrigger";
@@ -183,7 +166,7 @@ var SelectTrigger = reactExports.forwardRef(
       {
         type: "button",
         role: "combobox",
-        "aria-controls": context.open ? context.contentId : void 0,
+        "aria-controls": context.contentId,
         "aria-expanded": context.open,
         "aria-required": context.required,
         "aria-autocomplete": "none",
@@ -237,15 +220,13 @@ var SelectValue = reactExports.forwardRef(
     useLayoutEffect2(() => {
       onValueNodeHasChildrenChange(hasChildren);
     }, [onValueNodeHasChildrenChange, hasChildren]);
-    const showPlaceholder = shouldShowPlaceholder(context.value);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Primitive.span,
       {
         ...valueProps,
-        asChild: showPlaceholder ? false : valueProps.asChild,
         ref: composedRefs,
         style: { pointerEvents: "none" },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.Fragment, { children: showPlaceholder ? placeholder : children }, showPlaceholder ? "placeholder" : "value")
+        children: shouldShowPlaceholder(context.value) ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: placeholder }) : children
       }
     );
   }
@@ -260,45 +241,37 @@ var SelectIcon = reactExports.forwardRef(
 );
 SelectIcon.displayName = ICON_NAME;
 var PORTAL_NAME = "SelectPortal";
-var [PortalProvider, usePortalContext] = createSelectContext(PORTAL_NAME, {
-  forceMount: void 0
-});
 var SelectPortal = (props) => {
-  const { __scopeSelect, forceMount, ...portalProps } = props;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: props.__scopeSelect, forceMount, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, { asChild: true, ...portalProps }) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$1, { asChild: true, ...props });
 };
 SelectPortal.displayName = PORTAL_NAME;
 var CONTENT_NAME = "SelectContent";
 var SelectContent = reactExports.forwardRef(
   (props, forwardedRef) => {
-    const portalContext = usePortalContext(CONTENT_NAME, props.__scopeSelect);
-    const { forceMount = portalContext.forceMount, ...contentProps } = props;
     const context = useSelectContext(CONTENT_NAME, props.__scopeSelect);
     const [fragment, setFragment] = reactExports.useState();
     useLayoutEffect2(() => {
       setFragment(new DocumentFragment());
     }, []);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: ({ present }) => present ? /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentImpl, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentFragment, { ...contentProps, fragment }) });
+    if (!context.open) {
+      const frag = fragment;
+      return frag ? reactDomExports.createPortal(
+        /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentProvider, { scope: props.__scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection.Slot, { scope: props.__scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: props.children }) }) }),
+        frag
+      ) : null;
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentImpl, { ...props, ref: forwardedRef });
   }
 );
 SelectContent.displayName = CONTENT_NAME;
-var SelectContentFragment = reactExports.forwardRef((props, forwardedRef) => {
-  const { __scopeSelect, children, fragment } = props;
-  if (!fragment) return null;
-  return reactDomExports.createPortal(
-    /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentProvider, { scope: __scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection.Slot, { scope: __scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref: forwardedRef, children }) }) }),
-    fragment
-  );
-});
-SelectContentFragment.displayName = "SelectContentFragment";
 var CONTENT_MARGIN = 10;
 var [SelectContentProvider, useSelectContentContext] = createSelectContext(CONTENT_NAME);
 var CONTENT_IMPL_NAME = "SelectContentImpl";
 var Slot = createSlot("SelectContent.RemoveScroll");
 var SelectContentImpl = reactExports.forwardRef(
   (props, forwardedRef) => {
-    const { __scopeSelect } = props;
     const {
+      __scopeSelect,
       position = "item-aligned",
       onCloseAutoFocus,
       onEscapeKeyDown,
@@ -321,7 +294,7 @@ var SelectContentImpl = reactExports.forwardRef(
     const context = useSelectContext(CONTENT_NAME, __scopeSelect);
     const [content, setContent] = reactExports.useState(null);
     const [viewport, setViewport] = reactExports.useState(null);
-    const composedRefs = useComposedRefs(forwardedRef, setContent);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
     const [selectedItem, setSelectedItem] = reactExports.useState(null);
     const [selectedItemText, setSelectedItemText] = reactExports.useState(
       null
@@ -372,7 +345,7 @@ var SelectContentImpl = reactExports.forwardRef(
           if (pointerMoveDelta.x <= 10 && pointerMoveDelta.y <= 10) {
             event.preventDefault();
           } else {
-            if (!event.composedPath().includes(content)) {
+            if (!content.contains(event.target)) {
               onOpenChange(false);
             }
           }
@@ -403,7 +376,7 @@ var SelectContentImpl = reactExports.forwardRef(
       const currentItem = enabledItems.find((item) => item.ref.current === document.activeElement);
       const nextItem = findNextItem(enabledItems, search, currentItem);
       if (nextItem) {
-        setTimeout(() => nextItem.ref.current?.focus());
+        setTimeout(() => nextItem.ref.current.focus());
       }
     });
     const itemRefCallback = reactExports.useCallback(
@@ -535,7 +508,7 @@ var SelectItemAlignedPosition = reactExports.forwardRef((props, forwardedRef) =>
   const contentContext = useSelectContentContext(CONTENT_NAME, __scopeSelect);
   const [contentWrapper, setContentWrapper] = reactExports.useState(null);
   const [content, setContent] = reactExports.useState(null);
-  const composedRefs = useComposedRefs(forwardedRef, setContent);
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
   const getItems = useCollection(__scopeSelect);
   const shouldExpandOnScrollRef = reactExports.useRef(false);
   const shouldRepositionRef = reactExports.useRef(true);
@@ -830,10 +803,10 @@ var SelectItem = reactExports.forwardRef(
     const isSelected = context.value === value;
     const [textValue, setTextValue] = reactExports.useState(textValueProp ?? "");
     const [isFocused, setIsFocused] = reactExports.useState(false);
-    const handleItemRefCallback = useCallbackRef(
+    const composedRefs = useComposedRefs(
+      forwardedRef,
       (node) => contentContext.itemRefCallback?.(node, value, disabled)
     );
-    const composedRefs = useComposedRefs(forwardedRef, handleItemRefCallback);
     const textId = useId();
     const pointerTypeRef = reactExports.useRef("touch");
     const handleSelect = () => {
@@ -842,6 +815,11 @@ var SelectItem = reactExports.forwardRef(
         context.onOpenChange(false);
       }
     };
+    if (value === "") {
+      throw new Error(
+        "A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder."
+      );
+    }
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       SelectItemContextProvider,
       {
@@ -898,19 +876,10 @@ var SelectItem = reactExports.forwardRef(
                   }
                 }),
                 onKeyDown: composeEventHandlers(itemProps.onKeyDown, (event) => {
-                  if (disabled || event.target !== event.currentTarget) {
-                    return;
-                  }
                   const isTypingAhead = contentContext.searchRef?.current !== "";
-                  if (isTypingAhead && event.key === " ") {
-                    return;
-                  }
-                  if (SELECTION_KEYS.includes(event.key)) {
-                    handleSelect();
-                  }
-                  if (event.key === " ") {
-                    event.preventDefault();
-                  }
+                  if (isTypingAhead && event.key === " ") return;
+                  if (SELECTION_KEYS.includes(event.key)) handleSelect();
+                  if (event.key === " ") event.preventDefault();
                 })
               }
             )
@@ -930,14 +899,11 @@ var SelectItemText = reactExports.forwardRef(
     const itemContext = useSelectItemContext(ITEM_TEXT_NAME, __scopeSelect);
     const nativeOptionsContext = useSelectNativeOptionsContext(ITEM_TEXT_NAME, __scopeSelect);
     const [itemTextNode, setItemTextNode] = reactExports.useState(null);
-    const handleItemTextRefCallback = useCallbackRef(
-      (node) => contentContext.itemTextRefCallback?.(node, itemContext.value, itemContext.disabled)
-    );
     const composedRefs = useComposedRefs(
       forwardedRef,
-      setItemTextNode,
+      (node) => setItemTextNode(node),
       itemContext.onItemTextChange,
-      handleItemTextRefCallback
+      (node) => contentContext.itemTextRefCallback?.(node, itemContext.value, itemContext.disabled)
     );
     const textContent = itemTextNode?.textContent;
     const nativeOption = reactExports.useMemo(
@@ -951,7 +917,7 @@ var SelectItemText = reactExports.forwardRef(
     }, [onNativeOptionAdd, onNativeOptionRemove, nativeOption]);
     return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.span, { id: itemContext.textId, ...itemTextProps, ref: composedRefs }),
-      itemContext.isSelected && context.valueNode && !context.valueNodeHasChildren && !shouldShowPlaceholder(context.value) ? reactDomExports.createPortal(itemTextProps.children, context.valueNode) : null
+      itemContext.isSelected && context.valueNode && !context.valueNodeHasChildren ? reactDomExports.createPortal(itemTextProps.children, context.valueNode) : null
     ] });
   }
 );
@@ -1087,24 +1053,18 @@ var SelectArrow = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, ...arrowProps } = props;
     const popperScope = usePopperScope(__scopeSelect);
+    const context = useSelectContext(ARROW_NAME, __scopeSelect);
     const contentContext = useSelectContentContext(ARROW_NAME, __scopeSelect);
-    return contentContext.position === "popper" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Arrow, { ...popperScope, ...arrowProps, ref: forwardedRef }) : null;
+    return context.open && contentContext.position === "popper" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Arrow, { ...popperScope, ...arrowProps, ref: forwardedRef }) : null;
   }
 );
 SelectArrow.displayName = ARROW_NAME;
 var BUBBLE_INPUT_NAME = "SelectBubbleInput";
 var SelectBubbleInput = reactExports.forwardRef(
-  ({ __scopeSelect, ...props }, forwardedRef) => {
-    const context = useSelectContext(BUBBLE_INPUT_NAME, __scopeSelect);
-    const { value, onValueChange, required, disabled, name, autoComplete, form } = context;
-    const { nativeOptions, nativeSelectKey } = context;
+  ({ __scopeSelect, value, ...props }, forwardedRef) => {
     const ref = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref);
-    const selectValue = value ?? "";
-    const prevValue = usePrevious(selectValue);
-    const hasEmptyValueOption = Array.from(nativeOptions).some(
-      (option) => (option.props.value ?? "") === ""
-    );
+    const prevValue = usePrevious(value);
     reactExports.useEffect(() => {
       const select = ref.current;
       if (!select) return;
@@ -1114,40 +1074,24 @@ var SelectBubbleInput = reactExports.forwardRef(
         "value"
       );
       const setValue = descriptor.set;
-      if (prevValue !== selectValue && setValue) {
+      if (prevValue !== value && setValue) {
         const event = new Event("change", { bubbles: true });
-        setValue.call(select, selectValue);
+        setValue.call(select, value);
         select.dispatchEvent(event);
       }
-    }, [prevValue, selectValue]);
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    }, [prevValue, value]);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Primitive.select,
       {
-        "aria-hidden": true,
-        required,
-        tabIndex: -1,
-        name,
-        autoComplete,
-        disabled,
-        form,
-        onChange: (event) => onValueChange(event.target.value),
         ...props,
         style: { ...VISUALLY_HIDDEN_STYLES, ...props.style },
         ref: composedRefs,
-        defaultValue: selectValue,
-        children: [
-          shouldShowPlaceholder(value) && !hasEmptyValueOption ? /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "" }) : null,
-          Array.from(nativeOptions)
-        ]
-      },
-      nativeSelectKey
+        defaultValue: value
+      }
     );
   }
 );
 SelectBubbleInput.displayName = BUBBLE_INPUT_NAME;
-function isFunction(value) {
-  return typeof value === "function";
-}
 function shouldShowPlaceholder(value) {
   return value === "" || value === void 0;
 }
@@ -1191,19 +1135,33 @@ function findNextItem(items, search, currentItem) {
 function wrapArray(array, startIndex) {
   return array.map((_, index) => array[(startIndex + index) % array.length]);
 }
+var Root2 = Select;
+var Trigger = SelectTrigger;
+var Value = SelectValue;
+var Icon = SelectIcon;
+var Portal = SelectPortal;
+var Content2 = SelectContent;
+var Viewport = SelectViewport;
+var Label = SelectLabel;
+var Item = SelectItem;
+var ItemText = SelectItemText;
+var ItemIndicator = SelectItemIndicator;
+var ScrollUpButton = SelectScrollUpButton;
+var ScrollDownButton = SelectScrollDownButton;
+var Separator = SelectSeparator;
 export {
-  SelectTrigger as S,
-  SelectIcon as a,
-  SelectScrollUpButton as b,
-  SelectScrollDownButton as c,
-  SelectPortal as d,
-  SelectContent as e,
-  SelectViewport as f,
-  SelectLabel as g,
-  SelectItem as h,
-  SelectItemIndicator as i,
-  SelectItemText as j,
-  SelectSeparator as k,
-  Select as l,
-  SelectValue as m
+  Content2 as C,
+  Icon as I,
+  Label as L,
+  Portal as P,
+  Root2 as R,
+  ScrollUpButton as S,
+  Trigger as T,
+  Viewport as V,
+  ScrollDownButton as a,
+  Item as b,
+  ItemIndicator as c,
+  ItemText as d,
+  Separator as e,
+  Value as f
 };

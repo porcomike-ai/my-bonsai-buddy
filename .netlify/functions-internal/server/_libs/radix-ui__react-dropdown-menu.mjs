@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "./react.mjs";
 import { c as composeEventHandlers } from "./radix-ui__primitive.mjs";
-import { u as useComposedRefs } from "./radix-ui__react-compose-refs.mjs";
+import { c as composeRefs } from "./radix-ui__react-compose-refs.mjs";
 import { c as createContextScope } from "./radix-ui__react-context.mjs";
 import { u as useControllableState } from "./@radix-ui/react-use-controllable-state+[...].mjs";
-import { P as Primitive } from "./radix-ui__react-primitive.mjs";
+import { a as Primitive } from "./radix-ui__react-primitive.mjs";
 import { R as Root3, A as Anchor2, c as createMenuScope, P as Portal, C as Content2$1, I as Item2$1, G as Group, L as Label, a as CheckboxItem, b as RadioGroup, d as RadioItem, e as ItemIndicator, S as Separator, f as Arrow2, g as SubTrigger, h as SubContent } from "./radix-ui__react-menu.mjs";
 import { u as useId } from "./radix-ui__react-id.mjs";
 var DROPDOWN_MENU_NAME = "DropdownMenu";
@@ -53,7 +53,6 @@ var DropdownMenuTrigger = reactExports.forwardRef(
     const { __scopeDropdownMenu, disabled = false, ...triggerProps } = props;
     const context = useDropdownMenuContext(TRIGGER_NAME, __scopeDropdownMenu);
     const menuScope = useMenuScope(__scopeDropdownMenu);
-    const composedRefs = useComposedRefs(forwardedRef, context.triggerRef);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Anchor2, { asChild: true, ...menuScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       Primitive.button,
       {
@@ -66,7 +65,7 @@ var DropdownMenuTrigger = reactExports.forwardRef(
         "data-disabled": disabled ? "" : void 0,
         disabled,
         ...triggerProps,
-        ref: composedRefs,
+        ref: composeRefs(forwardedRef, context.triggerRef),
         onPointerDown: composeEventHandlers(props.onPointerDown, (event) => {
           if (!disabled && event.button === 0 && event.ctrlKey === false) {
             context.onOpenToggle();
