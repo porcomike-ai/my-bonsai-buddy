@@ -6,7 +6,7 @@ import { u as useControllableState } from "./@radix-ui/react-use-controllable-st
 import { u as usePrevious } from "./radix-ui__react-use-previous.mjs";
 import { u as useSize } from "./radix-ui__react-use-size.mjs";
 import { P as Presence } from "./radix-ui__react-presence.mjs";
-import { P as Primitive } from "./radix-ui__react-primitive.mjs";
+import { a as Primitive } from "./radix-ui__react-primitive.mjs";
 var CHECKBOX_NAME = "Checkbox";
 var [createCheckboxContext] = createContextScope(CHECKBOX_NAME);
 var [CheckboxProviderImpl, useCheckboxContext] = createCheckboxContext(CHECKBOX_NAME);

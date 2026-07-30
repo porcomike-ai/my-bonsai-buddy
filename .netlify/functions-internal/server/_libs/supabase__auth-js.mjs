@@ -1,9 +1,8 @@
 import { __rest } from "tslib";
-const version = "2.110.7";
+const version = "2.107.0";
 const AUTO_REFRESH_TICK_DURATION_MS = 30 * 1e3;
 const AUTO_REFRESH_TICK_THRESHOLD = 3;
 const EXPIRY_MARGIN_MS = AUTO_REFRESH_TICK_THRESHOLD * AUTO_REFRESH_TICK_DURATION_MS;
-const REFRESH_FAILURE_COOLDOWN_MS = 2 * AUTO_REFRESH_TICK_DURATION_MS;
 const GOTRUE_URL = "http://localhost:9999";
 const STORAGE_KEY = "supabase.auth.token";
 const DEFAULT_HEADERS = { "X-Client-Info": `gotrue-js/${version}` };
@@ -593,24 +592,7 @@ const _getErrorMessage = (err) => {
   }
   return JSON.stringify(err);
 };
-const NETWORK_ERROR_CODES = [
-  500,
-  501,
-  502,
-  503,
-  504,
-  520,
-  521,
-  522,
-  523,
-  524,
-  525,
-  526,
-  527,
-  528,
-  529,
-  530
-];
+const NETWORK_ERROR_CODES = [502, 503, 504, 520, 521, 522, 523, 524, 530];
 async function handleError(error) {
   var _a;
   if (!looksLikeFetchResponse(error)) {
@@ -903,7 +885,10 @@ class GoTrueAdminApi {
   }
   /**
    * Generates email links and OTPs to be sent via a custom email provider.
-   * @param params The parameters for generating the link, including the link `type`, the user's `email`, and type-specific options such as `password`, `data`, and `redirectTo`.
+   * @param email The user's email.
+   * @param options.password User password. For signup only.
+   * @param options.data Optional user metadata. For signup only.
+   * @param options.redirectTo The redirect url which should be appended to the generated link
    *
    * @category Auth
    * @subcategory Auth Admin
@@ -2687,10 +2672,8 @@ class GoTrueClient {
     this.autoRefreshTickTimeout = null;
     this.visibilityChangedCallback = null;
     this.refreshingDeferred = null;
-    this.lastRefreshFailure = null;
     this._sessionRemovalEpoch = 0;
     this.initializePromise = null;
-    this._pendingInitNotifications = null;
     this.detectSessionInUrl = true;
     this.hasCustomAuthorizationHeader = false;
     this.suppressGetSessionWarning = false;
@@ -2790,9 +2773,6 @@ class GoTrueClient {
       }
       (_c = this.broadcastChannel) === null || _c === void 0 ? void 0 : _c.addEventListener("message", async (event) => {
         this._debug("received broadcast notification from other tab or client", event);
-        if (event.data.event === "TOKEN_REFRESHED" || event.data.event === "SIGNED_IN") {
-          this.lastRefreshFailure = null;
-        }
         try {
           await this._notifyAllSubscribers(event.data.event, event.data.session, false);
         } catch (error) {
@@ -2833,29 +2813,16 @@ class GoTrueClient {
     return this;
   }
   /**
-   * Initialize the auth client by loading the session from storage or
-   * detecting it from the URL after an OAuth, magic-link, or password-recovery
-   * redirect.
-   *
-   * **Most callers do not need to invoke this directly.** The client calls it
-   * automatically during construction, and to react to sign-in events (including
-   * post-redirect events) you should subscribe to `onAuthStateChange` rather
-   * than awaiting `initialize()`.
-   *
-   * You only need to call it manually when you have opted out of the automatic
-   * call by passing `skipAutoInitialize: true` — for example, in an SSR context
-   * where you need to control initialization timing. In that case, awaiting
-   * `initialize()` returns the resolved session result (or any error encountered
-   * while detecting it from the URL).
+   * Initializes the client session either from the url or from storage.
+   * This method is automatically called when instantiating the client, but should also be called
+   * manually when checking for an error from an auth redirect (oauth, magiclink, password recovery, etc).
    *
    * @category Auth
    */
   async initialize() {
-    var _a;
     if (this.initializePromise) {
       return await this.initializePromise;
     }
-    this._pendingInitNotifications = [];
     this.initializePromise = (async () => {
       if (this.lock != null) {
         return await this._acquireLock(this.lockAcquireTimeout, async () => {
@@ -2864,13 +2831,7 @@ class GoTrueClient {
       }
       return await this._initialize();
     })();
-    const result = await this.initializePromise;
-    const queue = (_a = this._pendingInitNotifications) !== null && _a !== void 0 ? _a : [];
-    this._pendingInitNotifications = null;
-    for (const n of queue) {
-      await this._notifyAllSubscribers(n.event, n.session, n.broadcast);
-    }
-    return result;
+    return await this.initializePromise;
   }
   /**
    * IMPORTANT:
@@ -4653,26 +4614,15 @@ class GoTrueClient {
       const endpoint = `${this.url}/resend`;
       if ("email" in credentials) {
         const { email, type, options } = credentials;
-        let codeChallenge = null;
-        let codeChallengeMethod = null;
-        if (this.flowType === "pkce") {
-          ;
-          [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
-        }
         const { error } = await _request(this.fetch, "POST", endpoint, {
           headers: this.headers,
           body: {
             email,
             type,
-            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
-            code_challenge: codeChallenge,
-            code_challenge_method: codeChallengeMethod
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
           },
           redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo
         });
-        if (error) {
-          await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
-        }
         return this._returnResult({ data: { user: null, session: null }, error });
       } else if ("phone" in credentials) {
         const { phone, type, options } = credentials;
@@ -4691,7 +4641,6 @@ class GoTrueClient {
       }
       throw new AuthInvalidCredentialsError("You must provide either an email or phone number and a type");
     } catch (error) {
-      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
       if (isAuthError(error)) {
         return this._returnResult({ data: { user: null, session: null }, error });
       }
@@ -4707,7 +4656,7 @@ class GoTrueClient {
    * to the client. If that storage is based on request cookies for example,
    * the values in it may not be authentic and therefore it's strongly advised
    * against using this method and its results in such circumstances. A warning
-   * will be emitted if this is detected. Use {@link GoTrueClient.getUser} instead.
+   * will be emitted if this is detected. Use {@link #getUser()} instead.
    *
    * @category Auth
    *
@@ -4848,7 +4797,7 @@ class GoTrueClient {
     }
   }
   /**
-   * Use instead of {@link GoTrueClient.getSession} inside the library. Loads the session
+   * Use instead of {@link #getSession} inside the library. Loads the session
    * via `__loadSession` (which may trigger a refresh if the access token is
    * within the expiry margin) and runs `fn` with the result.
    */
@@ -4864,7 +4813,7 @@ class GoTrueClient {
   /**
    * NEVER USE DIRECTLY!
    *
-   * Always use `_useSession`.
+   * Always use {@link #_useSession}.
    */
   async __loadSession() {
     this._debug("#__loadSession()", "begin");
@@ -4908,13 +4857,6 @@ class GoTrueClient {
       }
       const { data: session, error } = await this._callRefreshToken(currentSession.refresh_token);
       if (error) {
-        const accessTokenStillValid = !!(currentSession.expires_at && currentSession.expires_at * 1e3 > Date.now());
-        if (accessTokenStillValid) {
-          const stillStored = await getItemAsync(this.storage, this.storageKey);
-          if (stillStored && stillStored.refresh_token === currentSession.refresh_token) {
-            return this._returnResult({ data: { session: currentSession }, error: null });
-          }
-        }
         return this._returnResult({ data: { session: null }, error });
       }
       return this._returnResult({ data: { session }, error: null });
@@ -5716,10 +5658,6 @@ class GoTrueClient {
   async _signOut({ scope } = { scope: "global" }) {
     return await this._useSession(async (result) => {
       var _a;
-      const removeCurrentSession = async () => {
-        await this._removeSession();
-        await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
-      };
       const { data, error: sessionError } = result;
       if (sessionError && !isAuthSessionMissingError(sessionError)) {
         return this._returnResult({ error: sessionError });
@@ -5729,15 +5667,13 @@ class GoTrueClient {
         const { error } = await this.admin.signOut(accessToken, scope);
         if (error) {
           if (!(isAuthApiError(error) && (error.status === 404 || error.status === 401 || error.status === 403) || isAuthSessionMissingError(error))) {
-            if (scope !== "others") {
-              await removeCurrentSession();
-            }
             return this._returnResult({ error });
           }
         }
       }
       if (scope !== "others") {
-        await removeCurrentSession();
+        await this._removeSession();
+        await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
       }
       return this._returnResult({ error: null });
     });
@@ -6367,7 +6303,11 @@ class GoTrueClient {
             if (isAuthRefreshDiscardedError(error)) {
               this._debug(debugName, "refresh discarded by commit guard", error);
             } else {
-              this._debug(debugName, "refresh failed", error);
+              console.error(error);
+              if (!isAuthRetryableFetchError(error)) {
+                this._debug(debugName, "refresh failed with a non-retryable error, removing the session", error);
+                await this._removeSession();
+              }
             }
           }
         }
@@ -6403,10 +6343,6 @@ class GoTrueClient {
     }
     if (this.refreshingDeferred) {
       return this.refreshingDeferred.promise;
-    }
-    if (this.lastRefreshFailure && this.lastRefreshFailure.refreshToken === refreshToken && Date.now() < this.lastRefreshFailure.expiresAt) {
-      this._debug("#_callRefreshToken()", "returning cached failure (cooldown active)");
-      return this.lastRefreshFailure.result;
     }
     const debugName = `#_callRefreshToken()`;
     this._debug(debugName, "begin");
@@ -6451,7 +6387,6 @@ class GoTrueClient {
       }
       await this._notifyAllSubscribers("TOKEN_REFRESHED", data.session);
       const result = { data: data.session, error: null };
-      this.lastRefreshFailure = null;
       this.refreshingDeferred.resolve(result);
       return result;
     } catch (error) {
@@ -6459,19 +6394,8 @@ class GoTrueClient {
       if (isAuthError(error)) {
         const result = { data: null, error };
         if (!isAuthRetryableFetchError(error)) {
-          const storedNow = await getItemAsync(this.storage, this.storageKey);
-          const accessTokenStillValid = !!((storedNow === null || storedNow === void 0 ? void 0 : storedNow.expires_at) && storedNow.expires_at * 1e3 > Date.now());
-          if (accessTokenStillValid) {
-            this._debug(debugName, "proactive refresh failed, access token still valid — preserving session");
-          } else {
-            await this._removeSession();
-          }
+          await this._removeSession();
         }
-        this.lastRefreshFailure = {
-          refreshToken,
-          result,
-          expiresAt: Date.now() + REFRESH_FAILURE_COOLDOWN_MS
-        };
         (_a = this.refreshingDeferred) === null || _a === void 0 ? void 0 : _a.resolve(result);
         return result;
       }
@@ -6483,10 +6407,6 @@ class GoTrueClient {
     }
   }
   async _notifyAllSubscribers(event, session, broadcast = true) {
-    if (this._pendingInitNotifications !== null && broadcast) {
-      this._pendingInitNotifications.push({ event, session, broadcast });
-      return;
-    }
     const debugName = `#_notifyAllSubscribers(${event})`;
     this._debug(debugName, "begin", session, `broadcast = ${broadcast}`);
     try {
@@ -6519,6 +6439,7 @@ class GoTrueClient {
   async _saveSession(session) {
     this._debug("#_saveSession()", session);
     this.suppressGetSessionWarning = true;
+    await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
     const sessionToProcess = Object.assign({}, session);
     const userIsProxy = sessionToProcess.user && sessionToProcess.user.__isUserNotAvailableProxy === true;
     if (this.userStorage) {
@@ -6539,7 +6460,6 @@ class GoTrueClient {
   async _removeSession() {
     this._sessionRemovalEpoch += 1;
     this._debug("#_removeSession()");
-    this.lastRefreshFailure = null;
     this.suppressGetSessionWarning = false;
     await removeItemAsync(this.storage, this.storageKey);
     await removeItemAsync(this.storage, this.storageKey + "-code-verifier");
@@ -6552,8 +6472,8 @@ class GoTrueClient {
   /**
    * Removes any registered visibilitychange callback.
    *
-   * {@link GoTrueClient.startAutoRefresh}
-   * {@link GoTrueClient.stopAutoRefresh}
+   * {@see #startAutoRefresh}
+   * {@see #stopAutoRefresh}
    */
   _removeVisibilityChangedCallback() {
     this._debug("#_removeVisibilityChangedCallback()");
@@ -6568,7 +6488,7 @@ class GoTrueClient {
     }
   }
   /**
-   * This is the private implementation of {@link GoTrueClient.startAutoRefresh}. Use this
+   * This is the private implementation of {@link #startAutoRefresh}. Use this
    * within the library.
    */
   async _startAutoRefresh() {
@@ -6593,7 +6513,7 @@ class GoTrueClient {
     }
   }
   /**
-   * This is the private implementation of {@link GoTrueClient.stopAutoRefresh}. Use this
+   * This is the private implementation of {@link #stopAutoRefresh}. Use this
    * within the library.
    */
   async _stopAutoRefresh() {
@@ -6629,7 +6549,7 @@ class GoTrueClient {
    * platform's foreground indication mechanism and call these methods
    * appropriately to conserve resources.
    *
-   * {@link GoTrueClient.stopAutoRefresh}
+   * {@see #stopAutoRefresh}
    *
    * @category Auth
    *
@@ -6663,7 +6583,7 @@ class GoTrueClient {
    * If you call this method any managed visibility change callback will be
    * removed and you must manage visibility changes on your own.
    *
-   * See {@link GoTrueClient.startAutoRefresh} for more details.
+   * See {@link #startAutoRefresh} for more details.
    *
    * @category Auth
    *
@@ -7018,7 +6938,7 @@ class GoTrueClient {
     return run();
   }
   /**
-   * {@link GoTrueMFAApi#challengeAndVerify}
+   * {@see GoTrueMFAApi#challengeAndVerify}
    */
   async _challengeAndVerify(params) {
     const { data: challengeData, error: challengeError } = await this._challenge({
@@ -7034,7 +6954,7 @@ class GoTrueClient {
     });
   }
   /**
-   * {@link GoTrueMFAApi#listFactors}
+   * {@see GoTrueMFAApi#listFactors}
    */
   async _listFactors() {
     var _a;
@@ -7060,7 +6980,7 @@ class GoTrueClient {
     };
   }
   /**
-   * {@link GoTrueMFAApi#getAuthenticatorAssuranceLevel}
+   * {@see GoTrueMFAApi#getAuthenticatorAssuranceLevel}
    */
   async _getAuthenticatorAssuranceLevel(jwt) {
     var _a, _b, _c, _d;
@@ -7298,15 +7218,15 @@ class GoTrueClient {
    * Extracts the JWT claims present in the access token by first verifying the
    * JWT against the server's JSON Web Key Set endpoint
    * `/.well-known/jwks.json` which is often cached, resulting in significantly
-   * faster responses. Prefer this method over {@link GoTrueClient.getUser} which always
+   * faster responses. Prefer this method over {@link #getUser} which always
    * sends a request to the Auth server for each JWT.
    *
    * If the project is not using an asymmetric JWT signing key (like ECC or
-   * RSA) it always sends a request to the Auth server (similar to
-   * {@link GoTrueClient.getUser}) to verify the JWT.
+   * RSA) it always sends a request to the Auth server (similar to {@link
+   * #getUser}) to verify the JWT.
    *
    * @param jwt An optional specific JWT you wish to verify, not the one you
-   *            can obtain from {@link GoTrueClient.getSession}.
+   *            can obtain from {@link #getSession}.
    * @param options Various additional options that allow you to customize the
    *                behavior of this method.
    *

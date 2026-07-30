@@ -4,12 +4,10 @@ import { c as createCollection } from "./radix-ui__react-collection.mjs";
 import { u as useComposedRefs } from "./radix-ui__react-compose-refs.mjs";
 import { c as createContextScope } from "./radix-ui__react-context.mjs";
 import { u as useId } from "./radix-ui__react-id.mjs";
-import { P as Primitive } from "./radix-ui__react-primitive.mjs";
+import { a as Primitive } from "./radix-ui__react-primitive.mjs";
 import { u as useCallbackRef } from "./@radix-ui/react-use-callback-ref+[...].mjs";
 import { u as useControllableState } from "./@radix-ui/react-use-controllable-state+[...].mjs";
 import { u as useDirection } from "./radix-ui__react-direction.mjs";
-import { u as useLayoutEffect2 } from "./@radix-ui/react-use-layout-effect+[...].mjs";
-import { u as useIsHydrated2 } from "./@radix-ui/react-use-is-hydrated+[...].mjs";
 var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
 var EVENT_OPTIONS = { bubbles: false, cancelable: true };
 var GROUP_NAME = "RovingFocusGroup";
@@ -132,21 +130,12 @@ var RovingFocusGroupItem = reactExports.forwardRef(
     const isCurrentTabStop = context.currentTabStopId === id;
     const getItems = useCollection(__scopeRovingFocusGroup);
     const { onFocusableItemAdd, onFocusableItemRemove, currentTabStopId } = context;
-    const isHydrated = useIsHydrated2();
-    useLayoutEffect2(() => {
-      if (!isHydrated || !focusable) {
-        return;
-      }
-      onFocusableItemAdd();
-      return () => onFocusableItemRemove();
-    }, [isHydrated, focusable, onFocusableItemAdd, onFocusableItemRemove]);
     reactExports.useEffect(() => {
-      if (isHydrated || !focusable) {
-        return;
+      if (focusable) {
+        onFocusableItemAdd();
+        return () => onFocusableItemRemove();
       }
-      onFocusableItemAdd();
-      return () => onFocusableItemRemove();
-    }, [isHydrated, focusable, onFocusableItemAdd, onFocusableItemRemove]);
+    }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Collection.ItemSlot,
       {

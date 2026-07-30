@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../react.mjs";
-import { P as Primitive } from "../radix-ui__react-primitive.mjs";
+import { a as Primitive } from "../radix-ui__react-primitive.mjs";
 var VISUALLY_HIDDEN_STYLES = Object.freeze({
   // See: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_visually-hidden.scss
   position: "absolute",

@@ -6,13 +6,13 @@ var hasRequiredFormats;
 function requireFormats() {
   if (hasRequiredFormats) return formats;
   hasRequiredFormats = 1;
-  (function(exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
+  (function(exports$1) {
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.formatNames = exports$1.fastFormats = exports$1.fullFormats = void 0;
     function fmtDef(validate, compare) {
       return { validate, compare };
     }
-    exports.fullFormats = {
+    exports$1.fullFormats = {
       // date: http://tools.ietf.org/html/rfc3339#section-5.6
       date: fmtDef(date, compareDate),
       // date-time: http://tools.ietf.org/html/rfc3339#section-5.6
@@ -59,8 +59,8 @@ function requireFormats() {
       // unchecked string payload
       binary: true
     };
-    exports.fastFormats = {
-      ...exports.fullFormats,
+    exports$1.fastFormats = {
+      ...exports$1.fullFormats,
       date: fmtDef(/^\d\d\d\d-[0-1]\d-[0-3]\d$/, compareDate),
       time: fmtDef(/^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i, compareTime),
       "date-time": fmtDef(/^\d\d\d\d-[0-1]\d-[0-3]\dt(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i, compareDateTime),
@@ -74,7 +74,7 @@ function requireFormats() {
       // http://www.w3.org/TR/html5/forms.html#valid-e-mail-address (search for 'wilful violation')
       email: /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i
     };
-    exports.formatNames = Object.keys(exports.fullFormats);
+    exports$1.formatNames = Object.keys(exports$1.fullFormats);
     function isLeapYear(year) {
       return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
     }
@@ -211,9 +211,9 @@ var hasRequiredLimit;
 function requireLimit() {
   if (hasRequiredLimit) return limit;
   hasRequiredLimit = 1;
-  (function(exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.formatLimitDefinition = void 0;
+  (function(exports$1) {
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.formatLimitDefinition = void 0;
     const ajv_1 = /* @__PURE__ */ requireAjv();
     const codegen_1 = /* @__PURE__ */ requireCodegen();
     const ops = codegen_1.operators;
@@ -227,7 +227,7 @@ function requireLimit() {
       message: ({ keyword, schemaCode }) => (0, codegen_1.str)`should be ${KWDs[keyword].okStr} ${schemaCode}`,
       params: ({ keyword, schemaCode }) => (0, codegen_1._)`{comparison: ${KWDs[keyword].okStr}, limit: ${schemaCode}}`
     };
-    exports.formatLimitDefinition = {
+    exports$1.formatLimitDefinition = {
       keyword: Object.keys(KWDs),
       type: "string",
       schemaType: "string",
@@ -273,10 +273,10 @@ function requireLimit() {
       dependencies: ["format"]
     };
     const formatLimitPlugin = (ajv) => {
-      ajv.addKeyword(exports.formatLimitDefinition);
+      ajv.addKeyword(exports$1.formatLimitDefinition);
       return ajv;
     };
-    exports.default = formatLimitPlugin;
+    exports$1.default = formatLimitPlugin;
   })(limit);
   return limit;
 }
@@ -284,8 +284,8 @@ var hasRequiredDist;
 function requireDist() {
   if (hasRequiredDist) return dist.exports;
   hasRequiredDist = 1;
-  (function(module, exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
+  (function(module, exports$1) {
+    Object.defineProperty(exports$1, "__esModule", { value: true });
     const formats_1 = requireFormats();
     const limit_1 = requireLimit();
     const codegen_1 = /* @__PURE__ */ requireCodegen();
@@ -317,9 +317,9 @@ function requireDist() {
       for (const f of list)
         ajv.addFormat(f, fs[f]);
     }
-    module.exports = exports = formatsPlugin;
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.default = formatsPlugin;
+    module.exports = exports$1 = formatsPlugin;
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.default = formatsPlugin;
   })(dist, dist.exports);
   return dist.exports;
 }
