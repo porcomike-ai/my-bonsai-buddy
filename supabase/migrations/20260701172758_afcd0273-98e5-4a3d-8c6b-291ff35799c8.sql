@@ -1,5 +1,21 @@
+/*
+# Recréation des tables métier (idempotente)
 
-CREATE TABLE public.poteries (
+## Contexte
+Cette migration a historiquement utilisé `CREATE TABLE` sans `IF NOT EXISTS`,
+ce qui faisait échouer un `db reset` / greenfield lorsque
+`20260620162342_create_bonsai_studio_schema.sql` avait déjà créé les tables.
+
+## Correctif
+- `CREATE TABLE IF NOT EXISTS` sur les 6 tables
+- `DROP POLICY IF EXISTS` avant chaque `CREATE POLICY`
+- `CREATE INDEX IF NOT EXISTS`
+- `DROP TRIGGER IF EXISTS` avant chaque trigger
+
+Rejouable sans erreur sur base neuve ou déjà peuplée.
+*/
+
+CREATE TABLE IF NOT EXISTS public.poteries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   nom TEXT NOT NULL,
@@ -12,10 +28,11 @@ CREATE TABLE public.poteries (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.poteries TO authenticated;
 GRANT ALL ON public.poteries TO service_role;
 ALTER TABLE public.poteries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own poteries" ON public.poteries;
 CREATE POLICY "own poteries" ON public.poteries FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX ON public.poteries(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS poteries_user_id_created_at_idx ON public.poteries(user_id, created_at DESC);
 
-CREATE TABLE public.bonsais (
+CREATE TABLE IF NOT EXISTS public.bonsais (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   nom TEXT NOT NULL, espece TEXT NOT NULL, style TEXT NOT NULL, etape TEXT,
@@ -32,11 +49,12 @@ CREATE TABLE public.bonsais (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.bonsais TO authenticated;
 GRANT ALL ON public.bonsais TO service_role;
 ALTER TABLE public.bonsais ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own bonsais" ON public.bonsais;
 CREATE POLICY "own bonsais" ON public.bonsais FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX ON public.bonsais(user_id, created_at DESC);
-CREATE INDEX ON public.bonsais(poterie_id);
+CREATE INDEX IF NOT EXISTS bonsais_user_id_created_at_idx ON public.bonsais(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS bonsais_poterie_id_idx ON public.bonsais(poterie_id);
 
-CREATE TABLE public.photos (
+CREATE TABLE IF NOT EXISTS public.photos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   bonsai_id UUID NOT NULL REFERENCES public.bonsais(id) ON DELETE CASCADE,
@@ -48,10 +66,11 @@ CREATE TABLE public.photos (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.photos TO authenticated;
 GRANT ALL ON public.photos TO service_role;
 ALTER TABLE public.photos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own photos" ON public.photos;
 CREATE POLICY "own photos" ON public.photos FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX ON public.photos(user_id, bonsai_id, date DESC);
+CREATE INDEX IF NOT EXISTS photos_user_id_bonsai_id_date_idx ON public.photos(user_id, bonsai_id, date DESC);
 
-CREATE TABLE public.journal_entries (
+CREATE TABLE IF NOT EXISTS public.journal_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   bonsai_id UUID NOT NULL REFERENCES public.bonsais(id) ON DELETE CASCADE,
@@ -64,10 +83,11 @@ CREATE TABLE public.journal_entries (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.journal_entries TO authenticated;
 GRANT ALL ON public.journal_entries TO service_role;
 ALTER TABLE public.journal_entries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own journal" ON public.journal_entries;
 CREATE POLICY "own journal" ON public.journal_entries FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX ON public.journal_entries(user_id, bonsai_id, date DESC);
+CREATE INDEX IF NOT EXISTS journal_entries_user_id_bonsai_id_date_idx ON public.journal_entries(user_id, bonsai_id, date DESC);
 
-CREATE TABLE public.rappels (
+CREATE TABLE IF NOT EXISTS public.rappels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   bonsai_id UUID NOT NULL REFERENCES public.bonsais(id) ON DELETE CASCADE,
@@ -81,10 +101,11 @@ CREATE TABLE public.rappels (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.rappels TO authenticated;
 GRANT ALL ON public.rappels TO service_role;
 ALTER TABLE public.rappels ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own rappels" ON public.rappels;
 CREATE POLICY "own rappels" ON public.rappels FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX ON public.rappels(user_id, prochaine_date);
+CREATE INDEX IF NOT EXISTS rappels_user_id_prochaine_date_idx ON public.rappels(user_id, prochaine_date);
 
-CREATE TABLE public.evenements (
+CREATE TABLE IF NOT EXISTS public.evenements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
   titre TEXT NOT NULL,
@@ -98,14 +119,17 @@ CREATE TABLE public.evenements (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.evenements TO authenticated;
 GRANT ALL ON public.evenements TO service_role;
 ALTER TABLE public.evenements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own evenements" ON public.evenements;
 CREATE POLICY "own evenements" ON public.evenements FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE INDEX ON public.evenements(user_id, date_heure);
+CREATE INDEX IF NOT EXISTS evenements_user_id_date_heure_idx ON public.evenements(user_id, date_heure);
 
 CREATE OR REPLACE FUNCTION public.set_updated_at() RETURNS TRIGGER
 LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END $$;
 
+DROP TRIGGER IF EXISTS trg_bonsais_updated ON public.bonsais;
 CREATE TRIGGER trg_bonsais_updated BEFORE UPDATE ON public.bonsais
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+DROP TRIGGER IF EXISTS trg_poteries_updated ON public.poteries;
 CREATE TRIGGER trg_poteries_updated BEFORE UPDATE ON public.poteries
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
