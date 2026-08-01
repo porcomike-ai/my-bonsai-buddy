@@ -185,27 +185,60 @@ input[type="number"] {
 /* ─── Design System utilities ─────────────────────────────────────────────── */
 
 @layer utilities {
-  /* Surface cards */
+  /* Surface cards — valeurs expandées (pas de @apply sur classe custom) */
   .surface-card {
-    @apply rounded-2xl border border-border bg-card shadow-sm;
+    border-radius: var(--radius-2xl);
+    border-width: 1px;
+    border-color: var(--color-border);
+    background-color: var(--color-card);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   }
+
   .surface-card-hover {
-    @apply surface-card transition-all duration-200 hover:border-accent/40 hover:shadow-md;
+    border-radius: var(--radius-2xl);
+    border-width: 1px;
+    border-color: var(--color-border);
+    background-color: var(--color-card);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+  .surface-card-hover:hover {
+    border-color: color-mix(in oklch, var(--color-accent) 40%, transparent);
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.07),
+      0 2px 4px -2px rgb(0 0 0 / 0.05);
   }
 
   /* Text hierarchy */
   .text-display {
-    @apply font-display font-semibold tracking-tight;
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
   .text-label {
-    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--color-muted-foreground);
   }
   .text-meta {
-    @apply text-xs text-muted-foreground;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--color-muted-foreground);
   }
 
-  /* Status pills (utilisables partout) */
+  /* Status pills */
   .badge-base {
-    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.5rem;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
   }
 }
