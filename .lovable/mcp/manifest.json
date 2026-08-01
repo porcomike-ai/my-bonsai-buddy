@@ -106,7 +106,7 @@
       {
         "name": "log_soin",
         "title": "Enregistrer un soin",
-        "description": "Ajoute une entrée dans le journal d'entretien d'un bonsaï (arrosage, taille, rempotage, etc.).",
+        "description": "Ajoute une entrée dans le journal d'entretien d'un bonsaï (rempotage, engrais, greffe, etc.).",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -124,14 +124,18 @@
             "type": {
               "type": "string",
               "enum": [
-                "arrosage",
-                "taille",
-                "rempotage",
-                "fertilisation",
-                "traitement",
-                "ligature",
-                "don_vente",
+                "accident",
+                "achete",
+                "engrais",
+                "exposition",
+                "greffe",
+                "marcottage",
+                "mise_en_forme",
                 "mort",
+                "mise_en_pleine_terre",
+                "prelevement",
+                "rempotage",
+                "don_vente",
                 "autre"
               ],
               "description": "Type de soin"
