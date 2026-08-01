@@ -263,11 +263,17 @@ function CollectionPage() {
         </Link>
       </header>
 
-      {/* Filtres sticky — top = hauteur réelle du header AppShell */}
+      {/* Filtres sticky full-bleed : fond flouté sur toute la largeur viewport,
+          contenu réel réeligné sur max-w-7xl + px-6 (comme AppShell main). */}
       <div
-        className="sticky z-20 -mx-1 mb-4 space-y-2 border-b border-border/40 bg-background/95 px-1 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        style={{ top: "var(--app-header-h, 4.5rem)" }}
+        className="sticky z-20 mb-4 border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        style={{
+          top: "var(--app-header-h, 4.5rem)",
+          width: "100vw",
+          marginLeft: "calc(50% - 50vw)",
+        }}
       >
+        <div className="mx-auto max-w-7xl space-y-2 px-6 py-2.5">
         {/* Mobile : recherche + bouton Filtres */}
         <div className="flex gap-2 md:hidden">
           <div className="relative min-w-0 flex-1">
@@ -312,6 +318,7 @@ function CollectionPage() {
         </div>
 
         {chipsRow}
+        </div>
       </div>
 
       {/* Sheet filtres — mobile uniquement */}
