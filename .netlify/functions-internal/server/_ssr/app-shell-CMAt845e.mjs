@@ -1,6 +1,6 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { f as useRouterState, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { d as cn } from "./router-Ct750Zk_.mjs";
+import { d as cn } from "./router-CpKzFGrm.mjs";
 import { j as Leaf, k as LayoutDashboard, f as Sprout, g as Container, e as Calendar, h as BookOpen, l as ChartBar, m as Settings } from "../_libs/lucide-react.mjs";
 const NAV = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard },

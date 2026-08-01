@@ -1,4 +1,4 @@
-import { v as getPhotoBlob } from "./router-Ct750Zk_.mjs";
+import { v as getPhotoBlob } from "./router-CpKzFGrm.mjs";
 import "../_libs/react.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
@@ -163,8 +163,7 @@ function getCachedPhotoBlob(photo) {
     rememberKey(key);
     return existing;
   }
-  let promise;
-  promise = (async () => {
+  const promise = (async () => {
     const cached = await readFromIndexedDB(key);
     if (cached) return cached;
     const blob = await getPhotoBlob(photo).catch(() => void 0);

@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { R as Route$f, e as collectionSearchToFilters, f as filterAndSortBonsais, I as Input, S as Select, g as SelectTrigger, h as SelectValue, i as SelectContent, j as SelectItem, k as STYLES, m as ageActuel, c as styleLabel, n as filtersToCollectionSearch, l as listBonsais } from "./router-Ct750Zk_.mjs";
-import { A as AppShell } from "./app-shell-BFvJr5yJ.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-D0cLlNIP.mjs";
-import { C as Checkbox } from "./checkbox-z7fKygSF.mjs";
+import { R as Route$f, e as collectionSearchToFilters, f as filterAndSortBonsais, I as Input, S as Select, g as SelectTrigger, h as SelectValue, i as SelectContent, j as SelectItem, k as STYLES, m as ageActuel, c as styleLabel, n as filtersToCollectionSearch, l as listBonsais } from "./router-CpKzFGrm.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
+import { C as Checkbox } from "./checkbox-BZvbSth_.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -84,7 +84,7 @@ import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
-import "./photo-cache--KYxtGs5.mjs";
+import "./photo-cache-CHvThkhZ.mjs";
 import "../_libs/radix-ui__react-checkbox.mjs";
 const ALL_STYLES = "__all__";
 function CollectionPage() {

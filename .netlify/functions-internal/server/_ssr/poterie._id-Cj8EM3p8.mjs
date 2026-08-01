@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { a3 as Route$2, w as getPoteriePhoto, Y as useBlobUrl, a4 as PoterieForm, B as Button, a5 as deletePoterie, D as getPoterie, l as listBonsais, Q as listPoteriePhotos } from "./router-Ct750Zk_.mjs";
-import { A as AppShell } from "./app-shell-BFvJr5yJ.mjs";
-import { u as useConfirm } from "./confirm-dialog-Dah9B7JQ.mjs";
+import { a3 as Route$2, w as getPoteriePhoto, Y as useBlobUrl, a4 as PoterieForm, B as Button, a5 as deletePoterie, D as getPoterie, l as listBonsais, Q as listPoteriePhotos } from "./router-CpKzFGrm.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -84,7 +84,7 @@ import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
 import "../_libs/radix-ui__react-alert-dialog.mjs";
-const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-CHCxV_RH.mjs"));
+const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-iAVqywTF.mjs"));
 function PoterieDetail() {
   const {
     id

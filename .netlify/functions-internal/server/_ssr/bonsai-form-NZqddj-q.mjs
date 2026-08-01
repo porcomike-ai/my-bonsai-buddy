@@ -4,7 +4,7 @@ import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-que
 import { u as useForm, C as Controller } from "../_libs/react-hook-form.mjs";
 import { u } from "../_libs/hookform__resolvers.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { o as useAuth, a1 as getAllEspeces, u as uid, a2 as addCustomEspece, x as saveBonsai, z as savePhoto, L as Label, I as Input, k as STYLES, Z as ETAPES, T as Textarea, B as Button, X as AddPhotoDialog, d as cn, a as listPoteries, l as listBonsais } from "./router-Ct750Zk_.mjs";
+import { o as useAuth, a1 as getAllEspeces, u as uid, a2 as addCustomEspece, x as saveBonsai, z as savePhoto, L as Label, I as Input, k as STYLES, Z as ETAPES, T as Textarea, B as Button, X as AddPhotoDialog, d as cn, a as listPoteries, l as listBonsais } from "./router-CpKzFGrm.mjs";
 import { f as folderNameError } from "./folder-name-GYMsNziU.mjs";
 import { S as Switch$1, a as SwitchThumb } from "../_libs/radix-ui__react-switch.mjs";
 import { I as ImagePlus } from "../_libs/lucide-react.mjs";
@@ -30,12 +30,9 @@ const Switch = reactExports.forwardRef(({ className, ...props }, ref) => /* @__P
 ));
 Switch.displayName = Switch$1.displayName;
 const schema = object({
-  nom: string().min(1, "Donnez un nom à votre bonsaï").superRefine((val, ctx) => {
-    const err = folderNameError(val);
-    if (err !== null) {
-      ctx.addIssue({ code: "custom", message: err });
-    }
-  }),
+  nom: string().min(1, "Donnez un nom à votre bonsaï").refine((val) => folderNameError(val) === null, (val) => ({
+    message: folderNameError(val) ?? "Nom invalide"
+  })),
   espece: string().min(1, "Indiquez l'espèce"),
   style: _enum([
     "chokkan",

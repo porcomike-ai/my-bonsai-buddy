@@ -265,7 +265,7 @@ function AuthGate({ children }) {
   if (!user && !isAuthRoute) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$c = () => import("./index-BCcr7aXa.mjs");
+const $$splitComponentImporter$c = () => import("./index-C1i8tc8L.mjs");
 const Route$h = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -286,7 +286,7 @@ const Route$h = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./calendrier-DCVGLrBX.mjs");
+const $$splitComponentImporter$b = () => import("./calendrier-o2QT7PiT.mjs");
 const Route$g = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -405,7 +405,7 @@ function filtersToCollectionSearch(f) {
   if (f.favorisFirst !== DEFAULT_COLLECTION_FILTERS.favorisFirst) s.fav = true;
   return s;
 }
-const $$splitComponentImporter$a = () => import("./collection-rFosyuLt.mjs");
+const $$splitComponentImporter$a = () => import("./collection-C_nZHPAO.mjs");
 const Route$f = createFileRoute("/collection")({
   validateSearch: validateCollectionSearch,
   head: () => ({
@@ -427,7 +427,7 @@ const Route$f = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$a, "component")
 });
-const $$splitComponentImporter$9 = () => import("./connexion-5RQxomN-.mjs");
+const $$splitComponentImporter$9 = () => import("./connexion-DQu-PbT0.mjs");
 function isSafeRedirect(path) {
   if (!path.startsWith("/")) return false;
   if (path.includes("\\")) return false;
@@ -448,7 +448,7 @@ const Route$e = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./inscription-DQDl7tI7.mjs");
+const $$splitComponentImporter$8 = () => import("./inscription-Dibet_Xh.mjs");
 const Route$d = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -460,7 +460,7 @@ const Route$d = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./journal-BI5bnkQn.mjs");
+const $$splitComponentImporter$7 = () => import("./journal-PLPOGZWQ.mjs");
 const Route$c = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -910,7 +910,7 @@ const Route$b = createFileRoute("/mcp")({
     }
   }
 });
-const $$splitComponentImporter$6 = () => import("./parametres-B_nJWpxF.mjs");
+const $$splitComponentImporter$6 = () => import("./parametres-Bwvq8U__.mjs");
 const Route$a = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -1224,14 +1224,14 @@ async function savePoterie(p) {
 }
 async function deletePoterie(id) {
   const poterie = await getPoterie(id);
+  if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
   const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
-  const galeriePaths = photos?.map((p) => p.storage_path).filter(Boolean) ?? [];
+  if (photos && photos.length > 0) {
+    const paths = photos.map((p) => p.storage_path);
+    await db.storage.from(POTERIE_BUCKET).remove(paths);
+  }
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
-  if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
-  if (galeriePaths.length > 0) {
-    await db.storage.from(POTERIE_BUCKET).remove(galeriePaths);
-  }
 }
 async function listPoteriePhotos(poterieId) {
   const rows = await fetchAllRows(
@@ -1866,7 +1866,7 @@ function useFileInput() {
   };
   return { file, setFile, inputRef, reset };
 }
-const $$splitComponentImporter$5 = () => import("./poteries-rr3TZ6MY.mjs");
+const $$splitComponentImporter$5 = () => import("./poteries-B8oFCcKF.mjs");
 const FORMES = ["Ovale", "Ronde", "Rectangulaire", "Rectangulaire à coins arrondis", "Carrée", "Hexagonale", "Octogonale", "Pentagonale", "Lotus", "Demi-lune", "Cascade (haute)", "Tambour (cylindrique)", "Suiban (plateau peu profond, sans trou)", "Coupe peu profonde", "Nanban (forme libre, texturée)", "Nuage / forme irrégulière"];
 const MATIERES = ["Grès", "Terre cuite non émaillée", "Céramique émaillée", "Porcelaine", "Argile de Yixing", "Béton", "Plastique / résine (entraînement)"];
 const AUTRE = "__autre__";
@@ -2117,7 +2117,7 @@ const Route$8 = createFileRoute("/sitemap.xml")({
     }
   }
 });
-const $$splitComponentImporter$4 = () => import("./statistiques-KFsyHTMW.mjs");
+const $$splitComponentImporter$4 = () => import("./statistiques-BntSdDal.mjs");
 const Route$7 = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -2153,7 +2153,7 @@ const Route$5 = createFileRoute("/.well-known/oauth-protected-resource")({
     }
   }
 });
-const $$splitComponentImporter$3 = () => import("./bonsai._id-CosY108n.mjs");
+const $$splitComponentImporter$3 = () => import("./bonsai._id-D-gMsToQ.mjs");
 const Route$4 = createFileRoute("/bonsai/$id")({
   ssr: false,
   validateSearch: validateCollectionSearch,
@@ -2205,7 +2205,7 @@ const Route$4 = createFileRoute("/bonsai/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./bonsai.nouveau-CCLwVx9p.mjs");
+const $$splitComponentImporter$2 = () => import("./bonsai.nouveau-CmlULePm.mjs");
 const Route$3 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -2229,7 +2229,7 @@ const Route$3 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./poterie._id-C0bNHQlI.mjs");
+const $$splitComponentImporter$1 = () => import("./poterie._id-Cj8EM3p8.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -2281,7 +2281,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
 });
 const authOAuth = () => supabase.auth.oauth;
 const $$splitErrorComponentImporter = () => import("../_._lovable.oauth.consent-BHbppD8f.mjs");
-const $$splitComponentImporter = () => import("../_._lovable.oauth.consent-WV_ZDMGT.mjs");
+const $$splitComponentImporter = () => import("../_._lovable.oauth.consent-46Ac6Y0Y.mjs");
 const Route$1 = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
   validateSearch: (s) => ({

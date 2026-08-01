@@ -1,8 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, L as Label, S as Select, g as SelectTrigger, h as SelectValue, i as SelectContent, j as SelectItem, T as Textarea, B as Button, X as AddPhotoDialog, u as uid, y as savePoterie, w as getPoteriePhoto, Y as useBlobUrl, a as listPoteries, l as listBonsais } from "./router-Ct750Zk_.mjs";
-import { A as AppShell } from "./app-shell-BFvJr5yJ.mjs";
+import { I as Input, L as Label, S as Select, g as SelectTrigger, h as SelectValue, i as SelectContent, j as SelectItem, T as Textarea, B as Button, X as AddPhotoDialog, u as uid, y as savePoterie, w as getPoteriePhoto, Y as useBlobUrl, a as listPoteries, l as listBonsais } from "./router-CpKzFGrm.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";

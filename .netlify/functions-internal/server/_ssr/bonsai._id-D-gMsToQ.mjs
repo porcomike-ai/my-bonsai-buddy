@@ -2,15 +2,15 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { $ as Route$4, e as collectionSearchToFilters, f as filterAndSortBonsais, B as Button, c as styleLabel, E as etapeLabel, m as ageActuel, x as saveBonsai, a0 as deleteBonsai, d as cn, _ as getBonsai, D as getPoterie, C as listPhotos, v as getPhotoBlob, b as soinLabel, l as listBonsais } from "./router-Ct750Zk_.mjs";
-import { l as listJournal } from "./journal-CQy1wF9d.mjs";
-import { l as listRappels } from "./rappel-QCFcoPk7.mjs";
-import { A as AppShell } from "./app-shell-BFvJr5yJ.mjs";
-import { B as BonsaiForm } from "./bonsai-form-JD7SthFa.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-D0cLlNIP.mjs";
+import { $ as Route$4, e as collectionSearchToFilters, f as filterAndSortBonsais, B as Button, c as styleLabel, E as etapeLabel, m as ageActuel, x as saveBonsai, a0 as deleteBonsai, d as cn, _ as getBonsai, D as getPoterie, C as listPhotos, v as getPhotoBlob, b as soinLabel, l as listBonsais } from "./router-CpKzFGrm.mjs";
+import { l as listJournal } from "./journal-BgnU7vFp.mjs";
+import { l as listRappels } from "./rappel-X1_dv-mM.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { B as BonsaiForm } from "./bonsai-form-NZqddj-q.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
 import { R as Root2$1, T as Trigger$1, P as Portal2, C as Content2, I as Item2, S as SubTrigger2, a as SubContent2, b as CheckboxItem2, c as ItemIndicator2, d as RadioItem2, L as Label2, e as Separator2 } from "../_libs/radix-ui__react-dropdown-menu.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
-import { u as useConfirm } from "./confirm-dialog-Dah9B7JQ.mjs";
+import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
 import { R as Root2, L as List, T as Trigger, C as Content } from "../_libs/radix-ui__react-tabs.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -94,7 +94,7 @@ import "../_libs/react-hook-form.mjs";
 import "../_libs/hookform__resolvers.mjs";
 import "./folder-name-GYMsNziU.mjs";
 import "../_libs/radix-ui__react-switch.mjs";
-import "./photo-cache--KYxtGs5.mjs";
+import "./photo-cache-CHvThkhZ.mjs";
 import "../_libs/radix-ui__react-menu.mjs";
 import "fs";
 import "path";
@@ -687,8 +687,8 @@ const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 TabsContent.displayName = Content.displayName;
-const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-BKl_hOLw.mjs"));
-const RappelsTab = reactExports.lazy(() => import("./rappels-tab-uqBJimWD.mjs"));
+const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-lUdOJRWY.mjs"));
+const RappelsTab = reactExports.lazy(() => import("./rappels-tab--xJlpbom.mjs"));
 function TabFallback() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "pt-4 text-sm text-muted-foreground", children: "Chargement…" });
 }

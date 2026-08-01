@@ -1,4 +1,4 @@
-import { V as currentUserId, W as db, U as fetchAllRows } from "./router-Ct750Zk_.mjs";
+import { V as currentUserId, W as db, U as fetchAllRows } from "./router-CpKzFGrm.mjs";
 function rowToJournal(r) {
   return {
     id: r.id,

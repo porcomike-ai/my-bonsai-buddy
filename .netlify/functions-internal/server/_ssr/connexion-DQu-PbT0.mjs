@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { o as useAuth, p as Route$e, L as Label, I as Input, B as Button } from "./router-Ct750Zk_.mjs";
+import { o as useAuth, p as Route$e, L as Label, I as Input, B as Button } from "./router-CpKzFGrm.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";

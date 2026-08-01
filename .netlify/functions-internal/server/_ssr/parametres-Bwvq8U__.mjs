@@ -1,16 +1,16 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { A as AppShell } from "./app-shell-BFvJr5yJ.mjs";
-import { o as useAuth, B as Button, x as saveBonsai, z as savePhoto, y as savePoterie, d as cn, F as Dialog, G as DialogTrigger, H as DialogContent, J as DialogHeader, K as DialogTitle, M as DialogDescription, N as RadioGroup, O as RadioGroupItem, L as Label, I as Input, P as DialogFooter, l as listBonsais$1, a as listPoteries$1, r as listAllPhotos, t as listAllPoteriePhotos, v as getPhotoBlob, w as getPoteriePhoto, C as listPhotos$1, Q as listPoteriePhotos, D as getPoterie, c as styleLabel, E as etapeLabel, m as ageActuel, b as soinLabel, A as savePoterieGalleryPhoto } from "./router-Ct750Zk_.mjs";
-import { C as Checkbox } from "./checkbox-z7fKygSF.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { o as useAuth, B as Button, x as saveBonsai, z as savePhoto, y as savePoterie, d as cn, F as Dialog, G as DialogTrigger, H as DialogContent, J as DialogHeader, K as DialogTitle, M as DialogDescription, N as RadioGroup, O as RadioGroupItem, L as Label, I as Input, P as DialogFooter, l as listBonsais$1, a as listPoteries$1, r as listAllPhotos, t as listAllPoteriePhotos, v as getPhotoBlob, w as getPoteriePhoto, C as listPhotos$1, Q as listPoteriePhotos, D as getPoterie, c as styleLabel, E as etapeLabel, m as ageActuel, b as soinLabel, A as savePoterieGalleryPhoto } from "./router-CpKzFGrm.mjs";
+import { C as Checkbox } from "./checkbox-BZvbSth_.mjs";
 import { R as Root, I as Indicator } from "../_libs/radix-ui__react-progress.mjs";
-import { u as useConfirm } from "./confirm-dialog-Dah9B7JQ.mjs";
+import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { J as JSZip } from "../_libs/jszip.mjs";
-import { s as saveJournal, l as listJournal$1 } from "./journal-CQy1wF9d.mjs";
-import { s as saveRappel, l as listRappels$1 } from "./rappel-QCFcoPk7.mjs";
+import { s as saveJournal, l as listJournal$1 } from "./journal-BgnU7vFp.mjs";
+import { s as saveRappel, l as listRappels$1 } from "./rappel-X1_dv-mM.mjs";
 import { s as sanitizeForFilesystem } from "./folder-name-GYMsNziU.mjs";
-import { s as saveEvenement, l as listEvenements$1 } from "./evenement-a42cNJfw.mjs";
+import { s as saveEvenement, l as listEvenements$1 } from "./evenement-BwQolQbz.mjs";
 import { o as openDB } from "../_libs/idb.mjs";
 import { s as supabase } from "./client-CWZp_xfH.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
@@ -1089,7 +1089,13 @@ async function subscribeToPush() {
     }
     const registration = await navigator.serviceWorker.register("/sw.js");
     if (false) ;
-    const vapidPublicKey = "BFIBioio6UseGsO67Zk0hJuGdYjkNuJ69RxTWBN0EfBXeSy3-t_z-zm9bCXYnqU2-u5YbZWW42gh1EQ4ZFyKtDE";
+    const vapidPublicKey = void 0;
+    if (!vapidPublicKey) {
+      console.error(
+        "VITE_VAPID_PUBLIC_KEY n'est pas défini : impossible de s'abonner aux notifications push."
+      );
+      return false;
+    }
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       // Cast nécessaire : le type Uint8Array de la lib DOM utilisée par ce

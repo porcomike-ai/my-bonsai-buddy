@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { B as Button, L as Label, aa as SOINS_SELECTABLE, I as Input, s as soinEmoji, b as soinLabel, u as uid } from "./router-Ct750Zk_.mjs";
-import { s as saveJournal, d as deleteJournal } from "./journal-CQy1wF9d.mjs";
-import { s as saveRappel, d as deleteRappel } from "./rappel-QCFcoPk7.mjs";
+import { B as Button, L as Label, aa as SOINS_SELECTABLE, I as Input, s as soinEmoji, b as soinLabel, u as uid } from "./router-CpKzFGrm.mjs";
+import { s as saveJournal, d as deleteJournal } from "./journal-BgnU7vFp.mjs";
+import { s as saveRappel, d as deleteRappel } from "./rappel-X1_dv-mM.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
