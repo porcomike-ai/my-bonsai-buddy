@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Bonsaï Studio — palette « Terre & sauge »
- * Terracotta, pêche, sauge, vert forêt sur fond crème.
- * Typographie : Fraunces (serif éditorial) + Manrope (sans-serif chaleureux).
+ * Bonsaï Studio — Design System « Terre & Sauge » v2
+ * Palette nature / terre cuite, typographie éditoriale,
+ * hiérarchie claire pour collections > 400 arbres.
  */
 
 @theme inline {
@@ -42,11 +42,14 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
+  /* Tokens métier */
   --color-terracotta: var(--terracotta);
   --color-peach: var(--peach);
   --color-sage: var(--sage);
   --color-forest: var(--forest);
   --color-cream: var(--cream);
+  --color-clay: var(--clay);
+  --color-bark: var(--bark);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -67,75 +70,87 @@
 :root {
   --radius: 0.75rem;
 
-  --cream: oklch(0.97 0.015 80);
+  /* Base */
+  --cream: oklch(0.975 0.012 82);
   --terracotta: oklch(0.62 0.13 38);
-  --peach: oklch(0.8 0.09 55);
-  --sage: oklch(0.72 0.06 140);
-  --forest: oklch(0.42 0.06 140);
+  --peach: oklch(0.84 0.07 55);
+  --sage: oklch(0.72 0.065 142);
+  --forest: oklch(0.38 0.07 145);
+  --clay: oklch(0.58 0.045 48);
+  --bark: oklch(0.28 0.025 40);
 
-  --background: oklch(0.97 0.015 80);
-  --foreground: oklch(0.25 0.03 140);
+  --background: oklch(0.975 0.012 82);
+  --foreground: oklch(0.24 0.03 145);
 
-  --card: oklch(0.99 0.008 80);
-  --card-foreground: oklch(0.25 0.03 140);
-  --popover: oklch(0.99 0.008 80);
-  --popover-foreground: oklch(0.25 0.03 140);
+  --card: oklch(0.995 0.006 82);
+  --card-foreground: oklch(0.24 0.03 145);
+  --popover: oklch(0.995 0.006 82);
+  --popover-foreground: oklch(0.24 0.03 145);
 
-  --primary: oklch(0.42 0.06 140);
-  --primary-foreground: oklch(0.97 0.015 80);
+  --primary: oklch(0.38 0.07 145);
+  --primary-foreground: oklch(0.975 0.012 82);
 
-  --secondary: oklch(0.92 0.025 80);
-  --secondary-foreground: oklch(0.3 0.04 140);
+  --secondary: oklch(0.93 0.02 80);
+  --secondary-foreground: oklch(0.28 0.04 145);
 
-  --muted: oklch(0.93 0.018 80);
-  --muted-foreground: oklch(0.48 0.025 130);
+  --muted: oklch(0.94 0.015 80);
+  --muted-foreground: oklch(0.48 0.025 135);
 
   --accent: oklch(0.62 0.13 38);
-  --accent-foreground: oklch(0.99 0.008 80);
+  --accent-foreground: oklch(0.99 0.005 80);
 
   --destructive: oklch(0.55 0.2 28);
-  --destructive-foreground: oklch(0.99 0.008 80);
+  --destructive-foreground: oklch(0.99 0.005 80);
 
-  --border: oklch(0.88 0.02 80);
-  --input: oklch(0.88 0.02 80);
+  --border: oklch(0.88 0.018 80);
+  --input: oklch(0.88 0.018 80);
   --ring: oklch(0.62 0.13 38);
 
+  /* Charts */
   --chart-1: oklch(0.62 0.13 38);
-  --chart-2: oklch(0.8 0.09 55);
-  --chart-3: oklch(0.72 0.06 140);
-  --chart-4: oklch(0.42 0.06 140);
-  --chart-5: oklch(0.55 0.08 100);
+  --chart-2: oklch(0.84 0.07 55);
+  --chart-3: oklch(0.72 0.065 142);
+  --chart-4: oklch(0.38 0.07 145);
+  --chart-5: oklch(0.58 0.045 48);
 
-  --sidebar: oklch(0.94 0.02 80);
-  --sidebar-foreground: oklch(0.3 0.04 140);
-  --sidebar-primary: oklch(0.42 0.06 140);
-  --sidebar-primary-foreground: oklch(0.97 0.015 80);
-  --sidebar-accent: oklch(0.88 0.03 70);
-  --sidebar-accent-foreground: oklch(0.3 0.04 140);
-  --sidebar-border: oklch(0.85 0.025 80);
+  /* Sidebar */
+  --sidebar: oklch(0.95 0.015 80);
+  --sidebar-foreground: oklch(0.28 0.04 145);
+  --sidebar-primary: oklch(0.38 0.07 145);
+  --sidebar-primary-foreground: oklch(0.975 0.012 82);
+  --sidebar-accent: oklch(0.90 0.025 70);
+  --sidebar-accent-foreground: oklch(0.28 0.04 145);
+  --sidebar-border: oklch(0.86 0.02 80);
   --sidebar-ring: oklch(0.62 0.13 38);
 }
 
 .dark {
-  --background: oklch(0.22 0.02 140);
-  --foreground: oklch(0.95 0.015 80);
-  --card: oklch(0.27 0.025 140);
-  --card-foreground: oklch(0.95 0.015 80);
-  --popover: oklch(0.27 0.025 140);
-  --popover-foreground: oklch(0.95 0.015 80);
-  --primary: oklch(0.72 0.06 140);
-  --primary-foreground: oklch(0.22 0.02 140);
-  --secondary: oklch(0.32 0.03 140);
-  --secondary-foreground: oklch(0.95 0.015 80);
-  --muted: oklch(0.3 0.025 140);
-  --muted-foreground: oklch(0.72 0.025 100);
-  --accent: oklch(0.7 0.13 40);
-  --accent-foreground: oklch(0.99 0.008 80);
+  --background: oklch(0.20 0.02 145);
+  --foreground: oklch(0.95 0.012 80);
+  --card: oklch(0.25 0.022 145);
+  --card-foreground: oklch(0.95 0.012 80);
+  --popover: oklch(0.25 0.022 145);
+  --popover-foreground: oklch(0.95 0.012 80);
+  --primary: oklch(0.72 0.065 142);
+  --primary-foreground: oklch(0.20 0.02 145);
+  --secondary: oklch(0.30 0.025 145);
+  --secondary-foreground: oklch(0.95 0.012 80);
+  --muted: oklch(0.28 0.02 145);
+  --muted-foreground: oklch(0.70 0.025 100);
+  --accent: oklch(0.70 0.13 40);
+  --accent-foreground: oklch(0.99 0.005 80);
   --destructive: oklch(0.65 0.2 28);
-  --destructive-foreground: oklch(0.99 0.008 80);
+  --destructive-foreground: oklch(0.99 0.005 80);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.13 40);
+  --ring: oklch(0.70 0.13 40);
+
+  --terracotta: oklch(0.70 0.13 40);
+  --peach: oklch(0.78 0.08 55);
+  --sage: oklch(0.72 0.065 142);
+  --forest: oklch(0.55 0.06 145);
+  --clay: oklch(0.55 0.04 50);
+  --bark: oklch(0.18 0.02 40);
 }
 
 @layer base {
@@ -148,17 +163,16 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
   }
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
+    font-weight: 600;
   }
 }
 
-/* Hide number input spin buttons (arrows) */
+/* Hide number input spin buttons */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -166,4 +180,32 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* ─── Design System utilities ─────────────────────────────────────────────── */
+
+@layer utilities {
+  /* Surface cards */
+  .surface-card {
+    @apply rounded-2xl border border-border bg-card shadow-sm;
+  }
+  .surface-card-hover {
+    @apply surface-card transition-all duration-200 hover:border-accent/40 hover:shadow-md;
+  }
+
+  /* Text hierarchy */
+  .text-display {
+    @apply font-display font-semibold tracking-tight;
+  }
+  .text-label {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+  }
+  .text-meta {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* Status pills (utilisables partout) */
+  .badge-base {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none;
+  }
 }
