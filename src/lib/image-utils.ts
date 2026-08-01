@@ -1,24 +1,35 @@
 // ============================================================================
-//  Utilitaires image côté navigateur — redimensionnement / recompression.
+//  Utilitaires image côté navigateur — source unique de compression.
 //
-//  Utilisé par la sauvegarde locale (backup.ts) quand l'utilisateur active
-//  l'option "réduire la taille des photos". Reste volontairement autonome
-//  (pas d'import depuis share-pdf.ts) pour ne pas risquer de régression sur
-//  l'export PDF existant.
+//  Utilisé par :
+//  - l'upload UI (`fileToBlob` dans blob-url.ts)
+//  - la sauvegarde locale (backup.ts, option "réduire la taille des photos")
+//
+//  Paramètres partagés (ne pas divergir entre chemins d'appel).
+//  share-pdf.ts garde ses propres dimensions (800 px) adaptées au PDF.
 // ============================================================================
+
+/** Plus grand côté max après redimensionnement (px). */
+export const IMAGE_MAX_DIMENSION = 1280;
+/** Qualité JPEG (0–1). */
+export const IMAGE_JPEG_QUALITY = 0.75;
+/**
+ * Sous ce poids (octets), on ne décode / ne recompresse pas : l'image est
+ * déjà assez légère pour le stockage et l'affichage.
+ */
+export const IMAGE_SKIP_BELOW_BYTES = 800_000;
 
 /**
  * Redimensionne et recompresse une image en JPEG via un canvas.
  * Si l'image est déjà plus petite que `maxDimension`, elle est retournée
- * telle quelle (on n'agrandit jamais, et on ne fait pas perdre de qualité
- * inutilement à une photo déjà légère).
+ * telle quelle (on n'agrandit jamais).
  * En cas d'échec (image illisible, canvas indisponible), retourne le blob
  * d'origine plutôt que d'interrompre l'appelant.
  */
 export async function resizeImageToBlob(
   blob: Blob,
-  maxDimension = 1280,
-  quality = 0.7,
+  maxDimension = IMAGE_MAX_DIMENSION,
+  quality = IMAGE_JPEG_QUALITY,
 ): Promise<Blob> {
   try {
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -54,6 +65,15 @@ export async function resizeImageToBlob(
   } catch {
     return blob;
   }
+}
+
+/**
+ * Point d'entrée upload : saute la recompression sous IMAGE_SKIP_BELOW_BYTES,
+ * sinon applique les paramètres canoniques (1280 px / 0.75).
+ */
+export async function compressImageBlob(blob: Blob): Promise<Blob> {
+  if (blob.size < IMAGE_SKIP_BELOW_BYTES) return blob;
+  return resizeImageToBlob(blob);
 }
 
 /** Formate un nombre d'octets en libellé lisible (Ko/Mo/Go). */
