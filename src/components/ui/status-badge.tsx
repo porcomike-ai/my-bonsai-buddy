@@ -6,6 +6,7 @@ import {
   TreeDeciduous,
   Star,
   Archive,
+  Container,
   type LucideIcon,
 } from "lucide-react";
 import type { BonsaiEtape } from "@/lib/supabase-data";
@@ -15,18 +16,14 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        culture:
-          "border-sage/50 bg-background/95 text-forest",
-        "pre-bonsai":
-          "border-terracotta/50 bg-background/95 text-terracotta",
-        bonsai:
-          "border-forest/40 bg-background/95 text-forest",
-        favori:
-          "border-terracotta/50 bg-background/95 text-terracotta",
-        sorti:
-          "border-muted-foreground/30 bg-background/95 text-muted-foreground",
-        default:
-          "border-border bg-background/95 text-secondary-foreground",
+        culture: "border-sage/50 bg-background/95 text-forest",
+        "pre-bonsai": "border-terracotta/50 bg-background/95 text-terracotta",
+        bonsai: "border-forest/40 bg-background/95 text-forest",
+        favori: "border-terracotta/50 bg-background/95 text-terracotta",
+        sorti: "border-muted-foreground/30 bg-background/95 text-muted-foreground",
+        libre: "border-muted-foreground/30 bg-background/95 text-muted-foreground",
+        plantee: "border-sage/50 bg-background/95 text-forest",
+        default: "border-border bg-background/95 text-secondary-foreground",
       },
       size: {
         sm: "px-2 py-0.5 text-[10px]",
@@ -46,6 +43,8 @@ const ICONS: Partial<Record<NonNullable<StatusBadgeProps["variant"]>, LucideIcon
   bonsai: TreeDeciduous,
   favori: Star,
   sorti: Archive,
+  libre: Container,
+  plantee: Sprout,
 };
 
 export interface StatusBadgeProps
