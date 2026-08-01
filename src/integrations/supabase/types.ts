@@ -313,6 +313,7 @@ export type Database = {
           id: string
           intervalle_jours: number | null
           notes: string | null
+          notified_at: string | null
           prochaine_date: string
           type: string
           user_id: string
@@ -324,6 +325,7 @@ export type Database = {
           id?: string
           intervalle_jours?: number | null
           notes?: string | null
+          notified_at?: string | null
           prochaine_date: string
           type: string
           user_id?: string
@@ -335,6 +337,7 @@ export type Database = {
           id?: string
           intervalle_jours?: number | null
           notes?: string | null
+          notified_at?: string | null
           prochaine_date?: string
           type?: string
           user_id?: string
