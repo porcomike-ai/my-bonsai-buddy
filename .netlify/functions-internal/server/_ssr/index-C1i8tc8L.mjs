@@ -1,11 +1,11 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { s as soinEmoji, b as soinLabel, c as styleLabel, l as listBonsais, a as listPoteries } from "./router-Dgs5QC_7.mjs";
-import { l as listJournal } from "./journal-BAlYNI2g.mjs";
-import { l as listRappels } from "./rappel-DXFdD1h8.mjs";
-import { A as AppShell } from "./app-shell-CiPQIcjs.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-D7__oiiM.mjs";
+import { s as soinEmoji, b as soinLabel, c as styleLabel, l as listBonsais, a as listPoteries } from "./router-CpKzFGrm.mjs";
+import { l as listJournal } from "./journal-BgnU7vFp.mjs";
+import { l as listRappels } from "./rappel-X1_dv-mM.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -85,7 +85,7 @@ import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
-import "./photo-cache-DVUV-uVj.mjs";
+import "./photo-cache-CHvThkhZ.mjs";
 function Dashboard() {
   const bonsais = useQuery({
     queryKey: ["bonsais"],

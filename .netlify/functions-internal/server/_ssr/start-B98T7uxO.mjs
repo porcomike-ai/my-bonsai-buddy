@@ -1,4 +1,4 @@
-import { c as createMiddleware } from "./server-CvjNH31o.mjs";
+import { c as createMiddleware } from "./server-ClfQNZ4k.mjs";
 import { r as renderErrorPage } from "./index.mjs";
 import { s as supabase } from "./client-CWZp_xfH.mjs";
 import "../_libs/seroval.mjs";

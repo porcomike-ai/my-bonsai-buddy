@@ -1,16 +1,16 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { A as AppShell } from "./app-shell-CiPQIcjs.mjs";
-import { k as useAuth, B as Button, r as saveBonsai, v as savePhoto, t as savePoterie, d as cn, D as Dialog, A as DialogTrigger, C as DialogContent, E as DialogHeader, F as DialogTitle, G as DialogDescription, H as RadioGroup, J as RadioGroupItem, L as Label, I as Input, K as DialogFooter, l as listBonsais$1, a as listPoteries$1, n as listAllPhotos, o as listAllPoteriePhotos, p as getPhotoBlob, q as getPoteriePhoto, x as listPhotos$1, M as listPoteriePhotos, y as getPoterie, c as styleLabel, z as etapeLabel, j as ageActuel, b as soinLabel, w as savePoterieGalleryPhoto } from "./router-Dgs5QC_7.mjs";
-import { C as Checkbox } from "./checkbox-KC5I_3te.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { o as useAuth, B as Button, x as saveBonsai, z as savePhoto, y as savePoterie, d as cn, F as Dialog, G as DialogTrigger, H as DialogContent, J as DialogHeader, K as DialogTitle, M as DialogDescription, N as RadioGroup, O as RadioGroupItem, L as Label, I as Input, P as DialogFooter, l as listBonsais$1, a as listPoteries$1, r as listAllPhotos, t as listAllPoteriePhotos, v as getPhotoBlob, w as getPoteriePhoto, C as listPhotos$1, Q as listPoteriePhotos, D as getPoterie, c as styleLabel, E as etapeLabel, m as ageActuel, b as soinLabel, A as savePoterieGalleryPhoto } from "./router-CpKzFGrm.mjs";
+import { C as Checkbox } from "./checkbox-BZvbSth_.mjs";
 import { R as Root, I as Indicator } from "../_libs/radix-ui__react-progress.mjs";
-import { u as useConfirm } from "./confirm-dialog-qMBn7-_d.mjs";
+import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { J as JSZip } from "../_libs/jszip.mjs";
-import { s as saveJournal, l as listJournal$1 } from "./journal-BAlYNI2g.mjs";
-import { s as saveRappel, l as listRappels$1 } from "./rappel-DXFdD1h8.mjs";
+import { s as saveJournal, l as listJournal$1 } from "./journal-BgnU7vFp.mjs";
+import { s as saveRappel, l as listRappels$1 } from "./rappel-X1_dv-mM.mjs";
 import { s as sanitizeForFilesystem } from "./folder-name-GYMsNziU.mjs";
-import { s as saveEvenement, l as listEvenements$1 } from "./evenement-Ck5gEObw.mjs";
+import { s as saveEvenement, l as listEvenements$1 } from "./evenement-BwQolQbz.mjs";
 import { o as openDB } from "../_libs/idb.mjs";
 import { s as supabase } from "./client-CWZp_xfH.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
@@ -1179,8 +1179,8 @@ function urlBase64ToUint8Array(base64String) {
   }
   return outputArray;
 }
-const APP_VERSION = "1.5.5";
-const APP_VERSION_DATE = "2026-07-26";
+const APP_VERSION = "1.5.6";
+const APP_VERSION_DATE = "2026-07-30";
 function ParametresPage() {
   const qc = useQueryClient();
   const {

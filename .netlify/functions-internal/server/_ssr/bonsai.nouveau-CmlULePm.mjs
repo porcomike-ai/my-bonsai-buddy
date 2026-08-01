@@ -1,7 +1,7 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
-import { A as AppShell } from "./app-shell-CiPQIcjs.mjs";
-import { B as BonsaiForm } from "./bonsai-form-DntgM_yg.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { B as BonsaiForm } from "./bonsai-form-NZqddj-q.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -21,7 +21,7 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "./router-Dgs5QC_7.mjs";
+import "./router-CpKzFGrm.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
 import "./client-CWZp_xfH.mjs";

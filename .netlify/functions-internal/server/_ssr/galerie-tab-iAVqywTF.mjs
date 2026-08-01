@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { a5 as useFileInput, B as Button, Q as AddPhotoDialog, I as Input, T as Textarea, a7 as updatePhotoDate, a8 as updatePhotoLegende, a9 as deletePhoto, w as savePoterieGalleryPhoto, u as uid, U as useBlobUrl } from "./router-Dgs5QC_7.mjs";
-import { P as PhotoLightbox } from "./photo-lightbox-mWMxVNX9.mjs";
-import { u as useConfirm } from "./confirm-dialog-qMBn7-_d.mjs";
-import { invalidateCachedPhoto, getCachedPhotoBlob } from "./photo-cache-DVUV-uVj.mjs";
+import { a9 as useFileInput, B as Button, X as AddPhotoDialog, I as Input, T as Textarea, ab as updatePhotoDate, ac as updatePhotoLegende, ad as deletePhoto, A as savePoterieGalleryPhoto, u as uid, Y as useBlobUrl } from "./router-CpKzFGrm.mjs";
+import { P as PhotoLightbox } from "./photo-lightbox-CVCONWKt.mjs";
+import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
+import { invalidateCachedPhoto, getCachedPhotoBlob } from "./photo-cache-CHvThkhZ.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";

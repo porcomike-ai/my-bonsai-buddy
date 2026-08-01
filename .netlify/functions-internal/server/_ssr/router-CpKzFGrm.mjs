@@ -80,7 +80,7 @@ import "../_libs/use-sidecar.mjs";
 import "../_libs/use-callback-ref.mjs";
 import "../_libs/radix-ui__react-roving-focus.mjs";
 import "../_libs/@radix-ui/react-use-is-hydrated+[...].mjs";
-const appCss = "/assets/styles-a5spGTDq.css";
+const appCss = "/assets/styles-DFQZE1AH.css";
 const Toaster = ({ ...props }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Toaster$1,
@@ -265,7 +265,7 @@ function AuthGate({ children }) {
   if (!user && !isAuthRoute) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children });
 }
-const $$splitComponentImporter$c = () => import("./index-SHSnWXOI.mjs");
+const $$splitComponentImporter$c = () => import("./index-C1i8tc8L.mjs");
 const Route$h = createFileRoute("/")({
   head: () => ({
     meta: [{
@@ -286,7 +286,7 @@ const Route$h = createFileRoute("/")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./calendrier-9UCg0dog.mjs");
+const $$splitComponentImporter$b = () => import("./calendrier-o2QT7PiT.mjs");
 const Route$g = createFileRoute("/calendrier")({
   head: () => ({
     meta: [{
@@ -307,8 +307,107 @@ const Route$g = createFileRoute("/calendrier")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$b, "component")
 });
-const $$splitComponentImporter$a = () => import("./collection-DGN80Y5t.mjs");
+const DEFAULT_COLLECTION_FILTERS = {
+  q: "",
+  style: "",
+  statut: "actifs",
+  sort: "nom-asc",
+  favorisFirst: false
+};
+function filterAndSortBonsais(bonsais, filters) {
+  const needle = filters.q.trim().toLowerCase();
+  const list = bonsais.filter((b) => {
+    const dans = b.dansCollection ?? true;
+    if (filters.statut === "actifs" && !dans) return false;
+    if (filters.statut === "sortis" && dans) return false;
+    if (filters.statut === "favoris" && !b.favori) return false;
+    if (filters.style && b.style !== filters.style) return false;
+    if (!needle) return true;
+    return b.nom.toLowerCase().includes(needle) || b.espece.toLowerCase().includes(needle) || (b.origine ?? "").toLowerCase().includes(needle);
+  });
+  const cmp = (a, b) => {
+    switch (filters.sort) {
+      case "nom-asc":
+        return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+      case "nom-desc":
+        return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+      case "espece-asc":
+        return a.espece.localeCompare(b.espece, "fr", { sensitivity: "base" });
+      case "acquisition-desc": {
+        const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
+        const db2 = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
+        if (da === null && db2 === null) return 0;
+        if (da === null) return 1;
+        if (db2 === null) return -1;
+        return db2 - da;
+      }
+      case "acquisition-asc": {
+        const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
+        const db2 = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
+        if (da === null && db2 === null) return 0;
+        if (da === null) return 1;
+        if (db2 === null) return -1;
+        return da - db2;
+      }
+      case "valeur-desc": {
+        const va = a.valeurEstimee ?? null;
+        const vb = b.valeurEstimee ?? null;
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        return vb - va;
+      }
+      default:
+        return 0;
+    }
+  };
+  return list.sort((a, b) => {
+    if (filters.favorisFirst) {
+      const diff = Number(!!b.favori) - Number(!!a.favori);
+      if (diff !== 0) return diff;
+    }
+    return cmp(a, b);
+  });
+}
+const VALID_STATUTS = ["actifs", "sortis", "tous", "favoris"];
+const VALID_SORTS = [
+  "nom-asc",
+  "nom-desc",
+  "espece-asc",
+  "acquisition-desc",
+  "acquisition-asc",
+  "valeur-desc"
+];
+function validateCollectionSearch(s) {
+  return {
+    q: typeof s.q === "string" ? s.q : void 0,
+    style: typeof s.style === "string" ? s.style : void 0,
+    statut: typeof s.statut === "string" && VALID_STATUTS.includes(s.statut) ? s.statut : void 0,
+    sort: typeof s.sort === "string" && VALID_SORTS.includes(s.sort) ? s.sort : void 0,
+    fav: s.fav === true || s.fav === "true" ? true : void 0
+  };
+}
+function collectionSearchToFilters(s) {
+  return {
+    q: s.q ?? DEFAULT_COLLECTION_FILTERS.q,
+    style: s.style ?? DEFAULT_COLLECTION_FILTERS.style,
+    statut: s.statut ?? DEFAULT_COLLECTION_FILTERS.statut,
+    sort: s.sort ?? DEFAULT_COLLECTION_FILTERS.sort,
+    favorisFirst: s.fav ?? DEFAULT_COLLECTION_FILTERS.favorisFirst
+  };
+}
+function filtersToCollectionSearch(f) {
+  const s = {};
+  if (f.q !== DEFAULT_COLLECTION_FILTERS.q) s.q = f.q;
+  if (f.style !== DEFAULT_COLLECTION_FILTERS.style) s.style = f.style;
+  if (f.statut !== DEFAULT_COLLECTION_FILTERS.statut) s.statut = f.statut;
+  if (f.sort !== DEFAULT_COLLECTION_FILTERS.sort) s.sort = f.sort;
+  if (f.favorisFirst !== DEFAULT_COLLECTION_FILTERS.favorisFirst) s.fav = true;
+  return s;
+}
+const $$splitComponentImporter$a = () => import("./collection-C_nZHPAO.mjs");
 const Route$f = createFileRoute("/collection")({
+  validateSearch: validateCollectionSearch,
   head: () => ({
     meta: [{
       title: "Mes bonsaïs — Bonsaï Studio"
@@ -328,7 +427,7 @@ const Route$f = createFileRoute("/collection")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$a, "component")
 });
-const $$splitComponentImporter$9 = () => import("./connexion-Bp1G4sFf.mjs");
+const $$splitComponentImporter$9 = () => import("./connexion-DQu-PbT0.mjs");
 function isSafeRedirect(path) {
   if (!path.startsWith("/")) return false;
   if (path.includes("\\")) return false;
@@ -349,7 +448,7 @@ const Route$e = createFileRoute("/connexion")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
-const $$splitComponentImporter$8 = () => import("./inscription-B1FCVbrX.mjs");
+const $$splitComponentImporter$8 = () => import("./inscription-Dibet_Xh.mjs");
 const Route$d = createFileRoute("/inscription")({
   head: () => ({
     meta: [{
@@ -361,7 +460,7 @@ const Route$d = createFileRoute("/inscription")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$8, "component")
 });
-const $$splitComponentImporter$7 = () => import("./journal-aesJhLml.mjs");
+const $$splitComponentImporter$7 = () => import("./journal-PLPOGZWQ.mjs");
 const Route$c = createFileRoute("/journal")({
   head: () => ({
     meta: [{
@@ -811,7 +910,7 @@ const Route$b = createFileRoute("/mcp")({
     }
   }
 });
-const $$splitComponentImporter$6 = () => import("./parametres-TEzb-Sb-.mjs");
+const $$splitComponentImporter$6 = () => import("./parametres-Bwvq8U__.mjs");
 const Route$a = createFileRoute("/parametres")({
   head: () => ({
     meta: [{
@@ -1767,7 +1866,7 @@ function useFileInput() {
   };
   return { file, setFile, inputRef, reset };
 }
-const $$splitComponentImporter$5 = () => import("./poteries-DPlDEhlI.mjs");
+const $$splitComponentImporter$5 = () => import("./poteries-B8oFCcKF.mjs");
 const FORMES = ["Ovale", "Ronde", "Rectangulaire", "Rectangulaire à coins arrondis", "Carrée", "Hexagonale", "Octogonale", "Pentagonale", "Lotus", "Demi-lune", "Cascade (haute)", "Tambour (cylindrique)", "Suiban (plateau peu profond, sans trou)", "Coupe peu profonde", "Nanban (forme libre, texturée)", "Nuage / forme irrégulière"];
 const MATIERES = ["Grès", "Terre cuite non émaillée", "Céramique émaillée", "Porcelaine", "Argile de Yixing", "Béton", "Plastique / résine (entraînement)"];
 const AUTRE = "__autre__";
@@ -2018,7 +2117,7 @@ const Route$8 = createFileRoute("/sitemap.xml")({
     }
   }
 });
-const $$splitComponentImporter$4 = () => import("./statistiques-CfZKOxlN.mjs");
+const $$splitComponentImporter$4 = () => import("./statistiques-BntSdDal.mjs");
 const Route$7 = createFileRoute("/statistiques")({
   head: () => ({
     meta: [{
@@ -2054,9 +2153,10 @@ const Route$5 = createFileRoute("/.well-known/oauth-protected-resource")({
     }
   }
 });
-const $$splitComponentImporter$3 = () => import("./bonsai._id-D51c2M8F.mjs");
+const $$splitComponentImporter$3 = () => import("./bonsai._id-D-gMsToQ.mjs");
 const Route$4 = createFileRoute("/bonsai/$id")({
   ssr: false,
+  validateSearch: validateCollectionSearch,
   loader: async ({
     params,
     context
@@ -2105,7 +2205,7 @@ const Route$4 = createFileRoute("/bonsai/$id")({
   },
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./bonsai.nouveau-3zh1b-IN.mjs");
+const $$splitComponentImporter$2 = () => import("./bonsai.nouveau-CmlULePm.mjs");
 const Route$3 = createFileRoute("/bonsai/nouveau")({
   head: () => ({
     meta: [{
@@ -2129,7 +2229,7 @@ const Route$3 = createFileRoute("/bonsai/nouveau")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./poterie._id-Ca0yEB9-.mjs");
+const $$splitComponentImporter$1 = () => import("./poterie._id-Cj8EM3p8.mjs");
 const Route$2 = createFileRoute("/poterie/$id")({
   ssr: false,
   loader: async ({
@@ -2181,7 +2281,7 @@ const Route$2 = createFileRoute("/poterie/$id")({
 });
 const authOAuth = () => supabase.auth.oauth;
 const $$splitErrorComponentImporter = () => import("../_._lovable.oauth.consent-BHbppD8f.mjs");
-const $$splitComponentImporter = () => import("../_._lovable.oauth.consent-fZqSV9Tq.mjs");
+const $$splitComponentImporter = () => import("../_._lovable.oauth.consent-46Ac6Y0Y.mjs");
 const Route$1 = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
   validateSearch: (s) => ({
@@ -2366,69 +2466,73 @@ const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   getRouter
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  Route$2 as $,
-  DialogTrigger as A,
+  Route$4 as $,
+  savePoterieGalleryPhoto as A,
   Button as B,
-  DialogContent as C,
-  Dialog as D,
-  DialogHeader as E,
-  DialogTitle as F,
-  DialogDescription as G,
-  RadioGroup as H,
+  listPhotos as C,
+  getPoterie as D,
+  etapeLabel as E,
+  Dialog as F,
+  DialogTrigger as G,
+  DialogContent as H,
   Input as I,
-  RadioGroupItem as J,
-  DialogFooter as K,
+  DialogHeader as J,
+  DialogTitle as K,
   Label as L,
-  listPoteriePhotos as M,
-  fetchAllRows as N,
-  currentUserId as O,
-  db as P,
-  AddPhotoDialog as Q,
-  Route$e as R,
+  DialogDescription as M,
+  RadioGroup as N,
+  RadioGroupItem as O,
+  DialogFooter as P,
+  listPoteriePhotos as Q,
+  Route$f as R,
   Select as S,
   Textarea as T,
-  useBlobUrl as U,
-  ETAPES as V,
-  getBonsai as W,
-  Route$4 as X,
-  deleteBonsai as Y,
-  getAllEspeces as Z,
-  addCustomEspece as _,
+  fetchAllRows as U,
+  currentUserId as V,
+  db as W,
+  AddPhotoDialog as X,
+  useBlobUrl as Y,
+  ETAPES as Z,
+  getBonsai as _,
   listPoteries as a,
-  PoterieForm as a0,
-  deletePoterie as a1,
-  buttonVariants as a2,
-  Route$1 as a3,
-  authOAuth as a4,
-  useFileInput as a5,
-  SOINS_SELECTABLE as a6,
-  updatePhotoDate as a7,
-  updatePhotoLegende as a8,
-  deletePhoto as a9,
-  router as aa,
+  deleteBonsai as a0,
+  getAllEspeces as a1,
+  addCustomEspece as a2,
+  Route$2 as a3,
+  PoterieForm as a4,
+  deletePoterie as a5,
+  buttonVariants as a6,
+  Route$1 as a7,
+  authOAuth as a8,
+  useFileInput as a9,
+  SOINS_SELECTABLE as aa,
+  updatePhotoDate as ab,
+  updatePhotoLegende as ac,
+  deletePhoto as ad,
+  router as ae,
   soinLabel as b,
   styleLabel as c,
   cn as d,
-  SelectTrigger as e,
-  SelectValue as f,
-  SelectContent as g,
-  SelectItem as h,
-  STYLES as i,
-  ageActuel as j,
-  useAuth as k,
+  collectionSearchToFilters as e,
+  filterAndSortBonsais as f,
+  SelectTrigger as g,
+  SelectValue as h,
+  SelectContent as i,
+  SelectItem as j,
+  STYLES as k,
   listBonsais as l,
-  SOINS as m,
-  listAllPhotos as n,
-  listAllPoteriePhotos as o,
-  getPhotoBlob as p,
-  getPoteriePhoto as q,
-  saveBonsai as r,
+  ageActuel as m,
+  filtersToCollectionSearch as n,
+  useAuth as o,
+  Route$e as p,
+  SOINS as q,
+  listAllPhotos as r,
   soinEmoji as s,
-  savePoterie as t,
+  listAllPoteriePhotos as t,
   uid as u,
-  savePhoto as v,
-  savePoterieGalleryPhoto as w,
-  listPhotos as x,
-  getPoterie as y,
-  etapeLabel as z
+  getPhotoBlob as v,
+  getPoteriePhoto as w,
+  saveBonsai as x,
+  savePoterie as y,
+  savePhoto as z
 };

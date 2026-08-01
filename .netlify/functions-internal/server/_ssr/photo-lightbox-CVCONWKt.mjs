@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { U as useBlobUrl, D as Dialog, C as DialogContent, F as DialogTitle, B as Button } from "./router-Dgs5QC_7.mjs";
+import { Y as useBlobUrl, F as Dialog, H as DialogContent, K as DialogTitle, B as Button } from "./router-CpKzFGrm.mjs";
 import { X, Z as ZoomOut, U as ZoomIn, V as RotateCcw } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 const MIN_ZOOM = 1;
@@ -10,6 +10,17 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
   const [offset, setOffset] = reactExports.useState({ x: 0, y: 0 });
   const containerRef = reactExports.useRef(null);
   const imgRef = reactExports.useRef(null);
+  const [isPanning, setIsPanning] = reactExports.useState(false);
+  const CLICK_DRAG_THRESHOLD_PX = 5;
+  const DOUBLE_CLICK_WINDOW_MS = 250;
+  const clickStartRef = reactExports.useRef(null);
+  const pendingCloseTimer = reactExports.useRef(null);
+  const cancelPendingClose = reactExports.useCallback(() => {
+    if (pendingCloseTimer.current) {
+      clearTimeout(pendingCloseTimer.current);
+      pendingCloseTimer.current = null;
+    }
+  }, []);
   const touchState = reactExports.useRef({
     mode: "none",
     startX: 0,
@@ -33,7 +44,7 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
       return;
     }
     let cancelled = false;
-    import("./photo-cache-DVUV-uVj.mjs").then(({ getCachedPhotoBlob }) => getCachedPhotoBlob(photo)).then((b) => {
+    import("./photo-cache-CHvThkhZ.mjs").then(({ getCachedPhotoBlob }) => getCachedPhotoBlob(photo)).then((b) => {
       if (!cancelled) setBlob(b);
     }).catch(() => {
       if (!cancelled) setBlob(void 0);
@@ -46,7 +57,8 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
   reactExports.useEffect(() => {
     setZoom(1);
     setOffset({ x: 0, y: 0 });
-  }, [photo, open]);
+    return () => cancelPendingClose();
+  }, [photo, open, cancelPendingClose]);
   const clampOffset = reactExports.useCallback((x, y, z) => {
     if (!containerRef.current || !imgRef.current) return { x, y };
     const cw = containerRef.current.clientWidth;
@@ -89,6 +101,7 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
   };
   const onMouseDown = (e) => {
     if (zoom <= 1) return;
+    setIsPanning(true);
     panState.current = {
       active: true,
       startX: e.clientX,
@@ -107,6 +120,7 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
   };
   const onMouseUp = () => {
     panState.current.active = false;
+    setIsPanning(false);
   };
   const onTouchStart = (e) => {
     if (e.touches.length === 1) {
@@ -120,6 +134,7 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
         startZoom: zoom
       };
     } else if (e.touches.length === 2) {
+      clickStartRef.current = null;
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       touchState.current = {
@@ -151,6 +166,25 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
   };
   const onTouchEnd = () => {
     touchState.current.mode = "none";
+  };
+  const onContainerPointerDown = (e) => {
+    clickStartRef.current = e.isPrimary ? { x: e.clientX, y: e.clientY } : null;
+  };
+  const onContainerClick = (e) => {
+    const start = clickStartRef.current;
+    clickStartRef.current = null;
+    if (!start) return;
+    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    if (dist > CLICK_DRAG_THRESHOLD_PX) return;
+    if (e.detail >= 2) {
+      cancelPendingClose();
+      return;
+    }
+    cancelPendingClose();
+    pendingCloseTimer.current = setTimeout(() => {
+      pendingCloseTimer.current = null;
+      onOpenChange(false);
+    }, DOUBLE_CLICK_WINDOW_MS);
   };
   const canPan = zoom > 1;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open, onOpenChange, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -222,8 +256,10 @@ function PhotoLightbox({ photo, open, onOpenChange }) {
             onTouchStart,
             onTouchMove,
             onTouchEnd,
+            onPointerDown: onContainerPointerDown,
+            onClick: onContainerClick,
             style: {
-              cursor: canPan ? panState.current.active ? "grabbing" : "grab" : "default"
+              cursor: isPanning ? "grabbing" : canPan ? "zoom-out" : "pointer"
             },
             children: url ? /* @__PURE__ */ jsxRuntimeExports.jsx(
               "img",

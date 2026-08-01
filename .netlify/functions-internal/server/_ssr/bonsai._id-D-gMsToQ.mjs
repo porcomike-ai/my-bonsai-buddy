@@ -2,21 +2,21 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { X as Route$4, B as Button, c as styleLabel, z as etapeLabel, j as ageActuel, r as saveBonsai, Y as deleteBonsai, d as cn, W as getBonsai, y as getPoterie, x as listPhotos, p as getPhotoBlob, b as soinLabel } from "./router-Dgs5QC_7.mjs";
-import { l as listJournal } from "./journal-BAlYNI2g.mjs";
-import { l as listRappels } from "./rappel-DXFdD1h8.mjs";
-import { A as AppShell } from "./app-shell-CiPQIcjs.mjs";
-import { B as BonsaiForm } from "./bonsai-form-DntgM_yg.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-D7__oiiM.mjs";
+import { $ as Route$4, e as collectionSearchToFilters, f as filterAndSortBonsais, B as Button, c as styleLabel, E as etapeLabel, m as ageActuel, x as saveBonsai, a0 as deleteBonsai, d as cn, _ as getBonsai, D as getPoterie, C as listPhotos, v as getPhotoBlob, b as soinLabel, l as listBonsais } from "./router-CpKzFGrm.mjs";
+import { l as listJournal } from "./journal-BgnU7vFp.mjs";
+import { l as listRappels } from "./rappel-X1_dv-mM.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { B as BonsaiForm } from "./bonsai-form-NZqddj-q.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
 import { R as Root2$1, T as Trigger$1, P as Portal2, C as Content2, I as Item2, S as SubTrigger2, a as SubContent2, b as CheckboxItem2, c as ItemIndicator2, d as RadioItem2, L as Label2, e as Separator2 } from "../_libs/radix-ui__react-dropdown-menu.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
-import { u as useConfirm } from "./confirm-dialog-qMBn7-_d.mjs";
+import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
 import { R as Root2, L as List, T as Trigger, C as Content } from "../_libs/radix-ui__react-tabs.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
-import { z as ArrowLeft, G as Pencil, J as Trash2, r as Star, L as Loader, K as Share2, M as Image$1, N as Images, o as ChevronRight, b as Check, c as Circle } from "../_libs/lucide-react.mjs";
+import { z as ArrowLeft, n as ChevronLeft, o as ChevronRight, G as Pencil, J as Trash2, r as Star, L as Loader, K as Share2, M as Image$1, N as Images, b as Check, c as Circle } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -94,7 +94,7 @@ import "../_libs/react-hook-form.mjs";
 import "../_libs/hookform__resolvers.mjs";
 import "./folder-name-GYMsNziU.mjs";
 import "../_libs/radix-ui__react-switch.mjs";
-import "./photo-cache-DVUV-uVj.mjs";
+import "./photo-cache-CHvThkhZ.mjs";
 import "../_libs/radix-ui__react-menu.mjs";
 import "fs";
 import "path";
@@ -582,6 +582,74 @@ function BonsaiHeader({
     ] })
   ] });
 }
+function BonsaiPrevNextNav({ prevId, nextId, position, search }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "nav",
+    {
+      "aria-label": "Navigation entre arbres de la collection filtrée",
+      className: "flex items-center gap-2",
+      children: [
+        prevId ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          Link,
+          {
+            to: "/bonsai/$id",
+            params: { id: prevId },
+            search,
+            className: "inline-flex h-9 items-center gap-1.5 rounded-full border border-input bg-card px-3 text-sm text-foreground transition hover:border-accent/60 hover:text-accent",
+            "aria-label": "Bonsaï précédent",
+            title: "Bonsaï précédent (flèche gauche)",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronLeft, { className: "h-4 w-4" }),
+              "Précédent"
+            ]
+          }
+        ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "span",
+          {
+            className: "inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-full border border-input bg-card px-3 text-sm text-muted-foreground opacity-50",
+            "aria-disabled": "true",
+            title: "Aucun arbre précédent dans ce filtre",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronLeft, { className: "h-4 w-4" }),
+              "Précédent"
+            ]
+          }
+        ),
+        position && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "px-1 text-xs tabular-nums text-muted-foreground", children: [
+          position.index,
+          " / ",
+          position.total
+        ] }),
+        nextId ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          Link,
+          {
+            to: "/bonsai/$id",
+            params: { id: nextId },
+            search,
+            className: "inline-flex h-9 items-center gap-1.5 rounded-full border border-input bg-card px-3 text-sm text-foreground transition hover:border-accent/60 hover:text-accent",
+            "aria-label": "Bonsaï suivant",
+            title: "Bonsaï suivant (flèche droite)",
+            children: [
+              "Suivant",
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-4 w-4" })
+            ]
+          }
+        ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "span",
+          {
+            className: "inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-full border border-input bg-card px-3 text-sm text-muted-foreground opacity-50",
+            "aria-disabled": "true",
+            title: "Aucun arbre suivant dans ce filtre",
+            children: [
+              "Suivant",
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-4 w-4" })
+            ]
+          }
+        )
+      ]
+    }
+  );
+}
 const Tabs = Root2;
 const TabsList = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   List,
@@ -619,8 +687,8 @@ const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 TabsContent.displayName = Content.displayName;
-const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-DVRG9nHJ.mjs"));
-const RappelsTab = reactExports.lazy(() => import("./rappels-tab-vjqfd90T.mjs"));
+const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-lUdOJRWY.mjs"));
+const RappelsTab = reactExports.lazy(() => import("./rappels-tab--xJlpbom.mjs"));
 function TabFallback() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "pt-4 text-sm text-muted-foreground", children: "Chargement…" });
 }
@@ -628,12 +696,14 @@ function BonsaiDetail() {
   const {
     id
   } = Route$4.useParams();
+  const search = Route$4.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = reactExports.useState(false);
   const {
     confirm,
-    dialog: confirmDialog
+    dialog: confirmDialog,
+    isConfirmOpen
   } = useConfirm();
   const {
     data: b,
@@ -667,10 +737,55 @@ function BonsaiDetail() {
     queryFn: () => b?.poterieId ? getPoterie(b.poterieId) : null,
     enabled: !!b?.poterieId
   });
+  const {
+    data: allBonsais = []
+  } = useQuery({
+    queryKey: ["bonsais"],
+    queryFn: listBonsais
+  });
+  const filters = reactExports.useMemo(() => collectionSearchToFilters(search), [search]);
+  const filteredIds = reactExports.useMemo(() => filterAndSortBonsais(allBonsais, filters).map((x) => x.id), [allBonsais, filters]);
+  const currentIndex = filteredIds.indexOf(id);
+  const prevId = currentIndex > 0 ? filteredIds[currentIndex - 1] : void 0;
+  const nextId = currentIndex >= 0 && currentIndex < filteredIds.length - 1 ? filteredIds[currentIndex + 1] : void 0;
+  const navPosition = currentIndex >= 0 ? {
+    index: currentIndex + 1,
+    total: filteredIds.length
+  } : void 0;
+  reactExports.useEffect(() => {
+    if (editing || isConfirmOpen) return;
+    const onKeyDown = (e) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const target = e.target;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable) {
+        return;
+      }
+      if (e.key === "ArrowLeft" && prevId) {
+        navigate({
+          to: "/bonsai/$id",
+          params: {
+            id: prevId
+          },
+          search
+        });
+      } else if (e.key === "ArrowRight" && nextId) {
+        navigate({
+          to: "/bonsai/$id",
+          params: {
+            id: nextId
+          },
+          search
+        });
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [editing, isConfirmOpen, prevId, nextId, search, navigate]);
   if (isPending) return /* @__PURE__ */ jsxRuntimeExports.jsx(AppShell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-muted-foreground", children: "Chargement…" }) });
   if (!b) return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-muted-foreground", children: "Bonsaï introuvable." }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/collection", className: "text-accent", children: "Retour à la collection" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/collection", search, className: "text-accent", children: "Retour à la collection" })
   ] });
   const remove = async () => {
     const confirmed = await confirm({
@@ -700,7 +815,8 @@ function BonsaiDetail() {
     });
     toast.success("Bonsaï supprimé");
     navigate({
-      to: "/collection"
+      to: "/collection",
+      search
     });
   };
   const toggleFavori = async () => {
@@ -771,9 +887,12 @@ function BonsaiDetail() {
     ] });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/collection", className: "mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4" }),
-      " Collection"
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-6 flex flex-wrap items-center justify-between gap-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/collection", search, className: "inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4" }),
+        " Collection"
+      ] }),
+      filteredIds.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiPrevNextNav, { prevId, nextId, position: navPosition, search })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-8 lg:grid-cols-[380px_1fr]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiHeader, { bonsai: b, poterie, photosCount: photos.length, onEdit: () => setEditing(true), onDelete: remove, onToggleFavori: toggleFavori, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tabs, { defaultValue: "timeline", className: "mt-10", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsList, { className: "bg-secondary/60", children: [

@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { L as Link } from "../_libs/tanstack__react-router.mjs";
+import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, S as Select, e as SelectTrigger, f as SelectValue, g as SelectContent, h as SelectItem, i as STYLES, j as ageActuel, c as styleLabel, l as listBonsais } from "./router-Dgs5QC_7.mjs";
-import { A as AppShell } from "./app-shell-CiPQIcjs.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-D7__oiiM.mjs";
-import { C as Checkbox } from "./checkbox-KC5I_3te.mjs";
+import { R as Route$f, e as collectionSearchToFilters, f as filterAndSortBonsais, I as Input, S as Select, g as SelectTrigger, h as SelectValue, i as SelectContent, j as SelectItem, k as STYLES, m as ageActuel, c as styleLabel, n as filtersToCollectionSearch, l as listBonsais } from "./router-CpKzFGrm.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
+import { C as Checkbox } from "./checkbox-BZvbSth_.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -84,7 +84,7 @@ import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
-import "./photo-cache-DVUV-uVj.mjs";
+import "./photo-cache-CHvThkhZ.mjs";
 import "../_libs/radix-ui__react-checkbox.mjs";
 const ALL_STYLES = "__all__";
 function CollectionPage() {
@@ -94,72 +94,44 @@ function CollectionPage() {
     queryKey: ["bonsais"],
     queryFn: listBonsais
   });
-  const [q, setQ] = reactExports.useState("");
-  const [styleFilter, setStyleFilter] = reactExports.useState("");
-  const [statutFilter, setStatutFilter] = reactExports.useState("actifs");
-  const [sortBy, setSortBy] = reactExports.useState("nom-asc");
-  const [favorisFirst, setFavorisFirst] = reactExports.useState(false);
-  const filtered = reactExports.useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    const list = bonsais.filter((b) => {
-      const dans = b.dansCollection ?? true;
-      if (statutFilter === "actifs" && !dans) return false;
-      if (statutFilter === "sortis" && dans) return false;
-      if (statutFilter === "favoris" && !b.favori) return false;
-      if (styleFilter && b.style !== styleFilter) return false;
-      if (!needle) return true;
-      return b.nom.toLowerCase().includes(needle) || b.espece.toLowerCase().includes(needle) || (b.origine ?? "").toLowerCase().includes(needle);
-    });
-    const cmp = (a, b) => {
-      switch (sortBy) {
-        case "nom-asc":
-          return a.nom.localeCompare(b.nom, "fr", {
-            sensitivity: "base"
-          });
-        case "nom-desc":
-          return b.nom.localeCompare(a.nom, "fr", {
-            sensitivity: "base"
-          });
-        case "espece-asc":
-          return a.espece.localeCompare(b.espece, "fr", {
-            sensitivity: "base"
-          });
-        case "acquisition-desc": {
-          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
-          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
-          if (da === null && db === null) return 0;
-          if (da === null) return 1;
-          if (db === null) return -1;
-          return db - da;
-        }
-        case "acquisition-asc": {
-          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
-          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
-          if (da === null && db === null) return 0;
-          if (da === null) return 1;
-          if (db === null) return -1;
-          return da - db;
-        }
-        case "valeur-desc": {
-          const va = a.valeurEstimee ?? null;
-          const vb = b.valeurEstimee ?? null;
-          if (va === null && vb === null) return 0;
-          if (va === null) return 1;
-          if (vb === null) return -1;
-          return vb - va;
-        }
-        default:
-          return 0;
-      }
+  const navigate = useNavigate({
+    from: "/collection"
+  });
+  const search = Route$f.useSearch();
+  const filters = collectionSearchToFilters(search);
+  const {
+    q,
+    style: styleFilter,
+    statut: statutFilter,
+    sort: sortBy,
+    favorisFirst
+  } = filters;
+  const patchFilters = (patch) => {
+    const next = {
+      ...filters,
+      ...patch
     };
-    return list.sort((a, b) => {
-      if (favorisFirst) {
-        const diff = Number(!!b.favori) - Number(!!a.favori);
-        if (diff !== 0) return diff;
-      }
-      return cmp(a, b);
+    navigate({
+      search: filtersToCollectionSearch(next),
+      replace: true
     });
-  }, [bonsais, q, styleFilter, statutFilter, sortBy, favorisFirst]);
+  };
+  const setQ = (v) => patchFilters({
+    q: v
+  });
+  const setStyleFilter = (v) => patchFilters({
+    style: v
+  });
+  const setStatutFilter = (v) => patchFilters({
+    statut: v
+  });
+  const setSortBy = (v) => patchFilters({
+    sort: v
+  });
+  const setFavorisFirst = (v) => patchFilters({
+    favorisFirst: v
+  });
+  const filtered = reactExports.useMemo(() => filterAndSortBonsais(bonsais, filters), [bonsais, q, styleFilter, statutFilter, sortBy, favorisFirst]);
   const actifsCount = bonsais.filter((b) => b.dansCollection ?? true).length;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "mb-8 flex flex-wrap items-end justify-between gap-4", children: [
@@ -226,7 +198,7 @@ function CollectionPage() {
       ] })
     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4", children: filtered.map((b) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/bonsai/$id", params: {
       id: b.id
-    }, className: "group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg", children: [
+    }, search, className: "group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative aspect-[4/5] w-full overflow-hidden", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiPhoto, { photoId: b.photoPrincipale, className: `h-full w-full object-cover transition duration-500 group-hover:scale-105 ${b.dansCollection ?? true ? "" : "grayscale"}` }),
         !(b.dansCollection ?? true) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur", children: "Sorti" }),

@@ -23,6 +23,33 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // Curseur desktop uniquement (grab/grabbing pendant un drag actif) — état
+  // séparé du ref panState ci-dessous pour ne pas déclencher de re-render à
+  // chaque pixel de déplacement pendant le pan (onMouseMove), seul le
+  // down/up (rare) met à jour ce state.
+  const [isPanning, setIsPanning] = useState(false);
+
+  // Fermeture au clic/tap simple sur l'image ou le fond, en distinguant un
+  // clic d'un geste de glisser/zoomer :
+  // - Distance parcourue entre pointerdown et click > 5px => c'était un
+  //   drag/pan, pas un clic : on ne ferme pas.
+  // - Un pointerdown "non primaire" (2e doigt d'un pinch) invalide le clic
+  //   en cours pour tout le geste.
+  // - Un double-clic/double-tap (zoom) ne doit pas fermer non plus : on
+  //   attend une courte fenêtre après un clic "simple" pour vérifier qu'un
+  //   2e clic n'arrive pas avant de fermer réellement (e.detail === 2 sur ce
+  //   2e clic annule la fermeture en attente).
+  const CLICK_DRAG_THRESHOLD_PX = 5;
+  const DOUBLE_CLICK_WINDOW_MS = 250;
+  const clickStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pendingCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelPendingClose = useCallback(() => {
+    if (pendingCloseTimer.current) {
+      clearTimeout(pendingCloseTimer.current);
+      pendingCloseTimer.current = null;
+    }
+  }, []);
+
   // Gestes tactiles (pinch-to-zoom + pan).
   const touchState = useRef<{
     mode: "none" | "pan" | "pinch";
@@ -83,7 +110,8 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
   useEffect(() => {
     setZoom(1);
     setOffset({ x: 0, y: 0 });
-  }, [photo, open]);
+    return () => cancelPendingClose();
+  }, [photo, open, cancelPendingClose]);
 
   const clampOffset = useCallback((x: number, y: number, z: number) => {
     if (!containerRef.current || !imgRef.current) return { x, y };
@@ -135,6 +163,7 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
   // Pan souris (desktop).
   const onMouseDown = (e: React.MouseEvent) => {
     if (zoom <= 1) return;
+    setIsPanning(true);
     panState.current = {
       active: true,
       startX: e.clientX,
@@ -153,6 +182,7 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
   };
   const onMouseUp = () => {
     panState.current.active = false;
+    setIsPanning(false);
   };
 
   // Touch handlers (mobile) — pinch + pan.
@@ -168,6 +198,8 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
         startZoom: zoom,
       };
     } else if (e.touches.length === 2) {
+      // Un 2e doigt qui se pose : ce geste ne peut pas être un clic simple.
+      clickStartRef.current = null;
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       touchState.current = {
@@ -199,6 +231,36 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
   };
   const onTouchEnd = () => {
     touchState.current.mode = "none";
+  };
+
+  // Fermeture au clic/tap — voir le commentaire au niveau des refs plus haut
+  // pour le détail du raisonnement (distance de drag, pinch, double-clic).
+  const onContainerPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    clickStartRef.current = e.isPrimary ? { x: e.clientX, y: e.clientY } : null;
+  };
+
+  const onContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const start = clickStartRef.current;
+    clickStartRef.current = null;
+    if (!start) return; // geste multi-doigts (pinch) : jamais interprété comme un clic
+
+    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    if (dist > CLICK_DRAG_THRESHOLD_PX) return; // drag/pan : pas une fermeture
+
+    if (e.detail >= 2) {
+      // 2e clic d'un double-clic/double-tap (zoom) : on annule la fermeture
+      // programmée par le 1er clic et on ignore celui-ci.
+      cancelPendingClose();
+      return;
+    }
+
+    // Clic simple confirmé : on laisse une courte fenêtre pour un éventuel
+    // 2e clic (double-clic = zoom) avant de fermer réellement.
+    cancelPendingClose();
+    pendingCloseTimer.current = setTimeout(() => {
+      pendingCloseTimer.current = null;
+      onOpenChange(false);
+    }, DOUBLE_CLICK_WINDOW_MS);
   };
 
   const canPan = zoom > 1;
@@ -268,8 +330,10 @@ export function PhotoLightbox({ photo, open, onOpenChange }: PhotoLightboxProps)
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          onPointerDown={onContainerPointerDown}
+          onClick={onContainerClick}
           style={{
-            cursor: canPan ? (panState.current.active ? "grabbing" : "grab") : "default",
+            cursor: isPanning ? "grabbing" : canPan ? "zoom-out" : "pointer",
           }}
         >
           {url ? (

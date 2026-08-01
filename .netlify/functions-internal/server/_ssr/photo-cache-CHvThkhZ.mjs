@@ -1,4 +1,4 @@
-import { p as getPhotoBlob } from "./router-Dgs5QC_7.mjs";
+import { v as getPhotoBlob } from "./router-CpKzFGrm.mjs";
 import "../_libs/react.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";

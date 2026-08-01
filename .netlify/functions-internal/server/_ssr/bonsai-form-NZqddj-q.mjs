@@ -4,7 +4,7 @@ import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-que
 import { u as useForm, C as Controller } from "../_libs/react-hook-form.mjs";
 import { u } from "../_libs/hookform__resolvers.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { k as useAuth, Z as getAllEspeces, u as uid, _ as addCustomEspece, r as saveBonsai, v as savePhoto, L as Label, I as Input, i as STYLES, V as ETAPES, T as Textarea, B as Button, Q as AddPhotoDialog, d as cn, a as listPoteries, l as listBonsais } from "./router-Dgs5QC_7.mjs";
+import { o as useAuth, a1 as getAllEspeces, u as uid, a2 as addCustomEspece, x as saveBonsai, z as savePhoto, L as Label, I as Input, k as STYLES, Z as ETAPES, T as Textarea, B as Button, X as AddPhotoDialog, d as cn, a as listPoteries, l as listBonsais } from "./router-CpKzFGrm.mjs";
 import { f as folderNameError } from "./folder-name-GYMsNziU.mjs";
 import { S as Switch$1, a as SwitchThumb } from "../_libs/radix-ui__react-switch.mjs";
 import { I as ImagePlus } from "../_libs/lucide-react.mjs";

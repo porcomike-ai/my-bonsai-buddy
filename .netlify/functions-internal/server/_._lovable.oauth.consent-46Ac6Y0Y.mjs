@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "./_libs/react.mjs";
-import { a3 as Route$1, B as Button, a4 as authOAuth } from "./_ssr/router-Dgs5QC_7.mjs";
+import { a7 as Route$1, B as Button, a8 as authOAuth } from "./_ssr/router-CpKzFGrm.mjs";
 import "./_libs/sonner.mjs";
 import "./_libs/lovable.dev__mcp-js.mjs";
 import "./_libs/modelcontextprotocol__sdk.mjs";

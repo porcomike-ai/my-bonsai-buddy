@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -8,6 +8,7 @@ import {
   deleteBonsai,
   getBonsai,
   getPoterie,
+  listBonsais,
   listJournal,
   listPhotos,
   listRappels,
@@ -16,8 +17,10 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { BonsaiForm } from "@/components/bonsai-form";
 import { BonsaiHeader } from "@/components/bonsai-detail/header";
+import { BonsaiPrevNextNav } from "@/components/bonsai-detail/prev-next-nav";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { collectionSearchToFilters, filterAndSortBonsais, validateCollectionSearch } from "@/lib/collection-filters";
 
 // Chargement paresseux des onglets — chaque onglet est bundle-splitté
 const UnifiedTimeline = lazy(() => import("@/components/bonsai-detail/unified-timeline"));
@@ -25,6 +28,7 @@ const RappelsTab = lazy(() => import("@/components/bonsai-detail/rappels-tab"));
 
 export const Route = createFileRoute("/bonsai/$id")({
   ssr: false,
+  validateSearch: validateCollectionSearch,
   loader: async ({ params, context }) => {
     // Même queryKey que le `useQuery` de BonsaiDetail ci-dessous : évite un 2e
     // appel réseau `getBonsai` redondant juste après la navigation.
@@ -61,10 +65,11 @@ function TabFallback() {
 
 function BonsaiDetail() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const { confirm, dialog: confirmDialog } = useConfirm();
+  const { confirm, dialog: confirmDialog, isConfirmOpen } = useConfirm();
 
   const { data: b, isPending } = useQuery({
     queryKey: ["bonsai", id],
@@ -87,6 +92,55 @@ function BonsaiDetail() {
     queryFn: () => (b?.poterieId ? getPoterie(b.poterieId) : null),
     enabled: !!b?.poterieId,
   });
+  // Même queryKey que /collection : partage le cache React Query, pas de
+  // requête réseau supplémentaire si la collection a déjà été visitée.
+  const { data: allBonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
+
+  // Navigation Précédent/Suivant : reproduit exactement le filtrage/tri de
+  // la vue Collection (fonction partagée) à partir des filtres reçus en
+  // search params, pour que "Suivant" corresponde à l'arbre suivant dans la
+  // liste que l'utilisateur avait sous les yeux avant d'ouvrir cette fiche.
+  const filters = useMemo(() => collectionSearchToFilters(search), [search]);
+  const filteredIds = useMemo(
+    () => filterAndSortBonsais(allBonsais, filters).map((x) => x.id),
+    [allBonsais, filters],
+  );
+  const currentIndex = filteredIds.indexOf(id);
+  const prevId = currentIndex > 0 ? filteredIds[currentIndex - 1] : undefined;
+  const nextId =
+    currentIndex >= 0 && currentIndex < filteredIds.length - 1
+      ? filteredIds[currentIndex + 1]
+      : undefined;
+  const navPosition =
+    currentIndex >= 0 ? { index: currentIndex + 1, total: filteredIds.length } : undefined;
+
+  // Raccourcis clavier ← / → : ignorés pendant l'édition du formulaire, si
+  // une boîte de confirmation est ouverte, ou si le focus est dans un champ
+  // de saisie (texte, select, contenteditable) pour ne pas interférer avec
+  // la frappe ou la navigation native du clavier dans un formulaire.
+  useEffect(() => {
+    if (editing || isConfirmOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (e.key === "ArrowLeft" && prevId) {
+        navigate({ to: "/bonsai/$id", params: { id: prevId }, search });
+      } else if (e.key === "ArrowRight" && nextId) {
+        navigate({ to: "/bonsai/$id", params: { id: nextId }, search });
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [editing, isConfirmOpen, prevId, nextId, search, navigate]);
 
   if (isPending)
     return (
@@ -98,7 +152,7 @@ function BonsaiDetail() {
     return (
       <AppShell>
         <p className="text-muted-foreground">Bonsaï introuvable.</p>
-        <Link to="/collection" className="text-accent">
+        <Link to="/collection" search={search} className="text-accent">
           Retour à la collection
         </Link>
       </AppShell>
@@ -125,7 +179,7 @@ function BonsaiDetail() {
     qc.invalidateQueries({ queryKey: ["journal"] });
     qc.invalidateQueries({ queryKey: ["rappels"] });
     toast.success("Bonsaï supprimé");
-    navigate({ to: "/collection" });
+    navigate({ to: "/collection", search });
   };
 
   const toggleFavori = async () => {
@@ -195,12 +249,23 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      <Link
-        to="/collection"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Collection
-      </Link>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <Link
+          to="/collection"
+          search={search}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Collection
+        </Link>
+        {filteredIds.length > 1 && (
+          <BonsaiPrevNextNav
+            prevId={prevId}
+            nextId={nextId}
+            position={navPosition}
+            search={search}
+          />
+        )}
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
         <BonsaiHeader

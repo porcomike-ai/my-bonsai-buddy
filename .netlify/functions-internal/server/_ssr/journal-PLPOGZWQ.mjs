@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { m as SOINS, s as soinEmoji, b as soinLabel, l as listBonsais } from "./router-Dgs5QC_7.mjs";
-import { l as listJournal } from "./journal-BAlYNI2g.mjs";
-import { A as AppShell } from "./app-shell-CiPQIcjs.mjs";
+import { q as SOINS, s as soinEmoji, b as soinLabel, l as listBonsais } from "./router-CpKzFGrm.mjs";
+import { l as listJournal } from "./journal-BgnU7vFp.mjs";
+import { A as AppShell } from "./app-shell-CMAt845e.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";

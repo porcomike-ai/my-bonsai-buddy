@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { listBonsais, ageActuel } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
@@ -15,22 +15,23 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, Sprout, Star } from "lucide-react";
-
-type SortOption =
-  | "nom-asc"
-  | "nom-desc"
-  | "espece-asc"
-  | "acquisition-desc"
-  | "acquisition-asc"
-  | "valeur-desc";
+import {
+  collectionSearchToFilters,
+  filterAndSortBonsais,
+  filtersToCollectionSearch,
+  validateCollectionSearch,
+  type CollectionFilters,
+  type CollectionSortOption,
+  type CollectionStatutFilter,
+} from "@/lib/collection-filters";
 
 // Radix <Select.Item> interdit une value="" (réservée pour "aucune sélection"
 // / placeholder) — on utilise ce sentinel pour "tous les styles" et on le
-// traduit en "" au niveau du state applicatif (styleFilter reste "" en
-// interne, comme avant, pour ne rien changer à la logique de filtrage).
+// traduit en "" au niveau des search params (le state applicatif réel).
 const ALL_STYLES = "__all__";
 
 export const Route = createFileRoute("/collection")({
+  validateSearch: validateCollectionSearch,
   head: () => ({
     meta: [
       { title: "Mes bonsaïs — Bonsaï Studio" },
@@ -52,75 +53,29 @@ export const Route = createFileRoute("/collection")({
 
 function CollectionPage() {
   const { data: bonsais = [] } = useQuery({ queryKey: ["bonsais"], queryFn: listBonsais });
-  const [q, setQ] = useState("");
-  const [styleFilter, setStyleFilter] = useState<string>("");
-  const [statutFilter, setStatutFilter] = useState<"actifs" | "sortis" | "tous" | "favoris">(
-    "actifs",
+  const navigate = useNavigate({ from: "/collection" });
+  const search = Route.useSearch();
+  const filters = collectionSearchToFilters(search);
+  const { q, style: styleFilter, statut: statutFilter, sort: sortBy, favorisFirst } = filters;
+
+  // Chaque setter ne modifie qu'un champ et laisse les autres tels quels dans
+  // l'URL — les search params sont la seule source de vérité pour les
+  // filtres (plus de useState local), pour que la fiche bonsaï puisse les
+  // lire à l'identique via le lien "Suivant/Précédent".
+  const patchFilters = (patch: Partial<CollectionFilters>) => {
+    const next = { ...filters, ...patch };
+    navigate({ search: filtersToCollectionSearch(next), replace: true });
+  };
+  const setQ = (v: string) => patchFilters({ q: v });
+  const setStyleFilter = (v: string) => patchFilters({ style: v });
+  const setStatutFilter = (v: CollectionStatutFilter) => patchFilters({ statut: v });
+  const setSortBy = (v: CollectionSortOption) => patchFilters({ sort: v });
+  const setFavorisFirst = (v: boolean) => patchFilters({ favorisFirst: v });
+
+  const filtered = useMemo(
+    () => filterAndSortBonsais(bonsais, filters),
+    [bonsais, q, styleFilter, statutFilter, sortBy, favorisFirst],
   );
-  const [sortBy, setSortBy] = useState<SortOption>("nom-asc");
-  const [favorisFirst, setFavorisFirst] = useState(false);
-
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    const list = bonsais.filter((b) => {
-      const dans = b.dansCollection ?? true;
-      if (statutFilter === "actifs" && !dans) return false;
-      if (statutFilter === "sortis" && dans) return false;
-      if (statutFilter === "favoris" && !b.favori) return false;
-      if (styleFilter && b.style !== styleFilter) return false;
-      if (!needle) return true;
-      return (
-        b.nom.toLowerCase().includes(needle) ||
-        b.espece.toLowerCase().includes(needle) ||
-        (b.origine ?? "").toLowerCase().includes(needle)
-      );
-    });
-
-    const cmp = (a: typeof list[number], b: typeof list[number]): number => {
-      switch (sortBy) {
-        case "nom-asc":
-          return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
-        case "nom-desc":
-          return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
-        case "espece-asc":
-          return a.espece.localeCompare(b.espece, "fr", { sensitivity: "base" });
-        case "acquisition-desc": {
-          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
-          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
-          if (da === null && db === null) return 0;
-          if (da === null) return 1;
-          if (db === null) return -1;
-          return db - da;
-        }
-        case "acquisition-asc": {
-          const da = a.dateAcquisition ? new Date(a.dateAcquisition).getTime() : null;
-          const db = b.dateAcquisition ? new Date(b.dateAcquisition).getTime() : null;
-          if (da === null && db === null) return 0;
-          if (da === null) return 1;
-          if (db === null) return -1;
-          return da - db;
-        }
-        case "valeur-desc": {
-          const va = a.valeurEstimee ?? null;
-          const vb = b.valeurEstimee ?? null;
-          if (va === null && vb === null) return 0;
-          if (va === null) return 1;
-          if (vb === null) return -1;
-          return vb - va;
-        }
-        default:
-          return 0;
-      }
-    };
-
-    return list.sort((a, b) => {
-      if (favorisFirst) {
-        const diff = Number(!!b.favori) - Number(!!a.favori);
-        if (diff !== 0) return diff;
-      }
-      return cmp(a, b);
-    });
-  }, [bonsais, q, styleFilter, statutFilter, sortBy, favorisFirst]);
 
   const actifsCount = bonsais.filter((b) => b.dansCollection ?? true).length;
 
@@ -176,7 +131,7 @@ function CollectionPage() {
         </Select>
         <Select
           value={statutFilter}
-          onValueChange={(v) => setStatutFilter(v as "actifs" | "sortis" | "tous" | "favoris")}
+          onValueChange={(v) => setStatutFilter(v as CollectionStatutFilter)}
         >
           <SelectTrigger
             aria-label="Filtrer par statut dans la collection"
@@ -191,7 +146,7 @@ function CollectionPage() {
             <SelectItem value="tous">Tous</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as CollectionSortOption)}>
           <SelectTrigger
             aria-label="Trier les bonsaïs"
             className="h-11 w-auto min-w-[200px] rounded-full border-input bg-card px-4 text-sm"
@@ -245,6 +200,7 @@ function CollectionPage() {
               <Link
                 to="/bonsai/$id"
                 params={{ id: b.id }}
+                search={search}
                 className="group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg"
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden">

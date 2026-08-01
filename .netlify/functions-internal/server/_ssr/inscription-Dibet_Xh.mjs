@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { k as useAuth, R as Route$e, L as Label, I as Input, B as Button } from "./router-Dgs5QC_7.mjs";
+import { o as useAuth, L as Label, I as Input, B as Button } from "./router-CpKzFGrm.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -81,53 +81,44 @@ import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
-function isSafeRedirect(path) {
-  if (!path.startsWith("/")) return false;
-  if (path.includes("\\")) return false;
-  if (path.startsWith("//")) return false;
-  return true;
-}
-function ConnexionPage() {
+function InscriptionPage() {
   const {
-    signIn,
+    signUp,
     user,
     loading
   } = useAuth();
   const navigate = useNavigate();
-  const {
-    redirect
-  } = Route$e.useSearch();
   const [email, setEmail] = reactExports.useState("");
   const [password, setPassword] = reactExports.useState("");
+  const [confirm, setConfirm] = reactExports.useState("");
   const [busy, setBusy] = reactExports.useState(false);
-  const goRedirect = () => {
-    const target = redirect ?? "/";
-    if (target.includes("?") || target.startsWith("/.")) {
-      const resolved = new URL(target, window.location.origin);
-      if (resolved.origin !== window.location.origin) {
-        window.location.assign("/");
-        return;
-      }
-      window.location.assign(target);
-    } else {
+  reactExports.useEffect(() => {
+    if (!loading && user) {
       navigate({
-        to: target,
+        to: "/",
         replace: true
       });
     }
-  };
-  reactExports.useEffect(() => {
-    if (!loading && user) goRedirect();
-  }, [user, loading]);
+  }, [user, loading, navigate]);
   const submit = async (e) => {
     e.preventDefault();
+    if (password.length < 8) {
+      toast.error("Le mot de passe doit faire au moins 8 caractères");
+      return;
+    }
+    if (password !== confirm) {
+      toast.error("Les mots de passe ne correspondent pas");
+      return;
+    }
     setBusy(true);
     try {
-      await signIn(email.trim(), password);
-      toast.success("Connexion réussie");
-      goRedirect();
+      await signUp(email.trim(), password);
+      toast.success("Compte créé. Vous pouvez vous connecter.");
+      navigate({
+        to: "/connexion"
+      });
     } catch (err) {
-      toast.error("Connexion impossible : " + err.message);
+      toast.error("Inscription impossible : " + err.message);
     } finally {
       setBusy(false);
     }
@@ -135,8 +126,8 @@ function ConnexionPage() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex min-h-screen items-center justify-center bg-background px-4 py-12", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full max-w-md", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-8 text-center", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Leaf, { className: "h-6 w-6", strokeWidth: 2.25 }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "font-display text-3xl font-semibold tracking-tight", children: "Bonsaï Studio" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-sm text-muted-foreground", children: "Carnet de collection" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "font-display text-3xl font-semibold tracking-tight", children: "Créer un compte" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-sm text-muted-foreground", children: "Synchronisez vos bonsaïs sur tous vos appareils" })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: submit, className: "space-y-4 rounded-3xl border border-border bg-card p-6", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
@@ -145,18 +136,21 @@ function ConnexionPage() {
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "password", children: "Mot de passe" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { id: "password", type: "password", required: true, autoComplete: "current-password", value: password, onChange: (e) => setPassword(e.target.value), placeholder: "••••••••" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { id: "password", type: "password", required: true, autoComplete: "new-password", value: password, onChange: (e) => setPassword(e.target.value), placeholder: "Au moins 8 caractères" })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", disabled: busy, className: "w-full", children: busy ? "Connexion…" : "Se connecter" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "confirm", children: "Confirmer le mot de passe" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Input, { id: "confirm", type: "password", required: true, autoComplete: "new-password", value: confirm, onChange: (e) => setConfirm(e.target.value), placeholder: "••••••••" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", disabled: busy, className: "w-full", children: busy ? "Création…" : "Créer mon compte" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-center text-sm text-muted-foreground", children: [
-        "Pas encore de compte ?",
+        "Déjà un compte ?",
         " ",
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/inscription", className: "font-medium text-accent hover:underline", children: "Créer un compte" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/connexion", className: "font-medium text-accent hover:underline", children: "Se connecter" })
       ] })
     ] })
   ] }) });
 }
 export {
-  ConnexionPage as component,
-  isSafeRedirect
+  InscriptionPage as component
 };
