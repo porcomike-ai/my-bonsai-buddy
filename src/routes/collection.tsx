@@ -316,7 +316,7 @@ function CollectionPage() {
 
       {/* Sheet filtres — mobile uniquement */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl pb-8">
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl pb-24">
           <SheetHeader className="text-left">
             <SheetTitle className="font-display text-xl">Filtres</SheetTitle>
             <SheetDescription>
@@ -390,7 +390,7 @@ function CollectionPage() {
             </label>
           </div>
 
-          <SheetFooter className="mt-8 flex flex-row gap-2 sm:justify-between">
+          <SheetFooter className="mt-8 mb-2 flex flex-row gap-2 sm:justify-between">
             <Button
               type="button"
               variant="outline"
