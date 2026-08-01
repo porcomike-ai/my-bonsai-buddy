@@ -25,9 +25,7 @@ export function KpiCard({
         <span className="text-muted-foreground">{icon}</span>
         {label}
       </div>
-      <div className="mt-2 font-display text-2xl font-semibold tracking-tight">
-        {value}
-      </div>
+      <div className="mt-2 font-display text-2xl font-semibold tracking-tight">{value}</div>
       {hint && (
         <div
           className={cn(
