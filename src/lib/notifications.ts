@@ -47,14 +47,18 @@ export async function subscribeToPush(): Promise<boolean> {
     const registration = await navigator.serviceWorker.register("/sw.js");
     if (import.meta.env.DEV) console.log("Service Worker enregistré:", registration);
 
-    // 3. S'abonner au push
-    // Valeur de secours non sensible (clé VAPID *publique*, conçue pour être
-    // connue du navigateur) si la variable d'environnement n'est pas
-    // configurée sur la plateforme de déploiement — évite un échec total de
-    // l'abonnement pour un simple oubli de configuration.
-    const vapidPublicKey =
-      import.meta.env.VITE_VAPID_PUBLIC_KEY ||
-      "BFIBioio6UseGsO67Zk0hJuGdYjkNuJ69RxTWBN0EfBXeSy3-t_z-zm9bCXYnqU2-u5YbZWW42gh1EQ4ZFyKtDE";
+    // 3. S'abonner au push — clé publique OBLIGATOIRE via env.
+    // Pas de fallback hardcodé : une clé orpheline (sans privée côté edge)
+    // ferait réussir l'abonnement tout en rendant les push définitivement
+    // muets, sans aucune erreur visible.
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+    if (!vapidPublicKey) {
+      console.error(
+        "VITE_VAPID_PUBLIC_KEY manquante : abonnement push impossible. " +
+          "Configurer la variable sur l'environnement de déploiement.",
+      );
+      return false;
+    }
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
