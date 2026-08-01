@@ -33,9 +33,14 @@ const schema = z.object({
     // Ce nom sert de nom de dossier lors de l'export ZIP par arbre : on
     // bloque à la saisie les caractères non supportés par les systèmes de
     // fichiers plutôt que de les corriger silencieusement à l'export.
-    .refine((val) => folderNameError(val) === null, (val) => ({
-      message: folderNameError(val) ?? "Nom invalide",
-    })),
+    // Zod 4 : le 2ᵉ argument de refine n'accepte plus un callback
+    // `(val) => ({ message })` — superRefine conserve le message dynamique.
+    .superRefine((val, ctx) => {
+      const err = folderNameError(val);
+      if (err !== null) {
+        ctx.addIssue({ code: "custom", message: err });
+      }
+    }),
   espece: z.string().min(1, "Indiquez l'espèce"),
   style: z.enum([
     "chokkan",
