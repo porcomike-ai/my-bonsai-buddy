@@ -11,20 +11,26 @@ import {
 import type { BonsaiEtape } from "@/lib/supabase-data";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none transition-colors",
+  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm backdrop-blur-md",
   {
     variants: {
       variant: {
-        culture: "border-sage/30 bg-sage/15 text-forest",
-        "pre-bonsai": "border-terracotta/30 bg-terracotta/12 text-terracotta",
-        bonsai: "border-forest/25 bg-forest/10 text-forest",
-        favori: "border-terracotta/40 bg-terracotta/15 text-terracotta",
-        sorti: "border-muted-foreground/20 bg-muted text-muted-foreground",
-        default: "border-border bg-secondary text-secondary-foreground",
+        culture:
+          "border-sage/50 bg-background/95 text-forest",
+        "pre-bonsai":
+          "border-terracotta/50 bg-background/95 text-terracotta",
+        bonsai:
+          "border-forest/40 bg-background/95 text-forest",
+        favori:
+          "border-terracotta/50 bg-background/95 text-terracotta",
+        sorti:
+          "border-muted-foreground/30 bg-background/95 text-muted-foreground",
+        default:
+          "border-border bg-background/95 text-secondary-foreground",
       },
       size: {
-        sm: "px-1.5 py-0.5 text-[10px]",
-        md: "px-2 py-0.5 text-[11px]",
+        sm: "px-2 py-0.5 text-[10px]",
+        md: "px-2.5 py-1 text-[11px]",
       },
     },
     defaultVariants: {
@@ -62,7 +68,7 @@ export function StatusBadge({
 
   return (
     <span className={cn(badgeVariants({ variant, size }), className)} {...props}>
-      {showIcon && Icon && <Icon className="h-3 w-3 shrink-0" strokeWidth={2.25} />}
+      {showIcon && Icon && <Icon className="h-3 w-3 shrink-0" strokeWidth={2.5} />}
       {label ?? children}
     </span>
   );
