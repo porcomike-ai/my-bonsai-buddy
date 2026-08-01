@@ -9,6 +9,7 @@ import {
   uploadPoteriePhoto,
   uploadPoterieGalleryPhoto,
   deleteStorageObject,
+  cleanupStoragePaths,
   POTERIE_BUCKET,
   type Poterie,
   type Photo,
@@ -47,29 +48,22 @@ export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<vo
 }
 
 export async function deletePoterie(id: string): Promise<void> {
-  // Récupérer les chemins Storage AVANT toute suppression (photo principale +
-  // galerie), même principe que deleteBonsai (voir bonsai.ts).
+  // 1) Lire les chemins AVANT le DELETE.
+  // 2) DELETE BDD d'abord (FK bonsais.poterie_id → ON DELETE SET NULL).
+  // 3) Cleanup Storage best-effort — ne doit pas faire échouer l'UX si la
+  //    poterie a déjà disparu de la collection.
   const poterie = await getPoterie(id);
   const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
-  const galeriePaths =
-    (photos as PhotoRow[] | null)?.map((p) => p.storage_path).filter(Boolean) ?? [];
+  const paths: string[] = [];
+  if (poterie?.photoPath) paths.push(poterie.photoPath);
+  for (const p of (photos as PhotoRow[] | null) ?? []) {
+    if (p.storage_path) paths.push(p.storage_path);
+  }
 
-  // Supprimer la poterie en BDD d'abord. bonsais.poterie_id a une contrainte
-  // FK bonsais_poterie_id_fkey avec ON DELETE SET NULL (voir
-  // supabase/migrations/20260703030246_...sql) : supprimer une poterie remet
-  // automatiquement à null le poterie_id de tout bonsaï encore "planté"
-  // dedans, pas besoin de le faire manuellement ici. Si cette étape échoue,
-  // on s'arrête là : mieux vaut des fichiers Storage orphelins (récupérables
-  // via un nettoyage périodique) que des lignes en base pointant vers des
-  // fichiers déjà supprimés.
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
 
-  // Nettoyer le Storage seulement après le succès de la suppression BDD.
-  if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
-  if (galeriePaths.length > 0) {
-    await db.storage.from(POTERIE_BUCKET).remove(galeriePaths);
-  }
+  await cleanupStoragePaths(POTERIE_BUCKET, paths);
 }
 
 // --- Photos de poteries (galerie) ---

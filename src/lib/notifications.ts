@@ -20,83 +20,126 @@ export function notificationStatus(): NotificationPermission | "unsupported" {
 
 export function triggerTimeFor(e: Evenement): number {
   const ts = new Date(e.dateHeure).getTime();
-  // Ajout d'une sécurité : si la date est invalide, on retourne une valeur très éloignée
-  if (isNaN(ts)) return Infinity; 
+  if (isNaN(ts)) return Infinity;
   const minutesBefore = e.rappelMinutes ?? 0;
   return ts - minutesBefore * 60_000;
 }
 
 // --- Push notifications (Service Worker) ---
 
-export async function subscribeToPush(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
+export type PushSubscribeResult =
+  | { ok: true }
+  | { ok: false; reason: string };
+
+/**
+ * Active les notifications push.
+ * Retourne un motif explicite en cas d'échec (affiché dans le toast Paramètres).
+ */
+export async function subscribeToPush(): Promise<PushSubscribeResult> {
+  if (typeof window === "undefined") {
+    return { ok: false, reason: "Environnement non navigateur" };
+  }
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    console.warn("Service Worker ou Push API non supporté");
-    return false;
+    return {
+      ok: false,
+      reason: "Ce navigateur ne supporte pas les notifications push (Service Worker / Push API)",
+    };
   }
 
   try {
-    // 1. Demander la permission
     const permission = await requestNotificationPermission();
     if (permission !== "granted") {
-      console.warn("Permission de notification refusée");
-      return false;
+      return {
+        ok: false,
+        reason:
+          permission === "denied"
+            ? "Permission refusée. Réactivez les notifications dans les réglages du navigateur."
+            : "Permission de notification non accordée",
+      };
     }
 
-    // 2. Enregistrer le service worker
+    // Enregistrement + attente que le SW soit actif (sinon pushManager.subscribe échoue).
     const registration = await navigator.serviceWorker.register("/sw.js");
-    if (import.meta.env.DEV) console.log("Service Worker enregistré:", registration);
+    await navigator.serviceWorker.ready;
+    // Prefer the registration that is controlling, fallback to the one we just got.
+    const activeRegistration =
+      (await navigator.serviceWorker.getRegistration()) ?? registration;
 
-    // 3. S'abonner au push
-    // Valeur de secours non sensible (clé VAPID *publique*, conçue pour être
-    // connue du navigateur) si la variable d'environnement n'est pas
-    // configurée sur la plateforme de déploiement — évite un échec total de
-    // l'abonnement pour un simple oubli de configuration.
-    const vapidPublicKey =
-      import.meta.env.VITE_VAPID_PUBLIC_KEY ||
-      "BFIBioio6UseGsO67Zk0hJuGdYjkNuJ69RxTWBN0EfBXeSy3-t_z-zm9bCXYnqU2-u5YbZWW42gh1EQ4ZFyKtDE";
+    const vapidPublicKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined)?.trim();
+    if (!vapidPublicKey) {
+      console.error(
+        "VITE_VAPID_PUBLIC_KEY manquante : abonnement push impossible. " +
+          "Configurer la variable sur l'environnement de déploiement (même clé publique que VAPID_PUBLIC_KEY côté Edge).",
+      );
+      return {
+        ok: false,
+        reason:
+          "Clé VAPID publique absente (VITE_VAPID_PUBLIC_KEY). À configurer dans les variables d'environnement du déploiement.",
+      };
+    }
 
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      // Cast nécessaire : le type Uint8Array de la lib DOM utilisée par ce
-      // projet est plus strict que BufferSource (incompatibilité de version
-      // de types, sans conséquence à l'exécution — un Uint8Array est un
-      // BufferSource valide pour l'API Push réelle du navigateur).
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-    });
+    let subscription: PushSubscription;
+    try {
+      subscription = await activeRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        // Cast : incompatibilité de types DOM/lib sans impact runtime.
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+      });
+    } catch (err) {
+      console.error("pushManager.subscribe failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        ok: false,
+        reason: `Échec de l'abonnement navigateur : ${msg}`,
+      };
+    }
 
-    // 4. Enregistrer l'abonnement dans Supabase
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
-      console.error("Utilisateur non connecté");
-      return false;
+      return { ok: false, reason: "Utilisateur non connecté" };
     }
 
     const p256dhKey = subscription.getKey("p256dh");
     const authKey = subscription.getKey("auth");
     if (!p256dhKey || !authKey) {
-      console.error("Clés de chiffrement manquantes sur l'abonnement push.");
-      return false;
+      return { ok: false, reason: "Clés de chiffrement manquantes sur l'abonnement" };
     }
 
-    const { error } = await supabase.from("push_subscriptions").upsert({
-      user_id: user.id,
-      endpoint: subscription.endpoint,
-      p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
-      auth: btoa(String.fromCharCode(...new Uint8Array(authKey))),
-    }, { onConflict: "endpoint" });
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: arrayBufferToBase64(p256dhKey),
+        auth: arrayBufferToBase64(authKey),
+      },
+      { onConflict: "endpoint" },
+    );
 
     if (error) {
       console.error("Erreur lors de l'enregistrement de l'abonnement:", error);
-      return false;
+      return {
+        ok: false,
+        reason: `Enregistrement BDD impossible : ${error.message}`,
+      };
     }
 
     if (import.meta.env.DEV) console.log("Abonnement push enregistré avec succès");
-    return true;
+    return { ok: true };
   } catch (error) {
     console.error("Erreur lors de l'abonnement push:", error);
-    return false;
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : String(error),
+    };
   }
+}
+
+/** Compat : booléen simple pour les appelants qui n'utilisent pas le motif. */
+export async function subscribeToPushSimple(): Promise<boolean> {
+  const r = await subscribeToPush();
+  return r.ok;
 }
 
 export async function checkPushSubscription(): Promise<boolean> {
@@ -129,7 +172,6 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     const subscription = await registration.pushManager.getSubscription();
     if (!subscription) return false;
 
-    // Delete from Supabase first
     const { error } = await supabase
       .from("push_subscriptions")
       .delete()
@@ -140,7 +182,6 @@ export async function unsubscribeFromPush(): Promise<boolean> {
       return false;
     }
 
-    // Unsubscribe from browser
     const unsubscribed = await subscription.unsubscribe();
     if (import.meta.env.DEV) console.log("Abonnement push supprimé:", unsubscribed);
     return true;
@@ -150,16 +191,23 @@ export async function unsubscribeFromPush(): Promise<boolean> {
   }
 }
 
-// Convertir une clé VAPID base64 URL-safe en Uint8Array
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+/** Encode ArrayBuffer → base64 sans spread (évite les limites d'arguments). */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+  return btoa(binary);
 }
