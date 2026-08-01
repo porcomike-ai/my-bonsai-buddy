@@ -53,11 +53,11 @@ export function BonsaiCard({
           )}
         />
 
-        {/* Gradient bas pour lisibilité */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 to-transparent" />
+        {/* Gradient bas pour lisibilité du nom */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent" />
 
-        {/* Badge étape ou Sorti */}
-        <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+        {/* Badge étape ou Sorti — contraste renforcé */}
+        <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
           {isSorti ? (
             <StatusBadge variant="sorti" label="Sorti" size="sm" />
           ) : etape ? (
@@ -72,11 +72,11 @@ export function BonsaiCard({
         {/* Favori */}
         {bonsai.favori && (
           <div
-            className="absolute right-2 top-2 rounded-full bg-black/35 p-1.5 backdrop-blur-sm"
+            className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-background/95 shadow-sm backdrop-blur-md"
             aria-label="Favori"
             title="Favori"
           >
-            <Star className="h-3.5 w-3.5 fill-terracotta text-terracotta" />
+            <Star className="h-3.5 w-3.5 fill-terracotta text-terracotta" strokeWidth={2.25} />
           </div>
         )}
 
@@ -90,7 +90,7 @@ export function BonsaiCard({
           >
             {bonsai.nom}
           </h3>
-          <p className="mt-0.5 truncate text-xs italic text-white/80">{bonsai.espece}</p>
+          <p className="mt-0.5 truncate text-xs italic text-white/85">{bonsai.espece}</p>
         </div>
       </div>
 
