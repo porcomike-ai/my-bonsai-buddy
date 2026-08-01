@@ -138,24 +138,28 @@ export function PhotoLightbox({ photo, photos = [], open, onOpenChange }: PhotoL
   const [comparePhoto, setComparePhoto] = useState<Photo | null>(null);
   const [splitPct, setSplitPct] = useState(50);
 
-  // Index courant dans la liste (navigation)
+  // Photo active (navigation locale sans remonter au parent)
+  const [localPhoto, setLocalPhoto] = useState<Photo | null>(null);
+  useEffect(() => {
+    setLocalPhoto(photo);
+  }, [photo]);
+
+  const activePhoto = localPhoto ?? photo;
+
+  // Index courant dans la liste (basé sur la photo ACTIVE, pas la prop initiale)
   const sortedPhotos = useMemo(() => {
-    if (!photos.length) return photo ? [photo] : [];
+    if (!photos.length) return activePhoto ? [activePhoto] : [];
     return [...photos].sort((a, b) => a.date.localeCompare(b.date));
-  }, [photos, photo]);
+  }, [photos, activePhoto]);
 
   const currentIndex = useMemo(() => {
-    if (!photo) return -1;
-    return sortedPhotos.findIndex((p) => p.id === photo.id);
-  }, [sortedPhotos, photo]);
+    if (!activePhoto) return -1;
+    return sortedPhotos.findIndex((p) => p.id === activePhoto.id);
+  }, [sortedPhotos, activePhoto]);
 
   const goPrev = () => {
     if (currentIndex > 0) {
-      const prev = sortedPhotos[currentIndex - 1];
-      // Navigation via callback externe n'existe pas — on met à jour via parent
-      // En pratique le parent contrôle `photo`. On expose un pattern interne :
-      // on garde un state local override si photos[] est fourni.
-      setLocalPhoto(prev);
+      setLocalPhoto(sortedPhotos[currentIndex - 1]);
     }
   };
   const goNext = () => {
@@ -163,13 +167,6 @@ export function PhotoLightbox({ photo, photos = [], open, onOpenChange }: PhotoL
       setLocalPhoto(sortedPhotos[currentIndex + 1]);
     }
   };
-
-  const [localPhoto, setLocalPhoto] = useState<Photo | null>(null);
-  useEffect(() => {
-    setLocalPhoto(photo);
-  }, [photo]);
-
-  const activePhoto = localPhoto ?? photo;
   const url = usePhotoUrl(activePhoto, open);
   const compareUrl = usePhotoUrl(comparePhoto, open && compareMode);
 
