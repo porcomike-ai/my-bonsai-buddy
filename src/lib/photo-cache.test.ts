@@ -89,4 +89,17 @@ describe("photo-cache", () => {
     expect(result).toBeUndefined();
     expect(mockGetPhotoBlob).not.toHaveBeenCalled();
   });
+
+  test("un échec réseau n'est pas mis en cache : le prochain appel retente", async () => {
+    mockGetPhotoBlob.mockRejectedValueOnce(new Error("réseau down"));
+    const first = await getCachedPhotoBlob({ storagePath: "u/1/echec.jpg", poterieId: undefined });
+    expect(first).toBeUndefined();
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(1);
+
+    const fakeBlob = new Blob(["b"]);
+    mockGetPhotoBlob.mockResolvedValueOnce(fakeBlob);
+    const second = await getCachedPhotoBlob({ storagePath: "u/1/echec.jpg", poterieId: undefined });
+    expect(second).toBe(fakeBlob);
+    expect(mockGetPhotoBlob).toHaveBeenCalledTimes(2);
+  });
 });

@@ -93,5 +93,5 @@ export function useConfirm() {
     />
   ) : null;
 
-  return { confirm, dialog };
+  return { confirm, dialog, isConfirmOpen: state.open };
 }

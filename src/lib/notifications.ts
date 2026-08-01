@@ -48,13 +48,13 @@ export async function subscribeToPush(): Promise<boolean> {
     if (import.meta.env.DEV) console.log("Service Worker enregistré:", registration);
 
     // 3. S'abonner au push
-    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!vapidPublicKey) {
-      console.error(
-        "VITE_VAPID_PUBLIC_KEY n'est pas défini : impossible de s'abonner aux notifications push.",
-      );
-      return false;
-    }
+    // Valeur de secours non sensible (clé VAPID *publique*, conçue pour être
+    // connue du navigateur) si la variable d'environnement n'est pas
+    // configurée sur la plateforme de déploiement — évite un échec total de
+    // l'abonnement pour un simple oubli de configuration.
+    const vapidPublicKey =
+      import.meta.env.VITE_VAPID_PUBLIC_KEY ||
+      "BFIBioio6UseGsO67Zk0hJuGdYjkNuJ69RxTWBN0EfBXeSy3-t_z-zm9bCXYnqU2-u5YbZWW42gh1EQ4ZFyKtDE";
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,

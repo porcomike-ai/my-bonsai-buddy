@@ -1,328 +1,313 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import webPush from 'https://esm.sh/web-push@3.6.7'
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
+import webPush from "https://esm.sh/web-push@3.6.7"
 
+// Appelée par pg_cron (service role). CORS minimal — pas d'origine navigateur publique.
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "https://xvvqffgchelmszpbdvde.supabase.co",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-// Reuse the triggerTimeFor logic from notifications.ts
-function triggerTimeFor(e: any): number {
-  const ts = new Date(e.date_heure).getTime();
-  if (isNaN(ts)) return Infinity;
-  const minutesBefore = e.rappel_minutes ?? 0;
-  return ts - minutesBefore * 60_000;
+/** Ne charge que les items dont la date tombe dans [now − 24h, now + 24h]. */
+const LOOKBACK_MS = 24 * 3600_000
+const LOOKAHEAD_MS = 24 * 3600_000
+
+const FR_DATE: Intl.DateTimeFormatOptions = {
+  timeZone: "Europe/Paris",
+  dateStyle: "short",
+  timeStyle: "short",
+}
+
+type PushSub = { endpoint: string; p256dh: string; auth: string; user_id: string }
+
+function triggerTimeFor(dateHeure: string, rappelMinutes?: number | null): number {
+  const ts = new Date(dateHeure).getTime()
+  if (isNaN(ts)) return Infinity
+  return ts - (rappelMinutes ?? 0) * 60_000
+}
+
+function isDue(dateHeure: string, now: number, rappelMinutes?: number | null): boolean {
+  const eventTime = new Date(dateHeure).getTime()
+  if (isNaN(eventTime)) return false
+  return triggerTimeFor(dateHeure, rappelMinutes) <= now && eventTime + LOOKBACK_MS > now
+}
+
+function notificationUrl(bonsaiId: string | null | undefined): string {
+  return bonsaiId ? `/bonsai/${bonsaiId}` : "/calendrier"
+}
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  })
+}
+
+async function sendToUser(
+  subs: PushSub[],
+  payload: string,
+  invalid: Set<string>,
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0
+  let failed = 0
+  const results = await Promise.allSettled(
+    subs.map((sub) =>
+      webPush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        payload,
+      ),
+    ),
+  )
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i]
+    if (r.status === "fulfilled") {
+      sent++
+      continue
+    }
+    failed++
+    const err = r.reason as { statusCode?: number }
+    if (err?.statusCode === 404 || err?.statusCode === 410) {
+      invalid.add(subs[i].endpoint)
+    } else {
+      console.error("Failed to send notification:", r.reason)
+    }
+  }
+  return { sent, failed }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get VAPID keys from environment
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-    
+    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY")
+    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY")
     if (!vapidPublicKey || !vapidPrivateKey) {
-      return new Response(
-        JSON.stringify({ error: 'VAPID keys not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return json({ error: "VAPID keys not configured" }, 500)
     }
 
-    // Configure web-push with VAPID keys
     webPush.setVapidDetails(
-      'mailto:contact@bonsai-studio.com',
+      "mailto:contact@bonsai-studio.com",
       vapidPublicKey,
-      vapidPrivateKey
+      vapidPrivateKey,
     )
 
-    const now = Date.now();
-    const oneDayAgo = now - 24 * 3600_000;
+    const now = Date.now()
+    const windowStart = new Date(now - LOOKBACK_MS).toISOString()
+    const windowEnd = new Date(now + LOOKAHEAD_MS).toISOString()
 
-    // Fetch events that need notification
-    const { data: events, error: eventsError } = await supabase
-      .from('evenements')
-      .select('*')
-      .is('notified_at', null)
+    // ── 1. Fetch parallèle, colonnes strictes ──────────────────────────────
+    const [eventsRes, remindersRes] = await Promise.all([
+      supabase
+        .from("evenements")
+        .select("id, titre, description, date_heure, rappel_minutes, bonsai_id, user_id")
+        .is("notified_at", null)
+        .gte("date_heure", windowStart)
+        .lte("date_heure", windowEnd),
+      supabase
+        .from("rappels")
+        .select("id, type, notes, prochaine_date, intervalle_jours, bonsai_id, user_id")
+        .eq("actif", true)
+        .is("notified_at", null)
+        .gte("prochaine_date", windowStart)
+        .lte("prochaine_date", windowEnd),
+    ])
 
-    if (eventsError) {
-      console.error('Error fetching events:', eventsError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch events' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    if (eventsRes.error) {
+      console.error("Error fetching events:", eventsRes.error)
+      return json({ error: "Failed to fetch events" }, 500)
+    }
+    if (remindersRes.error) {
+      console.error("Error fetching reminders:", remindersRes.error)
+      return json({ error: "Failed to fetch reminders" }, 500)
     }
 
-    // Fetch reminders that need notification
-    const { data: reminders, error: remindersError } = await supabase
-      .from('rappels')
-      .select('*')
-      .eq('actif', true)
-      .is('notified_at', null)
+    const eventsToNotify = (eventsRes.data || []).filter((e) =>
+      isDue(e.date_heure, now, e.rappel_minutes),
+    )
+    const remindersToNotify = (remindersRes.data || []).filter((r) =>
+      isDue(r.prochaine_date, now, 0),
+    )
 
-    if (remindersError) {
-      console.error('Error fetching reminders:', remindersError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch reminders' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    if (eventsToNotify.length === 0 && remindersToNotify.length === 0) {
+      return json({ message: "Nothing to notify", eventsNotified: 0, remindersNotified: 0 })
     }
 
-    // Process events
-    const eventsToNotify = (events || []).filter((e: any) => {
-      const trigger = triggerTimeFor(e);
-      const eventTime = new Date(e.date_heure).getTime();
-      return trigger <= now && eventTime + 24 * 3600_000 > now;
-    });
-
-    // Process reminders - convert to event-like structure
-    // Note : user_id n'est pas encore connu ici (il dépend du bonsaï lié).
-    // Il est résolu juste après via bonsaiUserIdById, pour tous les rappels
-    // à notifier d'un coup plutôt qu'un par un.
-    const remindersAsEvents = (reminders || []).map((r: any) => ({
-      id: r.id,
-      titre: r.type,
-      description: r.notes || '',
-      date_heure: r.prochaine_date,
-      rappel_minutes: 0,
-      bonsai_id: r.bonsai_id,
-      intervalle_jours: r.intervalle_jours,
-      user_id: null as string | null,
-    }));
-
-    const remindersToNotify = remindersAsEvents.filter((e: any) => {
-      const trigger = triggerTimeFor(e);
-      const eventTime = new Date(e.date_heure).getTime();
-      return trigger <= now && eventTime + 24 * 3600_000 > now;
-    });
-
-    // Récupère en une seule requête le user_id de tous les bonsaïs concernés
-    // (événements + rappels à notifier), au lieu d'une requête par item.
-    const bonsaiIds = new Set<string>();
-    for (const event of eventsToNotify) {
-      if (event.bonsai_id) bonsaiIds.add(event.bonsai_id);
+    // ── 2. Résolution user_id (colonne native en priorité, bonsai en fallback) ─
+    const missingBonsaiIds = new Set<string>()
+    for (const e of eventsToNotify) {
+      if (!e.user_id && e.bonsai_id) missingBonsaiIds.add(e.bonsai_id)
     }
-    for (const reminder of remindersToNotify) {
-      if (reminder.bonsai_id) bonsaiIds.add(reminder.bonsai_id);
+    for (const r of remindersToNotify) {
+      if (!r.user_id && r.bonsai_id) missingBonsaiIds.add(r.bonsai_id)
     }
 
-    const bonsaiUserIdById = new Map<string, string>();
-    if (bonsaiIds.size > 0) {
+    const bonsaiUserIdById = new Map<string, string>()
+    if (missingBonsaiIds.size > 0) {
       const { data: bonsaisData, error: bonsaisError } = await supabase
-        .from('bonsais')
-        .select('id, user_id')
-        .in('id', Array.from(bonsaiIds));
+        .from("bonsais")
+        .select("id, user_id")
+        .in("id", Array.from(missingBonsaiIds))
 
       if (bonsaisError) {
-        console.error('Error fetching bonsais:', bonsaisError)
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch bonsais' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        console.error("Error fetching bonsais:", bonsaisError)
+        return json({ error: "Failed to fetch bonsais" }, 500)
       }
-
       for (const b of bonsaisData || []) {
-        if (b.user_id) bonsaiUserIdById.set(b.id, b.user_id);
+        if (b.user_id) bonsaiUserIdById.set(b.id, b.user_id)
       }
     }
 
-    // Résout maintenant le user_id de chaque rappel à partir de la map.
-    for (const reminder of remindersToNotify) {
-      reminder.user_id = reminder.bonsai_id ? bonsaiUserIdById.get(reminder.bonsai_id) ?? null : null;
+    function resolveUserId(
+      row: { user_id?: string | null; bonsai_id?: string | null },
+    ): string | null {
+      return row.user_id ?? (row.bonsai_id ? bonsaiUserIdById.get(row.bonsai_id) ?? null : null)
     }
 
-    // Get user IDs for all items to notify. Inclut aussi directement les
-    // user_id des évènements (colonne propre à evenements, indépendante des
-    // bonsaïs) : sans ça, un utilisateur n'ayant que des évènements de
-    // calendrier généraux (sans bonsai_id) n'aurait jamais ses abonnements
-    // push récupérés, même après résolution correcte de eventUserId ci-dessus.
-    const userIds = new Set<string>(bonsaiUserIdById.values());
-    for (const event of eventsToNotify) {
-      if (event.user_id) userIds.add(event.user_id);
+    const userIds = new Set<string>()
+    for (const e of eventsToNotify) {
+      const uid = resolveUserId(e)
+      if (uid) userIds.add(uid)
+      ;(e as { _uid?: string | null })._uid = uid
+    }
+    for (const r of remindersToNotify) {
+      const uid = resolveUserId(r)
+      if (uid) userIds.add(uid)
+      ;(r as { _uid?: string | null })._uid = uid
     }
 
-    // Fetch all push subscriptions for these users
+    if (userIds.size === 0) {
+      return json({ message: "Nothing to notify", eventsNotified: 0, remindersNotified: 0 })
+    }
+
+    // ── 3. Abonnements push ────────────────────────────────────────────────
     const { data: subscriptions, error: subError } = await supabase
-      .from('push_subscriptions')
-      .select('*')
-      .in('user_id', Array.from(userIds))
+      .from("push_subscriptions")
+      .select("endpoint, p256dh, auth, user_id")
+      .in("user_id", Array.from(userIds))
 
     if (subError) {
-      console.error('Error fetching subscriptions:', subError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch subscriptions' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      console.error("Error fetching subscriptions:", subError)
+      return json({ error: "Failed to fetch subscriptions" }, 500)
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      return new Response(
-        JSON.stringify({ message: 'No push subscriptions found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      return json({ message: "No push subscriptions found" })
+    }
+
+    const subscriptionsByUser = new Map<string, PushSub[]>()
+    for (const sub of subscriptions as PushSub[]) {
+      const list = subscriptionsByUser.get(sub.user_id)
+      if (list) list.push(sub)
+      else subscriptionsByUser.set(sub.user_id, [sub])
+    }
+
+    // ── 4. Envoi + marquage (push parallélisés, updates en batch) ───────────
+    let totalSent = 0
+    let totalFailed = 0
+    const invalidEndpoints = new Set<string>()
+    const markEventIds: string[] = []
+    const markReminderOneShot: string[] = []
+    const advanceReminders: { id: string; next: string }[] = []
+
+    for (const event of eventsToNotify) {
+      const uid = (event as { _uid?: string | null })._uid
+      if (!uid) continue
+      const subs = subscriptionsByUser.get(uid)
+      if (subs?.length) {
+        const eventDate = new Date(event.date_heure)
+        const body = event.description
+          ? `${eventDate.toLocaleString("fr-FR", FR_DATE)} — ${event.description}`
+          : eventDate.toLocaleString("fr-FR", FR_DATE)
+        const payload = JSON.stringify({
+          title: `🌱 ${event.titre}`,
+          body,
+          url: notificationUrl(event.bonsai_id),
+        })
+        const { sent, failed } = await sendToUser(subs, payload, invalidEndpoints)
+        totalSent += sent
+        totalFailed += failed
+      }
+      markEventIds.push(event.id)
+    }
+
+    for (const reminder of remindersToNotify) {
+      const uid = (reminder as { _uid?: string | null })._uid
+      if (!uid) continue
+      const subs = subscriptionsByUser.get(uid)
+      if (subs?.length) {
+        const reminderDate = new Date(reminder.prochaine_date)
+        const body =
+          reminder.notes || reminderDate.toLocaleString("fr-FR", FR_DATE)
+        const payload = JSON.stringify({
+          title: `🌱 Rappel : ${reminder.type}`,
+          body,
+          url: notificationUrl(reminder.bonsai_id),
+        })
+        const { sent, failed } = await sendToUser(subs, payload, invalidEndpoints)
+        totalSent += sent
+        totalFailed += failed
+      }
+      if (reminder.intervalle_jours) {
+        const nextDate = new Date(reminder.prochaine_date)
+        nextDate.setDate(nextDate.getDate() + reminder.intervalle_jours)
+        advanceReminders.push({ id: reminder.id, next: nextDate.toISOString() })
+      } else {
+        markReminderOneShot.push(reminder.id)
+      }
+    }
+
+    // Updates BDD en parallèle (au lieu d'1 await séquentiel par ligne).
+    const nowIso = new Date().toISOString()
+    const dbWrites: Promise<unknown>[] = []
+
+    if (markEventIds.length > 0) {
+      dbWrites.push(
+        supabase.from("evenements").update({ notified_at: nowIso }).in("id", markEventIds),
+      )
+    }
+    if (markReminderOneShot.length > 0) {
+      dbWrites.push(
+        supabase.from("rappels").update({ notified_at: nowIso }).in("id", markReminderOneShot),
+      )
+    }
+    for (const { id, next } of advanceReminders) {
+      dbWrites.push(
+        supabase.from("rappels").update({ prochaine_date: next }).eq("id", id),
+      )
+    }
+    if (invalidEndpoints.size > 0) {
+      dbWrites.push(
+        supabase
+          .from("push_subscriptions")
+          .delete()
+          .in("endpoint", Array.from(invalidEndpoints)),
       )
     }
 
-    // Group subscriptions by user_id
-    const subscriptionsByUser = new Map<string, any[]>();
-    for (const sub of subscriptions) {
-      if (!subscriptionsByUser.has(sub.user_id)) {
-        subscriptionsByUser.set(sub.user_id, []);
-      }
-      subscriptionsByUser.get(sub.user_id)!.push(sub);
+    const writeResults = await Promise.all(dbWrites)
+    for (const r of writeResults) {
+      const err = (r as { error?: unknown })?.error
+      if (err) console.error("DB write error:", err)
     }
 
-    let totalSent = 0;
-    let totalFailed = 0;
-    const invalidSubscriptions: string[] = [];
-
-    // Send notifications for events
-    for (const event of eventsToNotify) {
-      // Les évènements ont leur propre colonne user_id (posée à l'insert,
-      // evenement.ts), indépendante de bonsai_id qui est optionnel (un
-      // évènement de calendrier général n'est lié à aucun arbre). La dériver
-      // via bonsaiUserIdById — nécessaire pour les rappels, qui eux n'ont pas
-      // cette colonne — ne fonctionne pas pour ce cas et laissait ces
-      // évènements sans notification, indéfiniment.
-      const eventUserId: string | null = event.user_id ?? null;
-
-      if (!eventUserId) continue;
-
-      const userSubscriptions = subscriptionsByUser.get(eventUserId) || [];
-      
-      for (const sub of userSubscriptions) {
-        try {
-          const eventDate = new Date(event.date_heure);
-          const body = event.description
-            ? `${eventDate.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })} — ${event.description}`
-            : eventDate.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
-
-          const payload = JSON.stringify({
-            title: `🌱 ${event.titre}`,
-            body,
-            url: `/bonsai/${event.bonsai_id}`,
-          });
-
-          const pushSubscription = {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.p256dh,
-              auth: sub.auth,
-            },
-          }
-
-          await webPush.sendNotification(pushSubscription, payload)
-          totalSent++;
-        } catch (error: any) {
-          console.error('Failed to send notification:', error)
-          
-          // Check for 404 or 410 errors (subscription no longer valid)
-          if (error.statusCode === 404 || error.statusCode === 410) {
-            invalidSubscriptions.push(sub.endpoint);
-          }
-          totalFailed++;
-        }
-      }
-
-      // Mark event as notified
-      await supabase
-        .from('evenements')
-        .update({ notified_at: new Date().toISOString() })
-        .eq('id', event.id);
+    if (invalidEndpoints.size > 0) {
+      console.log(`Deleted ${invalidEndpoints.size} invalid subscriptions`)
     }
 
-    // Send notifications for reminders
-    for (const reminder of remindersToNotify) {
-      const reminderUserId: string | null = reminder.user_id;
-
-      if (!reminderUserId) continue;
-
-      const userSubscriptions = subscriptionsByUser.get(reminderUserId) || [];
-      
-      for (const sub of userSubscriptions) {
-        try {
-          const reminderDate = new Date(reminder.date_heure);
-          const body = reminder.notes || reminderDate.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
-
-          const payload = JSON.stringify({
-            title: `🌱 Rappel : ${reminder.titre}`,
-            body,
-            url: `/bonsai/${reminder.bonsai_id}`,
-          });
-
-          const pushSubscription = {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.p256dh,
-              auth: sub.auth,
-            },
-          }
-
-          await webPush.sendNotification(pushSubscription, payload)
-          totalSent++;
-        } catch (error: any) {
-          console.error('Failed to send notification:', error)
-          
-          // Check for 404 or 410 errors (subscription no longer valid)
-          if (error.statusCode === 404 || error.statusCode === 410) {
-            invalidSubscriptions.push(sub.endpoint);
-          }
-          totalFailed++;
-        }
-      }
-
-      // Update reminder: mark as notified for one-time, or advance date for recurring
-      // intervalle_jours est déjà disponible sur `reminder` (conservé dans
-      // remindersAsEvents) — plus besoin d'une requête individuelle ici.
-      if (reminder.intervalle_jours) {
-        // Recurring reminder: advance to next date
-        const nextDate = new Date(reminder.date_heure);
-        nextDate.setDate(nextDate.getDate() + reminder.intervalle_jours);
-
-        await supabase
-          .from('rappels')
-          .update({ prochaine_date: nextDate.toISOString() })
-          .eq('id', reminder.id);
-      } else {
-        // One-time reminder: mark as notified
-        await supabase
-          .from('rappels')
-          .update({ notified_at: new Date().toISOString() })
-          .eq('id', reminder.id);
-      }
-    }
-
-    // Delete invalid subscriptions
-    if (invalidSubscriptions.length > 0) {
-      await supabase
-        .from('push_subscriptions')
-        .delete()
-        .in('endpoint', invalidSubscriptions);
-      
-      console.log(`Deleted ${invalidSubscriptions.length} invalid subscriptions`);
-    }
-
-    return new Response(
-      JSON.stringify({
-        message: `Sent ${totalSent} notifications successfully, ${totalFailed} failed, ${invalidSubscriptions.length} invalid subscriptions removed`,
-        eventsNotified: eventsToNotify.length,
-        remindersNotified: remindersToNotify.length,
-        invalidSubscriptionsRemoved: invalidSubscriptions.length,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({
+      message: `Sent ${totalSent} notifications successfully, ${totalFailed} failed, ${invalidEndpoints.size} invalid subscriptions removed`,
+      eventsNotified: eventsToNotify.length,
+      remindersNotified: remindersToNotify.length,
+      invalidSubscriptionsRemoved: invalidEndpoints.size,
+    })
   } catch (error) {
-    console.error('Error in send-due-notifications:', error)
-    return new Response(
-      JSON.stringify({ error: String(error) }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    console.error("Error in send-due-notifications:", error)
+    return json({ error: String(error) }, 500)
   }
 })

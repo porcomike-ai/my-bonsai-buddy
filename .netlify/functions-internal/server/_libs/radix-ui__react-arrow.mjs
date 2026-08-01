@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "./react.mjs";
-import { a as Primitive } from "./radix-ui__react-primitive.mjs";
+import { P as Primitive } from "./radix-ui__react-primitive.mjs";
 var NAME = "Arrow";
 var Arrow = reactExports.forwardRef((props, forwardedRef) => {
   const { children, width = 10, height = 5, ...arrowProps } = props;

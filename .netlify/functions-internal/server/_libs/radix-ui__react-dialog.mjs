@@ -1,18 +1,18 @@
 import { r as reactExports, j as jsxRuntimeExports } from "./react.mjs";
 import { c as composeEventHandlers } from "./radix-ui__primitive.mjs";
 import { u as useComposedRefs } from "./radix-ui__react-compose-refs.mjs";
-import { c as createContextScope, a as createContext2 } from "./radix-ui__react-context.mjs";
+import { c as createContextScope } from "./radix-ui__react-context.mjs";
 import { u as useId } from "./radix-ui__react-id.mjs";
 import { u as useControllableState } from "./@radix-ui/react-use-controllable-state+[...].mjs";
-import { D as DismissableLayer } from "./@radix-ui/react-dismissable-layer+[...].mjs";
+import { u as useDismissableLayerSurface, D as DismissableLayer } from "./@radix-ui/react-dismissable-layer+[...].mjs";
 import { F as FocusScope } from "./radix-ui__react-focus-scope.mjs";
-import { P as Portal$1 } from "./radix-ui__react-portal.mjs";
+import { P as Portal } from "./radix-ui__react-portal.mjs";
 import { P as Presence } from "./radix-ui__react-presence.mjs";
-import { a as Primitive } from "./radix-ui__react-primitive.mjs";
+import { P as Primitive } from "./radix-ui__react-primitive.mjs";
 import { u as useFocusGuards } from "./radix-ui__react-focus-guards.mjs";
 import { R as ReactRemoveScroll } from "./react-remove-scroll.mjs";
 import { h as hideOthers } from "./aria-hidden.mjs";
-import { e as createSlot } from "./radix-ui__react-slot.mjs";
+import { c as createSlot } from "./radix-ui__react-slot.mjs";
 var DIALOG_NAME = "Dialog";
 var [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
 var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -63,7 +63,7 @@ var DialogTrigger = reactExports.forwardRef(
         type: "button",
         "aria-haspopup": "dialog",
         "aria-expanded": context.open,
-        "aria-controls": context.contentId,
+        "aria-controls": context.open ? context.contentId : void 0,
         "data-state": getState(context.open),
         ...triggerProps,
         ref: composedTriggerRef,
@@ -80,7 +80,7 @@ var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME, {
 var DialogPortal = (props) => {
   const { __scopeDialog, forceMount, children, container } = props;
   const context = useDialogContext(PORTAL_NAME, __scopeDialog);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeDialog, forceMount, children: reactExports.Children.map(children, (child) => /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$1, { asChild: true, container, children: child }) })) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeDialog, forceMount, children: reactExports.Children.map(children, (child) => /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, { asChild: true, container, children: child }) })) });
 };
 DialogPortal.displayName = PORTAL_NAME;
 var OVERLAY_NAME = "DialogOverlay";
@@ -98,6 +98,8 @@ var DialogOverlayImpl = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...overlayProps } = props;
     const context = useDialogContext(OVERLAY_NAME, __scopeDialog);
+    const registerDismissableSurface = useDismissableLayerSurface();
+    const composedRefs = useComposedRefs(forwardedRef, registerDismissableSurface);
     return (
       // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
       // ie. when `Overlay` and `Content` are siblings
@@ -106,7 +108,7 @@ var DialogOverlayImpl = reactExports.forwardRef(
         {
           "data-state": getState(context.open),
           ...overlayProps,
-          ref: forwardedRef,
+          ref: composedRefs,
           style: { pointerEvents: "auto", ...overlayProps.style }
         }
       ) })
@@ -138,7 +140,7 @@ var DialogContentModal = reactExports.forwardRef(
         ...props,
         ref: composedRefs,
         trapFocus: context.open,
-        disableOutsidePointerEvents: true,
+        disableOutsidePointerEvents: context.open,
         onCloseAutoFocus: composeEventHandlers(props.onCloseAutoFocus, (event) => {
           event.preventDefault();
           context.triggerRef.current?.focus();
@@ -201,38 +203,31 @@ var DialogContentImpl = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props;
     const context = useDialogContext(CONTENT_NAME, __scopeDialog);
-    const contentRef = reactExports.useRef(null);
-    const composedRefs = useComposedRefs(forwardedRef, contentRef);
     useFocusGuards();
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        FocusScope,
-        {
-          asChild: true,
-          loop: true,
-          trapped: trapFocus,
-          onMountAutoFocus: onOpenAutoFocus,
-          onUnmountAutoFocus: onCloseAutoFocus,
-          children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-            DismissableLayer,
-            {
-              role: "dialog",
-              id: context.contentId,
-              "aria-describedby": context.descriptionId,
-              "aria-labelledby": context.titleId,
-              "data-state": getState(context.open),
-              ...contentProps,
-              ref: composedRefs,
-              onDismiss: () => context.onOpenChange(false)
-            }
-          )
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(TitleWarning, { titleId: context.titleId }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(DescriptionWarning, { contentRef, descriptionId: context.descriptionId })
-      ] })
-    ] });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      FocusScope,
+      {
+        asChild: true,
+        loop: true,
+        trapped: trapFocus,
+        onMountAutoFocus: onOpenAutoFocus,
+        onUnmountAutoFocus: onCloseAutoFocus,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          DismissableLayer,
+          {
+            role: "dialog",
+            id: context.contentId,
+            "aria-describedby": context.descriptionId,
+            "aria-labelledby": context.titleId,
+            "data-state": getState(context.open),
+            ...contentProps,
+            ref: forwardedRef,
+            deferPointerDownOutside: true,
+            onDismiss: () => context.onOpenChange(false)
+          }
+        )
+      }
+    ) });
   }
 );
 var TITLE_NAME = "DialogTitle";
@@ -273,57 +268,14 @@ DialogClose.displayName = CLOSE_NAME;
 function getState(open) {
   return open ? "open" : "closed";
 }
-var TITLE_WARNING_NAME = "DialogTitleWarning";
-var [WarningProvider, useWarningContext] = createContext2(TITLE_WARNING_NAME, {
-  contentName: CONTENT_NAME,
-  titleName: TITLE_NAME,
-  docsSlug: "dialog"
-});
-var TitleWarning = ({ titleId }) => {
-  const titleWarningContext = useWarningContext(TITLE_WARNING_NAME);
-  const MESSAGE = `\`${titleWarningContext.contentName}\` requires a \`${titleWarningContext.titleName}\` for the component to be accessible for screen reader users.
-
-If you want to hide the \`${titleWarningContext.titleName}\`, you can wrap it with our VisuallyHidden component.
-
-For more information, see https://radix-ui.com/primitives/docs/components/${titleWarningContext.docsSlug}`;
-  reactExports.useEffect(() => {
-    if (titleId) {
-      const hasTitle = document.getElementById(titleId);
-      if (!hasTitle) console.error(MESSAGE);
-    }
-  }, [MESSAGE, titleId]);
-  return null;
-};
-var DESCRIPTION_WARNING_NAME = "DialogDescriptionWarning";
-var DescriptionWarning = ({ contentRef, descriptionId }) => {
-  const descriptionWarningContext = useWarningContext(DESCRIPTION_WARNING_NAME);
-  const MESSAGE = `Warning: Missing \`Description\` or \`aria-describedby={undefined}\` for {${descriptionWarningContext.contentName}}.`;
-  reactExports.useEffect(() => {
-    const describedById = contentRef.current?.getAttribute("aria-describedby");
-    if (descriptionId && describedById) {
-      const hasDescription = document.getElementById(descriptionId);
-      if (!hasDescription) console.warn(MESSAGE);
-    }
-  }, [MESSAGE, contentRef, descriptionId]);
-  return null;
-};
-var Root = Dialog;
-var Trigger = DialogTrigger;
-var Portal = DialogPortal;
-var Overlay = DialogOverlay;
-var Content = DialogContent;
-var Title = DialogTitle;
-var Description = DialogDescription;
-var Close = DialogClose;
 export {
-  Content as C,
-  Description as D,
-  Overlay as O,
-  Portal as P,
-  Root as R,
-  Title as T,
-  WarningProvider as W,
-  Close as a,
-  Trigger as b,
-  createDialogScope as c
+  Dialog as D,
+  DialogPortal as a,
+  DialogContent as b,
+  createDialogScope as c,
+  DialogTitle as d,
+  DialogDescription as e,
+  DialogClose as f,
+  DialogOverlay as g,
+  DialogTrigger as h
 };

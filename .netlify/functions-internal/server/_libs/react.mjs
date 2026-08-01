@@ -475,7 +475,7 @@ function requireReact_production() {
   react_production.useTransition = function() {
     return ReactSharedInternals.H.useTransition();
   };
-  react_production.version = "19.2.5";
+  react_production.version = "19.2.7";
   return react_production;
 }
 var hasRequiredReact;
@@ -489,7 +489,7 @@ function requireReact() {
 }
 var reactExports = requireReact();
 const React = /* @__PURE__ */ getDefaultExportFromCjs(reactExports);
-const React$1 = /* @__PURE__ */ _mergeNamespaces({
+const React2 = /* @__PURE__ */ _mergeNamespaces({
   __proto__: null,
   default: React
 }, [reactExports]);
@@ -536,7 +536,7 @@ var jsxRuntimeExports = requireJsxRuntime();
 export {
   React as R,
   requireReact as a,
-  React$1 as b,
+  React2 as b,
   commonjsGlobal as c,
   getAugmentedNamespace as d,
   getDefaultExportFromCjs as g,

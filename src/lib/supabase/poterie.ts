@@ -47,27 +47,29 @@ export async function savePoterie(p: Poterie & { photoBlob?: Blob }): Promise<vo
 }
 
 export async function deletePoterie(id: string): Promise<void> {
+  // Récupérer les chemins Storage AVANT toute suppression (photo principale +
+  // galerie), même principe que deleteBonsai (voir bonsai.ts).
   const poterie = await getPoterie(id);
-  if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
-  // Supprime aussi tous les fichiers de la galerie de la poterie.
   const { data: photos } = await db.from("photos").select("storage_path").eq("poterie_id", id);
-  if (photos && photos.length > 0) {
-    const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
-    await db.storage.from(POTERIE_BUCKET).remove(paths);
-  }
-  // bonsais.poterie_id n'a pas de contrainte FK/CASCADE en base (colonne uuid
-  // nue, voir create_bonsai_studio_schema.sql) : sans ce nettoyage explicite,
-  // tout bonsaï encore "planté" dans cette poterie garderait un poterie_id
-  // pointant vers une ligne supprimée. Fait avant le delete plutôt qu'après
-  // pour ne pas laisser de fenêtre où la poterie est déjà partie mais les
-  // bonsaïs pas encore mis à jour si une erreur survient entre les deux.
-  const { error: unlinkError } = await db
-    .from("bonsais")
-    .update({ poterie_id: null })
-    .eq("poterie_id", id);
-  if (unlinkError) throw unlinkError;
+  const galeriePaths =
+    (photos as PhotoRow[] | null)?.map((p) => p.storage_path).filter(Boolean) ?? [];
+
+  // Supprimer la poterie en BDD d'abord. bonsais.poterie_id a une contrainte
+  // FK bonsais_poterie_id_fkey avec ON DELETE SET NULL (voir
+  // supabase/migrations/20260703030246_...sql) : supprimer une poterie remet
+  // automatiquement à null le poterie_id de tout bonsaï encore "planté"
+  // dedans, pas besoin de le faire manuellement ici. Si cette étape échoue,
+  // on s'arrête là : mieux vaut des fichiers Storage orphelins (récupérables
+  // via un nettoyage périodique) que des lignes en base pointant vers des
+  // fichiers déjà supprimés.
   const { error } = await db.from("poteries").delete().eq("id", id);
   if (error) throw error;
+
+  // Nettoyer le Storage seulement après le succès de la suppression BDD.
+  if (poterie?.photoPath) await deleteStorageObject(POTERIE_BUCKET, poterie.photoPath);
+  if (galeriePaths.length > 0) {
+    await db.storage.from(POTERIE_BUCKET).remove(galeriePaths);
+  }
 }
 
 // --- Photos de poteries (galerie) ---

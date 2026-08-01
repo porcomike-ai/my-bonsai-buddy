@@ -27,15 +27,26 @@ export async function listEvenements(): Promise<Evenement[]> {
 
 export async function saveEvenement(e: Evenement): Promise<void> {
   const uidStr = await currentUserId();
+  // N'inclure `notified_at` que s'il a une vraie valeur (spread conditionnel).
+  // PostgREST ne modifie que les colonnes présentes dans le payload d'un
+  // upsert : l'omettre préserve la valeur existante en base (utile pour la
+  // restauration de sauvegarde : `backup.ts` / `parametres.tsx` appellent
+  // cette même fonction avec le `notifiedAt` tel qu'il était au moment de
+  // l'export, qui peut être vide s'il a été notifié depuis — l'écraser à
+  // null referait passer un évènement déjà notifié pour "non notifié" et
+  // risquerait une renotification). Sur une vraie création (calendrier.tsx),
+  // `notifiedAt` est de toute façon toujours vide, donc ce changement ne
+  // modifie rien dans ce cas : la colonne reste NULL par défaut (pas de
+  // DEFAULT explicite dans le schéma), exactement comme avant.
   const { error } = await db.from("evenements").upsert({
     id: e.id,
     titre: e.titre,
     description: e.description ?? null,
     date_heure: e.dateHeure,
     rappel_minutes: e.rappelMinutes ?? null,
-    notified_at: e.notifiedAt ?? null,
     bonsai_id: e.bonsaiId ?? null,
     user_id: uidStr,
+    ...(e.notifiedAt ? { notified_at: e.notifiedAt } : {}),
   });
   if (error) throw error;
 }
