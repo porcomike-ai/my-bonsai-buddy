@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { listBonsais } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiCard } from "@/components/bonsai-card";
@@ -46,78 +46,6 @@ const SORT_LABELS: Record<CollectionSortOption, string> = {
   "valeur-desc": "Valeur ↓",
 };
 
-/** Nombre de colonnes responsive (aligné sur la grille Tailwind). */
-function useColumnCount(): number {
-  const [cols, setCols] = useState(2);
-  useEffect(() => {
-    const update = () => {
-      const w = window.innerWidth;
-      if (w >= 1280) setCols(4);
-      else if (w >= 1024) setCols(3);
-      else setCols(2);
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-  return cols;
-}
-
-/**
- * Virtualisation basée sur le scroll fenêtre (pas de conteneur scroll interne).
- * Évite les pièges de hauteur (contain:strict, max-h + enfants absolute).
- */
-function useWindowVirtualRows(rowCount: number, rowH: number, overscan = 4) {
-  const listRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
-  const [viewportH, setViewportH] = useState(900);
-  const [listTop, setListTop] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    const onResize = () => {
-      setViewportH(window.innerHeight);
-      if (listRef.current) {
-        const rect = listRef.current.getBoundingClientRect();
-        setListTop(rect.top + window.scrollY);
-      }
-    };
-    onScroll();
-    onResize();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [rowCount, rowH]);
-
-  // Recalcule le top quand le layout change (filtres, header)
-  useEffect(() => {
-    if (!listRef.current) return;
-    const ro = new ResizeObserver(() => {
-      const rect = listRef.current!.getBoundingClientRect();
-      setListTop(rect.top + window.scrollY);
-    });
-    ro.observe(listRef.current);
-    return () => ro.disconnect();
-  }, []);
-
-  const relativeScroll = Math.max(0, scrollY - listTop);
-  const startRow = Math.max(0, Math.floor(relativeScroll / rowH) - overscan);
-  const endRow = Math.min(
-    rowCount - 1,
-    Math.ceil((relativeScroll + viewportH) / rowH) + overscan,
-  );
-
-  const visibleRows: number[] = [];
-  if (rowCount > 0) {
-    for (let r = startRow; r <= endRow; r++) visibleRows.push(r);
-  }
-
-  return { listRef, visibleRows, totalHeight: rowCount * rowH };
-}
-
 export const Route = createFileRoute("/collection")({
   validateSearch: validateCollectionSearch,
   head: () => ({
@@ -146,7 +74,6 @@ function CollectionPage() {
   const filters = collectionSearchToFilters(search);
   const { q, style: styleFilter, statut: statutFilter, sort: sortBy, favorisFirst } = filters;
   const isMobile = useIsMobile();
-  const cols = useColumnCount();
 
   const patchFilters = (patch: Partial<CollectionFilters>) => {
     const next = { ...filters, ...patch };
@@ -204,13 +131,6 @@ function CollectionPage() {
   const clearAllFilters = () => {
     navigate({ search: {}, replace: true });
   };
-
-  // ── Virtualisation fenêtre ───────────────────────────────────────────────
-  const gap = isMobile ? 12 : 20;
-  const estimateCardH = density === "compact" ? 210 : 340;
-  const rowH = estimateCardH + gap;
-  const rowCount = Math.ceil(filtered.length / cols);
-  const { listRef, visibleRows, totalHeight } = useWindowVirtualRows(rowCount, rowH);
 
   return (
     <AppShell>
@@ -360,30 +280,25 @@ function CollectionPage() {
           )}
         </div>
       ) : (
-        <div ref={listRef} className="relative w-full" style={{ height: totalHeight }}>
-          {visibleRows.map((rowIndex) => {
-            const startIdx = rowIndex * cols;
-            const rowItems = filtered.slice(startIdx, startIdx + cols);
-            return (
-              <div
-                key={rowIndex}
-                className="absolute left-0 right-0 grid"
-                style={{
-                  top: rowIndex * rowH,
-                  height: estimateCardH,
-                  gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                  gap,
-                }}
-              >
-                {rowItems.map((b) => (
-                  <div key={b.id} className="min-w-0">
-                    <BonsaiCard bonsai={b} search={search} density={density} />
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
+        /*
+         * Grille CSS native (pas de position absolute).
+         * content-visibility accélère le rendu à 400+ cartes sans risque
+         * de chevauchement lié à une hauteur de ligne mal estimée.
+         */
+        <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((b) => (
+            <li
+              key={b.id}
+              className="min-w-0"
+              style={{
+                contentVisibility: "auto",
+                containIntrinsicSize: density === "compact" ? "auto 220px" : "auto 380px",
+              }}
+            >
+              <BonsaiCard bonsai={b} search={search} density={density} />
+            </li>
+          ))}
+        </ul>
       )}
     </AppShell>
   );
