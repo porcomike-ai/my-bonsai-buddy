@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listBonsais } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiCard } from "@/components/bonsai-card";
@@ -63,6 +63,61 @@ function useColumnCount(): number {
   return cols;
 }
 
+/**
+ * Virtualisation basée sur le scroll fenêtre (pas de conteneur scroll interne).
+ * Évite les pièges de hauteur (contain:strict, max-h + enfants absolute).
+ */
+function useWindowVirtualRows(rowCount: number, rowH: number, overscan = 4) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const [viewportH, setViewportH] = useState(900);
+  const [listTop, setListTop] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    const onResize = () => {
+      setViewportH(window.innerHeight);
+      if (listRef.current) {
+        const rect = listRef.current.getBoundingClientRect();
+        setListTop(rect.top + window.scrollY);
+      }
+    };
+    onScroll();
+    onResize();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [rowCount, rowH]);
+
+  // Recalcule le top quand le layout change (filtres, header)
+  useEffect(() => {
+    if (!listRef.current) return;
+    const ro = new ResizeObserver(() => {
+      const rect = listRef.current!.getBoundingClientRect();
+      setListTop(rect.top + window.scrollY);
+    });
+    ro.observe(listRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const relativeScroll = Math.max(0, scrollY - listTop);
+  const startRow = Math.max(0, Math.floor(relativeScroll / rowH) - overscan);
+  const endRow = Math.min(
+    rowCount - 1,
+    Math.ceil((relativeScroll + viewportH) / rowH) + overscan,
+  );
+
+  const visibleRows: number[] = [];
+  if (rowCount > 0) {
+    for (let r = startRow; r <= endRow; r++) visibleRows.push(r);
+  }
+
+  return { listRef, visibleRows, totalHeight: rowCount * rowH };
+}
+
 export const Route = createFileRoute("/collection")({
   validateSearch: validateCollectionSearch,
   head: () => ({
@@ -115,20 +170,12 @@ function CollectionPage() {
   const chips = useMemo(() => {
     const list: { key: string; label: string; clear: () => void }[] = [];
     if (q.trim()) {
-      list.push({
-        key: "q",
-        label: `« ${q.trim()} »`,
-        clear: () => setQ(""),
-      });
+      list.push({ key: "q", label: `« ${q.trim()} »`, clear: () => setQ("") });
     }
     if (styleFilter) {
       const styleName =
         STYLES.find((s) => s.value === styleFilter)?.label.split(" — ")[0] ?? styleFilter;
-      list.push({
-        key: "style",
-        label: styleName,
-        clear: () => setStyleFilter(""),
-      });
+      list.push({ key: "style", label: styleName, clear: () => setStyleFilter("") });
     }
     if (statutFilter !== DEFAULT_COLLECTION_FILTERS.statut) {
       list.push({
@@ -158,41 +205,12 @@ function CollectionPage() {
     navigate({ search: {}, replace: true });
   };
 
-  // ── Virtualisation par lignes ────────────────────────────────────────────
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-  const [viewportH, setViewportH] = useState(800);
-
+  // ── Virtualisation fenêtre ───────────────────────────────────────────────
   const gap = isMobile ? 12 : 20;
-  // Hauteurs estimées carte (image + meta éventuelle)
-  const estimateCardH = density === "compact" ? 200 : 320;
+  const estimateCardH = density === "compact" ? 210 : 340;
   const rowH = estimateCardH + gap;
   const rowCount = Math.ceil(filtered.length / cols);
-  const overscan = 3;
-
-  const onScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setScrollTop(el.scrollTop);
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      setViewportH(el.clientHeight);
-    });
-    ro.observe(el);
-    setViewportH(el.clientHeight);
-    return () => ro.disconnect();
-  }, [filtered.length]);
-
-  const startRow = Math.max(0, Math.floor(scrollTop / rowH) - overscan);
-  const endRow = Math.min(rowCount - 1, Math.ceil((scrollTop + viewportH) / rowH) + overscan);
-  const visibleRows: number[] = [];
-  for (let r = startRow; r <= endRow; r++) visibleRows.push(r);
-
-  const totalHeight = rowCount * rowH;
+  const { listRef, visibleRows, totalHeight } = useWindowVirtualRows(rowCount, rowH);
 
   return (
     <AppShell>
@@ -205,7 +223,10 @@ function CollectionPage() {
             {bonsais.length > actifsCount &&
               ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
             {filtered.length !== bonsais.length && (
-              <span className="text-accent"> · {filtered.length} affiché{filtered.length > 1 ? "s" : ""}</span>
+              <span className="text-accent">
+                {" "}
+                · {filtered.length} affiché{filtered.length > 1 ? "s" : ""}
+              </span>
             )}
           </p>
         </div>
@@ -292,7 +313,6 @@ function CollectionPage() {
           </label>
         </div>
 
-        {/* Chips filtres actifs */}
         {chips.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {chips.map((c) => (
@@ -340,36 +360,29 @@ function CollectionPage() {
           )}
         </div>
       ) : (
-        <div
-          ref={scrollRef}
-          onScroll={onScroll}
-          className="relative -mx-1 max-h-[calc(100vh-14rem)] overflow-y-auto px-1"
-          style={{ contain: "strict" }}
-        >
-          <div style={{ height: totalHeight, position: "relative" }}>
-            {visibleRows.map((rowIndex) => {
-              const startIdx = rowIndex * cols;
-              const rowItems = filtered.slice(startIdx, startIdx + cols);
-              return (
-                <div
-                  key={rowIndex}
-                  className="absolute left-0 right-0 grid"
-                  style={{
-                    top: rowIndex * rowH,
-                    height: estimateCardH,
-                    gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                    gap: gap,
-                  }}
-                >
-                  {rowItems.map((b) => (
-                    <div key={b.id} className="min-w-0">
-                      <BonsaiCard bonsai={b} search={search} density={density} />
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+        <div ref={listRef} className="relative w-full" style={{ height: totalHeight }}>
+          {visibleRows.map((rowIndex) => {
+            const startIdx = rowIndex * cols;
+            const rowItems = filtered.slice(startIdx, startIdx + cols);
+            return (
+              <div
+                key={rowIndex}
+                className="absolute left-0 right-0 grid"
+                style={{
+                  top: rowIndex * rowH,
+                  height: estimateCardH,
+                  gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                  gap,
+                }}
+              >
+                {rowItems.map((b) => (
+                  <div key={b.id} className="min-w-0">
+                    <BonsaiCard bonsai={b} search={search} density={density} />
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </AppShell>
