@@ -249,9 +249,11 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      {/* Barre sticky : reste visible pendant le scroll de la timeline (mobile + desktop).
-          top aligné sous le header AppShell (nav mobile ~6.5rem, desktop ~4.5rem). */}
-      <div className="sticky top-[6.25rem] z-20 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-6 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 md:top-[4.5rem]">
+      {/* Barre sticky sous le header AppShell (hauteur mesurée via --app-header-h) */}
+      <div
+        className="sticky z-20 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-6 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
+      >
         <Link
           to="/collection"
           search={search}

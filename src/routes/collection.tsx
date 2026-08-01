@@ -158,8 +158,11 @@ function CollectionPage() {
         </Link>
       </header>
 
-      {/* Filtres sticky */}
-      <div className="sticky top-0 z-20 -mx-1 mb-4 space-y-3 bg-background/95 px-1 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      {/* Filtres sticky — top = hauteur réelle du header AppShell (--app-header-h) */}
+      <div
+        className="sticky z-20 -mx-1 mb-4 space-y-3 border-b border-border/40 bg-background/95 px-1 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
+      >
         <div className="flex flex-wrap gap-3">
           <div className="relative min-w-[200px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
