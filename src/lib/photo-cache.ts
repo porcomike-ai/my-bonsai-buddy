@@ -137,7 +137,11 @@ export function getCachedPhotoBlob(
     return existing;
   }
 
-  const promise = (async () => {
+  // Déclaration avant l'IIFE : la promise se compare à elle-même dans le
+  // corps async (invalidation cache mémoire en cas d'échec réseau). Sans
+  // assertion d'affectation, TS2454 (« used before being assigned »).
+  let promise!: Promise<Blob | undefined>;
+  promise = (async () => {
     const cached = await readFromIndexedDB(key);
     if (cached) return cached;
 
