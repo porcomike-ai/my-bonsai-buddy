@@ -149,14 +149,13 @@ function ParametresPage() {
     }
     setEnablingPush(true);
     try {
-      const success = await subscribeToPush();
-      if (success) {
-        // Vérifier l'abonnement réel après l'activation
+      const result = await subscribeToPush();
+      if (result.ok) {
         const hasSubscription = await checkPushSubscription();
         setPushEnabled(hasSubscription);
         toast.success("Notifications push activées");
       } else {
-        toast.error("Impossible d'activer les notifications push");
+        toast.error(result.reason || "Impossible d'activer les notifications push");
       }
     } catch (e) {
       toast.error("Erreur: " + (e as Error).message);

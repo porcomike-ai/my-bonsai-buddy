@@ -8,9 +8,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-/** Ne charge que les items dont la date tombe dans [now − 24h, now + 24h]. */
+/**
+ * Fenêtre SQL sur date_heure / prochaine_date.
+ * LOOKAHEAD doit couvrir le plus grand rappel_minutes de l'UI
+ * (calendrier.tsx : max "2 jours avant" = 2880 min = 48h), sinon un
+ * événement à H+36h avec rappel 48h ne serait jamais chargé alors que son
+ * trigger est déjà dû. +1h de marge horloge.
+ */
 const LOOKBACK_MS = 24 * 3600_000
-const LOOKAHEAD_MS = 24 * 3600_000
+const LOOKAHEAD_MS = (48 + 1) * 3600_000
 
 const FR_DATE: Intl.DateTimeFormatOptions = {
   timeZone: "Europe/Paris",

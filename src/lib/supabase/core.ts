@@ -360,10 +360,33 @@ export async function uploadPoterieGalleryPhoto(
   return path;
 }
 
+/**
+ * Suppression Storage stricte : lève si l'API échoue.
+ * À utiliser quand la ligne BDD existe encore (rollback d'upload, remplacement
+ * de photo) — l'appelant doit pouvoir annuler l'opération métier.
+ */
 export async function deleteStorageObject(bucket: string, path: string): Promise<void> {
   if (!path) return;
   const { error } = await db.storage.from(bucket).remove([path]);
   if (error) throw error;
+}
+
+/**
+ * Nettoyage Storage best-effort après un DELETE BDD réussi.
+ * Ne lève jamais : la BDD est déjà cohérente, un échec Storage ne doit pas
+ * faire croire à l'utilisateur que la suppression a échoué. Les erreurs sont
+ * loguées pour diagnostic (orphelins éventuels).
+ */
+export async function cleanupStoragePaths(bucket: string, paths: string[]): Promise<void> {
+  const clean = paths.filter(Boolean);
+  if (clean.length === 0) return;
+  const { error } = await db.storage.from(bucket).remove(clean);
+  if (error) {
+    console.error(
+      `[cleanupStoragePaths] échec suppressions bucket=${bucket} paths=${clean.length}:`,
+      error,
+    );
+  }
 }
 
 // --- Récupération exhaustive (sans plafond arbitraire) ---
