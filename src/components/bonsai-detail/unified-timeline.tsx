@@ -199,9 +199,10 @@ export function UnifiedTimeline({
         onUpdateBonsai={onUpdateBonsai}
       />
 
-      {/* Lightbox */}
+      {/* Lightbox avec liste pour navigation + mode comparer */}
       <PhotoLightbox
         photo={lightboxPhoto}
+        photos={photos}
         open={!!lightboxPhoto}
         onOpenChange={(o) => {
           if (!o) setLightboxPhoto(null);
