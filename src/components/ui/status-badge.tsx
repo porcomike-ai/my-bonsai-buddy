@@ -1,24 +1,23 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import {
-  Leaf,
-  Scissors,
   Sprout,
+  Leaf,
   TreeDeciduous,
   Star,
   Archive,
   type LucideIcon,
 } from "lucide-react";
+import type { BonsaiEtape } from "@/lib/supabase-data";
 
 const badgeVariants = cva(
-  "badge-base border transition-colors",
+  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none transition-colors",
   {
     variants: {
       variant: {
         culture: "border-sage/30 bg-sage/15 text-forest",
-        formation: "border-terracotta/30 bg-terracotta/12 text-terracotta",
-        mature: "border-forest/25 bg-forest/10 text-forest",
-        exposition: "border-peach/40 bg-peach/20 text-bark",
+        "pre-bonsai": "border-terracotta/30 bg-terracotta/12 text-terracotta",
+        bonsai: "border-forest/25 bg-forest/10 text-forest",
         favori: "border-terracotta/40 bg-terracotta/15 text-terracotta",
         sorti: "border-muted-foreground/20 bg-muted text-muted-foreground",
         default: "border-border bg-secondary text-secondary-foreground",
@@ -35,11 +34,10 @@ const badgeVariants = cva(
   },
 );
 
-const ICONS: Record<string, LucideIcon> = {
+const ICONS: Partial<Record<NonNullable<StatusBadgeProps["variant"]>, LucideIcon>> = {
   culture: Sprout,
-  formation: Scissors,
-  mature: TreeDeciduous,
-  exposition: Leaf,
+  "pre-bonsai": Leaf,
+  bonsai: TreeDeciduous,
   favori: Star,
   sorti: Archive,
 };
@@ -60,7 +58,7 @@ export function StatusBadge({
   children,
   ...props
 }: StatusBadgeProps) {
-  const Icon = variant && ICONS[variant] ? ICONS[variant] : null;
+  const Icon = variant ? ICONS[variant] : null;
 
   return (
     <span className={cn(badgeVariants({ variant, size }), className)} {...props}>
@@ -70,20 +68,15 @@ export function StatusBadge({
   );
 }
 
-/** Helper métier : mappe l’étape bonsaï vers le variant */
-export function etapeToVariant(
-  etape?: string | null,
-): StatusBadgeProps["variant"] {
+/** Mappe l’étape métier vers le variant du badge */
+export function etapeToVariant(etape?: BonsaiEtape | null): StatusBadgeProps["variant"] {
   switch (etape) {
     case "culture":
       return "culture";
-    case "formation":
-      return "formation";
-    case "mature":
-    case "raffinement":
-      return "mature";
-    case "exposition":
-      return "exposition";
+    case "pre-bonsai":
+      return "pre-bonsai";
+    case "bonsai":
+      return "bonsai";
     default:
       return "default";
   }
