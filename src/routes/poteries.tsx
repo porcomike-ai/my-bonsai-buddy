@@ -10,8 +10,9 @@ import {
   uid,
   type Poterie,
 } from "@/lib/supabase-data";
-import { fileToBlob, useBlobUrl } from "@/lib/blob-url";
+import { useBlobUrl } from "@/lib/blob-url";
 import { AppShell } from "@/components/app-shell";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -93,8 +94,8 @@ function PoteriesPage() {
     <AppShell>
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Catalogue</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold">Poteries</h1>
+          <p className="text-label">Catalogue</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Poteries</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {poteries.length} contenant{poteries.length > 1 ? "s" : ""} dans votre collection
           </p>
@@ -115,7 +116,7 @@ function PoteriesPage() {
           </p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
           {poteries.map((p) => {
             const planted = bonsais.find((b) => b.poterieId === p.id);
             return (
@@ -123,9 +124,18 @@ function PoteriesPage() {
                 <Link
                   to="/poterie/$id"
                   params={{ id: p.id }}
-                  className="group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg"
+                  className="group block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
                 >
-                  <PoterieImage poterie={p} />
+                  <div className="relative">
+                    <PoterieImage poterie={p} />
+                    <div className="absolute left-2.5 top-2.5">
+                      {planted ? (
+                        <StatusBadge variant="plantee" label={`Plantée · ${planted.nom}`} size="sm" />
+                      ) : (
+                        <StatusBadge variant="libre" label="Libre" size="sm" />
+                      )}
+                    </div>
+                  </div>
                   <div className="space-y-1.5 p-4">
                     <h2 className="truncate font-display text-lg font-semibold">{p.nom}</h2>
                     <p className="text-xs text-muted-foreground">
@@ -137,13 +147,6 @@ function PoteriesPage() {
                         cm
                       </p>
                     )}
-                    <p className="text-[11px] uppercase tracking-wider">
-                      {planted ? (
-                        <span className="text-accent">Plantée · {planted.nom}</span>
-                      ) : (
-                        <span className="text-muted-foreground">Libre</span>
-                      )}
-                    </p>
                   </div>
                 </Link>
               </li>
@@ -183,7 +186,7 @@ function PoterieImage({ poterie }: { poterie: Poterie }) {
           alt=""
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -201,7 +204,9 @@ export function PoterieForm({ initial, onClose }: { initial?: Poterie; onClose: 
   const [preview, setPreview] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogSource, setDialogSource] = useState<PhotoSource>("gallery");
-  const [photoData, setPhotoData] = useState<{ blob: Blob; date: string; legende: string } | null>(null);
+  const [photoData, setPhotoData] = useState<{ blob: Blob; date: string; legende: string } | null>(
+    null,
+  );
   const [form, setForm] = useState({
     nom: initial?.nom ?? "",
     longueurCm: initial?.longueurCm?.toString() ?? "",

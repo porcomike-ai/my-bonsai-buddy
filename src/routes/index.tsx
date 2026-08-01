@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { listBonsais, listRappels, listJournal, listPoteries } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiPhoto } from "@/components/bonsai-photo";
-import { soinEmoji, soinLabel, styleLabel } from "@/lib/bonsai-meta";
+import { StatusBadge, etapeToVariant } from "@/components/ui/status-badge";
+import { soinEmoji, soinLabel, styleLabel, etapeLabel } from "@/lib/bonsai-meta";
 import { format, parseISO, isAfter, isBefore, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Sprout, Container, Bell, BookOpen, Plus, ArrowRight, CalendarDays } from "lucide-react";
@@ -146,10 +147,7 @@ function Dashboard() {
         </section>
 
         <section>
-          <SectionHeader
-            title="Derniers ajouts"
-            link={{ to: "/collection", label: "Collection" }}
-          />
+          <SectionHeader title="Derniers ajouts" link={{ to: "/collection", label: "Collection" }} />
           {empty ? (
             <EmptyBox icon={<Sprout className="h-5 w-5" />}>
               Votre collection est vide. Commencez en ajoutant votre premier bonsaï.
@@ -161,13 +159,22 @@ function Dashboard() {
                   <Link
                     to="/bonsai/$id"
                     params={{ id: b.id }}
-                    className="group block overflow-hidden rounded-2xl border border-border bg-card transition hover:border-accent/50"
+                    className="group block overflow-hidden rounded-2xl border border-border bg-card transition hover:border-accent/50 hover:shadow-sm"
                   >
-                    <div className="aspect-square w-full overflow-hidden">
+                    <div className="relative aspect-square w-full overflow-hidden">
                       <BonsaiPhoto
                         photoId={b.photoPrincipale}
                         className="h-full w-full object-cover transition group-hover:scale-105"
                       />
+                      {b.etape && (
+                        <div className="absolute left-2 top-2">
+                          <StatusBadge
+                            variant={etapeToVariant(b.etape)}
+                            label={etapeLabel(b.etape)}
+                            size="sm"
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className="p-3">
                       <div className="truncate font-display text-sm font-semibold">{b.nom}</div>
@@ -202,7 +209,7 @@ function StatCard({
   return (
     <Link
       to={to}
-      className="group rounded-2xl border border-border bg-card p-5 transition hover:border-accent/50 hover:shadow-sm"
+      className="group surface-card p-5 transition hover:border-accent/50 hover:shadow-md"
     >
       <div className="flex items-center justify-between text-muted-foreground">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-foreground">
@@ -210,8 +217,10 @@ function StatCard({
         </span>
         <ArrowRight className="h-4 w-4 opacity-0 transition group-hover:opacity-100" />
       </div>
-      <div className="mt-3 font-display text-3xl font-semibold text-foreground">{value}</div>
-      <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground">
+        {value}
+      </div>
+      <div className="mt-1 text-label">{label}</div>
       {highlight && (
         <div className="mt-2 inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">
           {highlight}
@@ -233,10 +242,8 @@ function SectionHeader({
   return (
     <div className="mb-4 flex items-end justify-between">
       <div>
-        <h2 className="font-display text-2xl font-semibold">{title}</h2>
-        {subtitle && (
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">{subtitle}</p>
-        )}
+        <h2 className="font-display text-2xl font-semibold tracking-tight">{title}</h2>
+        {subtitle && <p className="text-label mt-0.5">{subtitle}</p>}
       </div>
       {link && (
         <Link to={link.to} className="text-sm font-medium text-accent hover:underline">

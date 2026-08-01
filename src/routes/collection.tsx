@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, Sprout } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   collectionSearchToFilters,
   filterAndSortBonsais,
@@ -55,6 +56,7 @@ function CollectionPage() {
   const search = Route.useSearch();
   const filters = collectionSearchToFilters(search);
   const { q, style: styleFilter, statut: statutFilter, sort: sortBy, favorisFirst } = filters;
+  const isMobile = useIsMobile();
 
   const patchFilters = (patch: Partial<CollectionFilters>) => {
     const next = { ...filters, ...patch };
@@ -72,6 +74,7 @@ function CollectionPage() {
   );
 
   const actifsCount = bonsais.filter((b) => b.dansCollection ?? true).length;
+  const density = isMobile ? "compact" : "comfortable";
 
   return (
     <AppShell>
@@ -190,11 +193,7 @@ function CollectionPage() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((b) => (
             <li key={b.id}>
-              <BonsaiCard
-                bonsai={b}
-                search={search}
-                density="comfortable"
-              />
+              <BonsaiCard bonsai={b} search={search} density={density} />
             </li>
           ))}
         </ul>
