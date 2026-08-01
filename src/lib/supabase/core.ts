@@ -13,11 +13,17 @@
 // ============================================================================
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type {
   BonsaiRow,
   PoterieRow,
   PhotoRow,
 } from "@/integrations/supabase/domain-types";
+
+/** Payload d'upsert bonsaï (colonnes optionnelles — PostgREST n'écrit que les présentes). */
+export type BonsaiUpsert = Database["public"]["Tables"]["bonsais"]["Insert"];
+/** Payload d'upsert poterie. */
+export type PoterieUpsert = Database["public"]["Tables"]["poteries"]["Insert"];
 
 // Le `supabase` exporté est un Proxy paresseux qui efface le type générique
 // de createClient<Database>(). Les types `*Row` importés ci-dessus servent
@@ -182,8 +188,10 @@ export function rowToBonsai(r: BonsaiRow): Bonsai {
   };
 }
 
-export function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
-  const row: Record<string, unknown> = {};
+export function bonsaiToRow(b: Partial<Bonsai>): BonsaiUpsert {
+  // Construction progressive : les champs requis (nom/espece/style) sont
+  // toujours fournis par les appelants d'upsert complets (saveBonsai).
+  const row: Partial<BonsaiUpsert> = {};
   if (b.id !== undefined) row.id = b.id;
   if (b.nom !== undefined) row.nom = b.nom;
   if (b.espece !== undefined) row.espece = b.espece;
@@ -200,7 +208,7 @@ export function bonsaiToRow(b: Partial<Bonsai>): Record<string, unknown> {
   if (b.notes !== undefined) row.notes = b.notes;
   if (b.dansCollection !== undefined) row.dans_collection = b.dansCollection;
   if (b.favori !== undefined) row.favori = b.favori;
-  return row;
+  return row as BonsaiUpsert;
 }
 
 export function rowToPoterie(r: PoterieRow): Poterie {
@@ -222,8 +230,9 @@ export function rowToPoterie(r: PoterieRow): Poterie {
   };
 }
 
-export function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
-  const row: Record<string, unknown> = {};
+export function poterieToRow(p: Partial<Poterie>): PoterieUpsert {
+  // Construction progressive : `nom` est toujours fourni par savePoterie.
+  const row: Partial<PoterieUpsert> = {};
   if (p.id !== undefined) row.id = p.id;
   if (p.nom !== undefined) row.nom = p.nom;
   if (p.longueurCm !== undefined) row.longueur_cm = p.longueurCm;
@@ -237,7 +246,7 @@ export function poterieToRow(p: Partial<Poterie>): Record<string, unknown> {
   if (p.prix !== undefined) row.prix = p.prix;
   if (p.photoPath !== undefined) row.photo_path = p.photoPath;
   if (p.notes !== undefined) row.notes = p.notes;
-  return row;
+  return row as PoterieUpsert;
 }
 
 export function rowToPhoto(r: PhotoRow): Photo {
@@ -365,8 +374,18 @@ export async function deleteStorageObject(bucket: string, path: string): Promise
 // que soit la taille réelle de sa collection.
 export const FETCH_CHUNK_SIZE = 1000;
 
+/**
+ * Résultat minimal attendu d'une page PostgREST.
+ * On accepte un thenable large (PostgrestFilterBuilder) plutôt que d'exiger
+ * exactement `PromiseLike<{ data: T[]; error }>` : le builder résout en
+ * `PostgrestSingleResponse` (champs supplémentaires status/count) et les
+ * `Row` générés divergent parfois des `*Row` domaine (ex. `style: string`
+ * vs `BonsaiStyle`) — d'où un cast interne unique ici.
+ */
+type PageResult = { data: unknown; error: unknown };
+
 export async function fetchAllRows<T>(
-  runQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  runQuery: (from: number, to: number) => PromiseLike<PageResult>,
 ): Promise<T[]> {
   // Plafond de sécurité : à FETCH_CHUNK_SIZE lignes par page, 1000 itérations
   // représentent déjà largement plus de données qu'un usage normal de l'app
@@ -379,7 +398,7 @@ export async function fetchAllRows<T>(
     const to = from + FETCH_CHUNK_SIZE - 1;
     const { data, error } = await runQuery(from, to);
     if (error) throw error;
-    const rows = data ?? [];
+    const rows = (data as T[] | null) ?? [];
     all.push(...rows);
     if (rows.length < FETCH_CHUNK_SIZE) return all;
     from += FETCH_CHUNK_SIZE;
