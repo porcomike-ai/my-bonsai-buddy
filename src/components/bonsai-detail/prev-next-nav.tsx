@@ -35,7 +35,7 @@ export function BonsaiPrevNextNav({ prevId, nextId, position, search }: BonsaiPr
           title="Bonsaï précédent (flèche gauche)"
         >
           <ChevronLeft className="h-4 w-4" />
-          Précédent
+          <span className="hidden sm:inline">Précédent</span>
         </Link>
       ) : (
         <span
@@ -44,12 +44,12 @@ export function BonsaiPrevNextNav({ prevId, nextId, position, search }: BonsaiPr
           title="Aucun arbre précédent dans ce filtre"
         >
           <ChevronLeft className="h-4 w-4" />
-          Précédent
+          <span className="hidden sm:inline">Précédent</span>
         </span>
       )}
 
       {position && (
-        <span className="px-1 text-xs tabular-nums text-muted-foreground">
+        <span className="min-w-[3.5rem] px-1 text-center text-xs tabular-nums text-muted-foreground">
           {position.index} / {position.total}
         </span>
       )}
@@ -63,7 +63,7 @@ export function BonsaiPrevNextNav({ prevId, nextId, position, search }: BonsaiPr
           aria-label="Bonsaï suivant"
           title="Bonsaï suivant (flèche droite)"
         >
-          Suivant
+          <span className="hidden sm:inline">Suivant</span>
           <ChevronRight className="h-4 w-4" />
         </Link>
       ) : (
@@ -72,7 +72,7 @@ export function BonsaiPrevNextNav({ prevId, nextId, position, search }: BonsaiPr
           aria-disabled="true"
           title="Aucun arbre suivant dans ce filtre"
         >
-          Suivant
+          <span className="hidden sm:inline">Suivant</span>
           <ChevronRight className="h-4 w-4" />
         </span>
       )}

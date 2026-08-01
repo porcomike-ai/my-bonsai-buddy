@@ -10,6 +10,7 @@ import {
   ageActuel,
 } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
+import { KpiCard } from "@/components/kpi-card";
 import { ETAPES, STYLES, styleLabel, etapeLabel } from "@/lib/bonsai-meta";
 import {
   ChartBar as BarChart3,
@@ -83,7 +84,6 @@ function StatistiquesPage() {
     actifs.forEach((b) => especesMap.set(b.espece, (especesMap.get(b.espece) ?? 0) + 1));
     const topEspeces = [...especesMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-    // Activité 30 derniers jours
     const now = new Date();
     const journal30 = journal.filter((j) => differenceInDays(now, parseISO(j.date)) <= 30);
     const rappelsActifs = rappels.filter((r) => r.actif).length;
@@ -114,8 +114,8 @@ function StatistiquesPage() {
   return (
     <AppShell>
       <header className="mb-8">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Aperçu</p>
-        <h1 className="mt-1 font-display text-4xl font-semibold">Statistiques</h1>
+        <p className="text-label">Aperçu</p>
+        <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Statistiques</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Vue d'ensemble de votre collection ({stats.actifs} arbre{stats.actifs > 1 ? "s" : ""}{" "}
           actif{stats.actifs > 1 ? "s" : ""}).
@@ -139,29 +139,29 @@ function StatistiquesPage() {
       ) : (
         <>
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <KPI
+            <KpiCard
               icon={<Sprout className="h-4 w-4" />}
               label="Bonsaïs actifs"
               value={stats.actifs}
               hint={stats.sortis ? `+${stats.sortis} sortis` : undefined}
             />
-            <KPI
+            <KpiCard
               icon={<Container className="h-4 w-4" />}
               label="Poteries"
               value={stats.totalPoteries}
             />
-            <KPI icon={<Camera className="h-4 w-4" />} label="Photos" value={stats.totalPhotos} />
-            <KPI
+            <KpiCard icon={<Camera className="h-4 w-4" />} label="Photos" value={stats.totalPhotos} />
+            <KpiCard
               icon={<CalendarIcon className="h-4 w-4" />}
               label="Rappels actifs"
               value={stats.rappelsActifs}
             />
-            <KPI
+            <KpiCard
               icon={<Euro className="h-4 w-4" />}
               label="Prix d'achat"
               value={`${stats.totalPrix.toLocaleString("fr-FR")} €`}
             />
-            <KPI
+            <KpiCard
               icon={<TrendingUp className="h-4 w-4" />}
               label="Valeur estimée"
               value={`${stats.totalValeur.toLocaleString("fr-FR")} €`}
@@ -261,42 +261,10 @@ function StatistiquesPage() {
   );
 }
 
-function KPI({
-  icon,
-  label,
-  value,
-  hint,
-  hintPositive,
-  hintNegative,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-  hintPositive?: boolean;
-  hintNegative?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-        {icon} {label}
-      </div>
-      <div className="mt-2 font-display text-2xl font-semibold">{value}</div>
-      {hint && (
-        <div
-          className={`mt-0.5 text-xs ${hintPositive ? "text-emerald-600" : hintNegative ? "text-destructive" : "text-muted-foreground"}`}
-        >
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-3xl border border-border bg-card p-6">
-      <h2 className="font-display text-lg font-semibold">{title}</h2>
+    <section className="surface-card rounded-3xl p-6">
+      <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -311,10 +279,7 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
         <span className="text-muted-foreground">{count}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-secondary">
-        <div
-          className="h-full rounded-full bg-accent transition-all"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

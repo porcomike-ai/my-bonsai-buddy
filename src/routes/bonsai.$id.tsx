@@ -249,7 +249,11 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      {/* Barre sticky sous le header AppShell (hauteur mesurée via --app-header-h) */}
+      <div
+        className="sticky z-20 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-6 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
+      >
         <Link
           to="/collection"
           search={search}
