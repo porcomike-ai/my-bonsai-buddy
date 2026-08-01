@@ -97,7 +97,7 @@ export function base64ToBlob(data: string, type: string): Blob {
 export interface ExportBackupOptions {
   onProgress?: (p: BackupProgress) => void;
   /**
-   * Si vrai, chaque photo est redimensionnée (max 1280 px) et recompressée
+   * Si vrai, chaque photo est redimensionnée (max IMAGE_MAX_DIMENSION px (image-utils)) et recompressée
    * en JPEG qualité 70 % avant d'être encodée en base64. Réduit sensiblement
    * la taille du fichier de sauvegarde, au prix d'une perte de qualité —
    * désactivé par défaut pour ne jamais dégrader les photos sans consentement
@@ -141,7 +141,7 @@ export async function exportSupabaseBackup(
   const photosEnc = await Promise.all(
     allPhotos.map(async (p) => {
       const blob = await getPhotoBlob(p);
-      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob) : blob;
       const { data, type } = finalBlob
         ? await blobToBase64(finalBlob)
         : { data: "", type: "application/octet-stream" };
@@ -155,7 +155,7 @@ export async function exportSupabaseBackup(
   const poteriePhotosEnc = await Promise.all(
     allPoteriePhotos.map(async (p) => {
       const blob = await getPhotoBlob(p);
-      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob) : blob;
       const { data, type } = finalBlob
         ? await blobToBase64(finalBlob)
         : { data: "", type: "application/octet-stream" };
@@ -173,7 +173,7 @@ export async function exportSupabaseBackup(
       current += 1;
       onProgress?.({ phase: "poteries", current, total: total || 1 });
       if (!blob) return rest;
-      const finalBlob = compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const finalBlob = compressPhotos ? await resizeImageToBlob(blob) : blob;
       const { data, type } = await blobToBase64(finalBlob);
       return { ...rest, photoBlobBase64: data, photoBlobType: type };
     }),

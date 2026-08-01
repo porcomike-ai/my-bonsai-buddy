@@ -33,15 +33,21 @@ export async function saveBonsai(b: Bonsai): Promise<void> {
 }
 
 export async function deleteBonsai(id: string): Promise<void> {
-  // Les photos sont supprimées en cascade en BDD ; on nettoie d'abord le Storage
-  // pour éviter les fichiers orphelins.
+  // Récupérer les chemins Storage AVANT toute suppression (même principe que
+  // deletePoterie). Si le DELETE BDD échoue ensuite, on n'a pas encore touché
+  // au Storage : mieux vaut des fichiers orphelins récupérables qu'une base
+  // pointant vers des fichiers déjà effacés.
   const { data: photos } = await db.from("photos").select("storage_path").eq("bonsai_id", id);
-  if (photos && photos.length > 0) {
-    const paths = (photos as PhotoRow[]).map((p) => p.storage_path);
-    await db.storage.from(BONSAI_BUCKET).remove(paths);
-  }
-  // La suppression du bonsaï déclenche ON DELETE CASCADE sur photos / journal / rappels
-  // et ON DELETE SET NULL sur evenements.
+  const paths =
+    (photos as PhotoRow[] | null)?.map((p) => p.storage_path).filter(Boolean) ?? [];
+
+  // La suppression du bonsaï déclenche ON DELETE CASCADE sur photos / journal /
+  // rappels et ON DELETE SET NULL sur evenements.
   const { error } = await db.from("bonsais").delete().eq("id", id);
   if (error) throw error;
+
+  // Nettoyer le Storage seulement après le succès de la suppression BDD.
+  if (paths.length > 0) {
+    await db.storage.from(BONSAI_BUCKET).remove(paths);
+  }
 }
