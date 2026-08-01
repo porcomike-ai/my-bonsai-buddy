@@ -361,7 +361,9 @@ export async function uploadPoterieGalleryPhoto(
 }
 
 export async function deleteStorageObject(bucket: string, path: string): Promise<void> {
-  await db.storage.from(bucket).remove([path]);
+  if (!path) return;
+  const { error } = await db.storage.from(bucket).remove([path]);
+  if (error) throw error;
 }
 
 // --- Récupération exhaustive (sans plafond arbitraire) ---
