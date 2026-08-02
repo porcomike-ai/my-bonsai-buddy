@@ -249,26 +249,33 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      {/* Barre sticky sous le header AppShell (hauteur mesurée via --app-header-h) */}
+      {/* Barre sticky full-bleed (tous viewports), contenu aligné max-w-7xl */}
       <div
-        className="sticky z-20 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-6 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        style={{ top: "var(--app-header-h, 4.5rem)" }}
+        className="sticky z-20 mb-6 border-b border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        style={{
+          top: "var(--app-header-h, 4.5rem)",
+          width: "100vw",
+          maxWidth: "100vw",
+          marginLeft: "calc(50% - 50vw)",
+        }}
       >
-        <Link
-          to="/collection"
-          search={search}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Collection
-        </Link>
-        {filteredIds.length > 1 && (
-          <BonsaiPrevNextNav
-            prevId={prevId}
-            nextId={nextId}
-            position={navPosition}
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+          <Link
+            to="/collection"
             search={search}
-          />
-        )}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Collection
+          </Link>
+          {filteredIds.length > 1 && (
+            <BonsaiPrevNextNav
+              prevId={prevId}
+              nextId={nextId}
+              position={navPosition}
+              search={search}
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">

@@ -272,12 +272,18 @@ function CollectionPage() {
         </Link>
       </header>
 
-      {/* Filtres sticky : -mx-6 annule le padding du main → flou bord à bord
-          sans 100vw (évite overflow horizontal tablette/mobile). */}
+      {/* Filtres sticky full-bleed (tous viewports).
+          100vw + margin compensé ; overflow-x géré par AppShell. */}
       <div
-        className="sticky z-20 -mx-4 mb-4 space-y-2 border-b border-border/40 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
-        style={{ top: "var(--app-header-h, 4.5rem)" }}
+        className="sticky z-20 mb-4 border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        style={{
+          top: "var(--app-header-h, 4.5rem)",
+          width: "100vw",
+          maxWidth: "100vw",
+          marginLeft: "calc(50% - 50vw)",
+        }}
       >
+        <div className="mx-auto max-w-7xl space-y-2 px-4 py-2.5 sm:px-6">
         {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
         <div className="flex gap-2 lg:hidden">
           <div className="relative min-w-0 flex-1">
@@ -322,6 +328,7 @@ function CollectionPage() {
         </div>
 
         {chipsRow}
+        </div>
       </div>
 
       {/* Sheet filtres — mobile uniquement */}
