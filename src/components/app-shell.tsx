@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header
         ref={headerRef}
         className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl"
