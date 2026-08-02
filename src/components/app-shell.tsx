@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { HeaderHeightContext } from "@/components/header-height";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Leaf,
@@ -25,13 +26,16 @@ const NAV = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
   const headerRef = useRef<HTMLElement>(null);
+  const [headerH, setHeaderH] = useState(72);
 
   // Hauteur réelle du header → CSS var pour les barres sticky (mobile / tablette / desktop)
   useEffect(() => {
     const el = headerRef.current;
     if (!el) return;
     const publish = () => {
-      document.documentElement.style.setProperty("--app-header-h", `${el.offsetHeight}px`);
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      setHeaderH(h);
+      document.documentElement.style.setProperty("--app-header-h", `${h}px`);
     };
     publish();
     const ro = new ResizeObserver(publish);
@@ -46,6 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
+    <HeaderHeightContext.Provider value={headerH}>
     <div className="min-h-screen bg-background text-foreground">
       <header
         ref={headerRef}
@@ -115,5 +120,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         Bonsaï Studio · vos données sont synchronisées via Supabase
       </footer>
     </div>
+    </HeaderHeightContext.Provider>
   );
 }
