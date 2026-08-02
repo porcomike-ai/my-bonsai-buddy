@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
   const headerRef = useRef<HTMLElement>(null);
 
-  // Expose la hauteur réelle du header en CSS var pour les barres sticky enfants
+  // Hauteur réelle du header → CSS var pour les barres sticky (mobile / tablette / desktop)
   useEffect(() => {
     const el = headerRef.current;
     if (!el) return;
@@ -36,8 +36,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     publish();
     const ro = new ResizeObserver(publish);
     ro.observe(el);
+    window.addEventListener("resize", publish);
+    window.addEventListener("orientationchange", publish);
     return () => {
       ro.disconnect();
+      window.removeEventListener("resize", publish);
+      window.removeEventListener("orientationchange", publish);
     };
   }, []);
 
@@ -105,7 +109,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
       </header>
-      <main className="w-full py-8 sm:py-10">{children}</main>
+      {/* max-w-7xl restauré : proportions correctes sur toutes les pages */}
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
       <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
         Bonsaï Studio · vos données sont synchronisées via Supabase
       </footer>
