@@ -15,6 +15,7 @@ import {
   saveBonsai,
 } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
+import { useHeaderHeight } from "@/components/header-height";
 import { BonsaiForm } from "@/components/bonsai-form";
 import { BonsaiHeader } from "@/components/bonsai-detail/header";
 import { BonsaiPrevNextNav } from "@/components/bonsai-detail/prev-next-nav";
@@ -64,6 +65,7 @@ function TabFallback() {
 }
 
 function BonsaiDetail() {
+  const headerH = useHeaderHeight();
   const { id } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -251,7 +253,7 @@ function BonsaiDetail() {
     <AppShell>
       <div
         className="sticky z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
-        style={{ top: "var(--app-header-h, 4.5rem)" }}
+        style={{ top: headerH }}
       >
         <Link
           to="/collection"

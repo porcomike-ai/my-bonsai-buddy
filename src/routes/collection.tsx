@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { Plus, Search, Sprout, X, SlidersHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useHeaderHeight } from "@/components/header-height";
 import {
   collectionSearchToFilters,
   filterAndSortBonsais,
@@ -84,6 +85,7 @@ function CollectionPage() {
   const filters = collectionSearchToFilters(search);
   const { q, style: styleFilter, statut: statutFilter, sort: sortBy, favorisFirst } = filters;
   const isMobile = useIsMobile();
+  const headerH = useHeaderHeight();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const patchFilters = (patch: Partial<CollectionFilters>) => {
@@ -276,7 +278,7 @@ function CollectionPage() {
           top = hauteur réelle header (maj resize/orientation → OK tablette). */}
       <div
         className="sticky z-20 -mx-4 mb-4 space-y-2 border-b border-border/40 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
-        style={{ top: "var(--app-header-h, 4.5rem)" }}
+        style={{ top: headerH }}
       >
         {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
         <div className="flex gap-2 lg:hidden">
