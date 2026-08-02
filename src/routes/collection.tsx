@@ -248,38 +248,36 @@ function CollectionPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-label">Collection</p>
-            <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Mes bonsaïs</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {actifsCount} arbre{actifsCount > 1 ? "s" : ""} dans votre collection
-              {bonsais.length > actifsCount &&
-                ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
-              {filtered.length !== bonsais.length && (
-                <span className="text-accent">
-                  {" "}
-                  · {filtered.length} affiché{filtered.length > 1 ? "s" : ""}
-                </span>
-              )}
-            </p>
-          </div>
-          <Link
-            to="/bonsai/nouveau"
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" /> Nouveau bonsaï
-          </Link>
-        </header>
-      </div>
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-label">Collection</p>
+          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Mes bonsaïs</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {actifsCount} arbre{actifsCount > 1 ? "s" : ""} dans votre collection
+            {bonsais.length > actifsCount &&
+              ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
+            {filtered.length !== bonsais.length && (
+              <span className="text-accent">
+                {" "}
+                · {filtered.length} affiché{filtered.length > 1 ? "s" : ""}
+              </span>
+            )}
+          </p>
+        </div>
+        <Link
+          to="/bonsai/nouveau"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" /> Nouveau bonsaï
+        </Link>
+      </header>
 
-      {/* Sticky full-width : en dehors de max-w-7xl, main = w-full → colle au scroll */}
+      {/* Sticky : -mx annule le padding du main → flou bord à bord du conteneur.
+          top = hauteur réelle header (maj resize/orientation → OK tablette). */}
       <div
-        className="sticky z-20 mb-4 border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        className="sticky z-20 -mx-4 mb-4 space-y-2 border-b border-border/40 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
         style={{ top: "var(--app-header-h, 4.5rem)" }}
       >
-        <div className="mx-auto max-w-7xl space-y-2 px-4 py-2.5 sm:px-6">
         {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
         <div className="flex gap-2 lg:hidden">
           <div className="relative min-w-0 flex-1">
@@ -324,10 +322,8 @@ function CollectionPage() {
         </div>
 
         {chipsRow}
-        </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       {/* Sheet filtres — mobile uniquement */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl pb-24">
@@ -463,7 +459,6 @@ function CollectionPage() {
           ))}
         </ul>
       )}
-      </div>
     </AppShell>
   );
 }

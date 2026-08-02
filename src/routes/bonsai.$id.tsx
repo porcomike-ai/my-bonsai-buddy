@@ -249,31 +249,27 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      {/* Sticky full-width (main = w-full) — pas de 100vw / overflow caché */}
       <div
-        className="sticky z-20 mb-6 border-b border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+        className="sticky z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
         style={{ top: "var(--app-header-h, 4.5rem)" }}
       >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
-          <Link
-            to="/collection"
+        <Link
+          to="/collection"
+          search={search}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Collection
+        </Link>
+        {filteredIds.length > 1 && (
+          <BonsaiPrevNextNav
+            prevId={prevId}
+            nextId={nextId}
+            position={navPosition}
             search={search}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" /> Collection
-          </Link>
-          {filteredIds.length > 1 && (
-            <BonsaiPrevNextNav
-              prevId={prevId}
-              nextId={nextId}
-              position={navPosition}
-              search={search}
-            />
-          )}
-        </div>
+          />
+        )}
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
         <BonsaiHeader
           bonsai={b}
@@ -315,7 +311,6 @@ function BonsaiDetail() {
         </BonsaiHeader>
       </div>
       {confirmDialog}
-      </div>
     </AppShell>
   );
 }

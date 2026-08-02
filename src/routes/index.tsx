@@ -52,7 +52,6 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <section className="mb-10">
         <div className="flex flex-col gap-6 rounded-3xl bg-gradient-to-br from-forest via-forest to-sage/80 p-8 text-primary-foreground md:flex-row md:items-end md:justify-between md:p-12">
           <div className="max-w-xl">
@@ -189,7 +188,6 @@ function Dashboard() {
             </ul>
           )}
         </section>
-      </div>
       </div>
     </AppShell>
   );
