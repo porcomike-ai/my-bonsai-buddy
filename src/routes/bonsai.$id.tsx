@@ -249,15 +249,10 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      {/* Barre sticky full-bleed (tous viewports), contenu aligné max-w-7xl */}
+      {/* Sticky full-width (main = w-full) — pas de 100vw / overflow caché */}
       <div
         className="sticky z-20 mb-6 border-b border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        style={{
-          top: "var(--app-header-h, 4.5rem)",
-          width: "100vw",
-          maxWidth: "100vw",
-          marginLeft: "calc(50% - 50vw)",
-        }}
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <Link
@@ -278,6 +273,7 @@ function BonsaiDetail() {
         </div>
       </div>
 
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
         <BonsaiHeader
           bonsai={b}
@@ -319,6 +315,7 @@ function BonsaiDetail() {
         </BonsaiHeader>
       </div>
       {confirmDialog}
+      </div>
     </AppShell>
   );
 }

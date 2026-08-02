@@ -248,40 +248,36 @@ function CollectionPage() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-label">Collection</p>
-          <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Mes bonsaïs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {actifsCount} arbre{actifsCount > 1 ? "s" : ""} dans votre collection
-            {bonsais.length > actifsCount &&
-              ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
-            {filtered.length !== bonsais.length && (
-              <span className="text-accent">
-                {" "}
-                · {filtered.length} affiché{filtered.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </p>
-        </div>
-        <Link
-          to="/bonsai/nouveau"
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" /> Nouveau bonsaï
-        </Link>
-      </header>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-label">Collection</p>
+            <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight">Mes bonsaïs</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {actifsCount} arbre{actifsCount > 1 ? "s" : ""} dans votre collection
+              {bonsais.length > actifsCount &&
+                ` · ${bonsais.length - actifsCount} sorti${bonsais.length - actifsCount > 1 ? "s" : ""}`}
+              {filtered.length !== bonsais.length && (
+                <span className="text-accent">
+                  {" "}
+                  · {filtered.length} affiché{filtered.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </p>
+          </div>
+          <Link
+            to="/bonsai/nouveau"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" /> Nouveau bonsaï
+          </Link>
+        </header>
+      </div>
 
-      {/* Filtres sticky full-bleed (tous viewports).
-          100vw + margin compensé ; overflow-x géré par AppShell. */}
+      {/* Sticky full-width : en dehors de max-w-7xl, main = w-full → colle au scroll */}
       <div
         className="sticky z-20 mb-4 border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        style={{
-          top: "var(--app-header-h, 4.5rem)",
-          width: "100vw",
-          maxWidth: "100vw",
-          marginLeft: "calc(50% - 50vw)",
-        }}
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
       >
         <div className="mx-auto max-w-7xl space-y-2 px-4 py-2.5 sm:px-6">
         {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
@@ -331,6 +327,7 @@ function CollectionPage() {
         </div>
       </div>
 
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       {/* Sheet filtres — mobile uniquement */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl pb-24">
@@ -466,6 +463,7 @@ function CollectionPage() {
           ))}
         </ul>
       )}
+      </div>
     </AppShell>
   );
 }
