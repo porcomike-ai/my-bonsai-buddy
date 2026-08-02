@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/sheet";
 import { Plus, Search, Sprout, X, SlidersHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useHeaderHeight } from "@/components/header-height";
 import {
   collectionSearchToFilters,
   filterAndSortBonsais,
@@ -85,7 +84,6 @@ function CollectionPage() {
   const filters = collectionSearchToFilters(search);
   const { q, style: styleFilter, statut: statutFilter, sort: sortBy, favorisFirst } = filters;
   const isMobile = useIsMobile();
-  const headerH = useHeaderHeight();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const patchFilters = (patch: Partial<CollectionFilters>) => {
@@ -275,63 +273,58 @@ function CollectionPage() {
       </header>
 
       {/* Sticky : -mx annule le padding du main → flou bord à bord du conteneur.
-          top = hauteur réelle header (maj resize/orientation → OK tablette).
-          Le flou/fond est isolé sur une couche enfant en position absolute (voir
-          plus bas) plutôt que posé directement sur l'élément sticky : Safari
-          iOS 26 (Liquid Glass) casse l'ancrage sticky/fixed d'un élément qui
-          porte lui-même un backdrop-filter ou un fond semi-transparent, ce qui
-          faisait défiler cette barre au lieu de la laisser fixe sur mobile/tablette. */}
-      <div className="sticky z-20 -mx-4 mb-4 sm:-mx-6" style={{ top: headerH }}>
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        />
-        <div className="space-y-2 px-4 py-2.5 sm:px-6">
-          {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
-          <div className="flex gap-2 lg:hidden">
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher…"
-                aria-label="Rechercher dans la collection"
-                className="h-10 rounded-full bg-card pl-10"
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSheetOpen(true)}
-              className="relative h-10 shrink-0 rounded-full px-3"
-              aria-label="Ouvrir les filtres"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {filterBadgeCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
-                  {filterBadgeCount}
-                </span>
-              )}
-            </Button>
+          top = var(--app-header-h), publiée par AppShell (voir app-shell.tsx).
+          Volontairement une variable CSS et non un state React consommé via
+          style={{ top: headerH }} : c'est cette dépendance à un re-render qui
+          empêchait la barre de rester ancrée pendant le scroll sur mobile/tablette. */}
+      <div
+        className="sticky z-20 -mx-4 mb-4 space-y-2 border-b border-border/40 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
+      >
+        {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
+        <div className="flex gap-2 lg:hidden">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Rechercher…"
+              aria-label="Rechercher dans la collection"
+              className="h-10 rounded-full bg-card pl-10"
+            />
           </div>
-
-          {/* Desktop : tous les contrôles en ligne */}
-          <div className="hidden flex-wrap gap-3 lg:flex">
-            <div className="relative min-w-[200px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Rechercher par nom, espèce, origine…"
-                aria-label="Rechercher dans la collection"
-                className="h-11 rounded-full bg-card pl-10"
-              />
-            </div>
-            {filtersControls}
-          </div>
-
-          {chipsRow}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSheetOpen(true)}
+            className="relative h-10 shrink-0 rounded-full px-3"
+            aria-label="Ouvrir les filtres"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {filterBadgeCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+                {filterBadgeCount}
+              </span>
+            )}
+          </Button>
         </div>
+
+        {/* Desktop : tous les contrôles en ligne */}
+        <div className="hidden flex-wrap gap-3 lg:flex">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Rechercher par nom, espèce, origine…"
+              aria-label="Rechercher dans la collection"
+              className="h-11 rounded-full bg-card pl-10"
+            />
+          </div>
+          {filtersControls}
+        </div>
+
+        {chipsRow}
       </div>
 
       {/* Sheet filtres — mobile uniquement */}

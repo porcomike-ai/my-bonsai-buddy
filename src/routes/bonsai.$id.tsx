@@ -15,7 +15,6 @@ import {
   saveBonsai,
 } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
-import { useHeaderHeight } from "@/components/header-height";
 import { BonsaiForm } from "@/components/bonsai-form";
 import { BonsaiHeader } from "@/components/bonsai-detail/header";
 import { BonsaiPrevNextNav } from "@/components/bonsai-detail/prev-next-nav";
@@ -65,7 +64,6 @@ function TabFallback() {
 }
 
 function BonsaiDetail() {
-  const headerH = useHeaderHeight();
   const { id } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -251,33 +249,29 @@ function BonsaiDetail() {
 
   return (
     <AppShell>
-      {/* Le flou/fond est isolé sur une couche enfant en position absolute
-          plutôt que posé directement sur l'élément sticky : Safari iOS 26
-          (Liquid Glass) casse l'ancrage sticky/fixed d'un élément qui porte
-          lui-même un backdrop-filter ou un fond semi-transparent, ce qui
-          faisait défiler cette barre au lieu de la laisser fixe sur mobile/tablette. */}
-      <div className="sticky z-20 -mx-4 mb-6 sm:-mx-6" style={{ top: headerH }}>
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 border-b border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        />
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
-          <Link
-            to="/collection"
+      {/* Sticky : top = var(--app-header-h), publiée par AppShell (voir app-shell.tsx).
+          Volontairement une variable CSS et non un state React consommé via
+          style={{ top: headerH }} : c'est cette dépendance à un re-render qui
+          empêchait la barre de rester ancrée pendant le scroll sur mobile/tablette. */}
+      <div
+        className="sticky z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
+      >
+        <Link
+          to="/collection"
+          search={search}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Collection
+        </Link>
+        {filteredIds.length > 1 && (
+          <BonsaiPrevNextNav
+            prevId={prevId}
+            nextId={nextId}
+            position={navPosition}
             search={search}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" /> Collection
-          </Link>
-          {filteredIds.length > 1 && (
-            <BonsaiPrevNextNav
-              prevId={prevId}
-              nextId={nextId}
-              position={navPosition}
-              search={search}
-            />
-          )}
-        </div>
+          />
+        )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
