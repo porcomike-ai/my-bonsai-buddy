@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listBonsais } from "@/lib/supabase-data";
 import { AppShell } from "@/components/app-shell";
 import { BonsaiCard } from "@/components/bonsai-card";
@@ -102,7 +102,16 @@ function CollectionPage() {
   );
 
   const actifsCount = bonsais.filter((b) => b.dansCollection ?? true).length;
-  const density = isMobile ? "compact" : "comfortable";
+  // Compact jusqu'à lg (1023px) : téléphone + tablette portrait Tab A9+ (~800–960px)
+  const [isNarrow, setIsNarrow] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setIsNarrow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  const density = isNarrow ? "compact" : "comfortable";
 
   // Chips actifs (hors recherche pour le badge ; recherche incluse dans les chips affichés)
   const chips = useMemo(() => {
@@ -263,19 +272,17 @@ function CollectionPage() {
         </Link>
       </header>
 
-      {/* Filtres sticky full-bleed : fond flouté sur toute la largeur viewport,
-          contenu réel réeligné sur max-w-7xl + px-6 (comme AppShell main). */}
+      {/* Sticky : -mx annule le padding du main → flou bord à bord du conteneur.
+          top = var(--app-header-h), publiée par AppShell (voir app-shell.tsx).
+          Volontairement une variable CSS et non un state React consommé via
+          style={{ top: headerH }} : c'est cette dépendance à un re-render qui
+          empêchait la barre de rester ancrée pendant le scroll sur mobile/tablette. */}
       <div
-        className="sticky z-20 mb-4 border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
-        style={{
-          top: "var(--app-header-h, 4.5rem)",
-          width: "100vw",
-          marginLeft: "calc(50% - 50vw)",
-        }}
+        className="sticky z-20 -mx-4 mb-4 space-y-2 border-b border-border/40 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6"
+        style={{ top: "var(--app-header-h, 4.5rem)" }}
       >
-        <div className="mx-auto max-w-7xl space-y-2 px-6 py-2.5">
-        {/* Mobile : recherche + bouton Filtres */}
-        <div className="flex gap-2 md:hidden">
+        {/* Compact (phone + tablette portrait) : recherche + bouton Filtres */}
+        <div className="flex gap-2 lg:hidden">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -303,7 +310,7 @@ function CollectionPage() {
         </div>
 
         {/* Desktop : tous les contrôles en ligne */}
-        <div className="hidden flex-wrap gap-3 md:flex">
+        <div className="hidden flex-wrap gap-3 lg:flex">
           <div className="relative min-w-[200px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -441,7 +448,7 @@ function CollectionPage() {
           )}
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
           {filtered.map((b) => (
             <li
               key={b.id}
