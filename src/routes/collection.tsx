@@ -325,7 +325,6 @@ function CollectionPage() {
         </div>
 
         {chipsRow}
-        </div>
       </div>
 
       {/* Sheet filtres — mobile uniquement */}
