@@ -1,15 +1,15 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { a3 as Route$2, w as getPoteriePhoto, Y as useBlobUrl, a4 as PoterieForm, B as Button, a5 as deletePoterie, D as getPoterie, l as listBonsais, Q as listPoteriePhotos } from "./router-CpKzFGrm.mjs";
-import { A as AppShell } from "./app-shell-CMAt845e.mjs";
-import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
+import { a6 as Route$2, y as getPoteriePhoto, $ as useBlobUrl, a7 as PoterieForm, B as Button, a8 as deletePoterie, G as getPoterie, l as listBonsais, V as listPoteriePhotos } from "./router-BaPlfOky.mjs";
+import { A as AppShell } from "./app-shell-D55QzivN.mjs";
+import { u as useConfirm } from "./confirm-dialog-DaHuxrcJ.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
-import { z as ArrowLeft, g as Container, G as Pencil, J as Trash2 } from "../_libs/lucide-react.mjs";
+import { K as ArrowLeft, g as Container, M as Pencil, N as Trash2 } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -84,7 +84,7 @@ import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
 import "../_libs/radix-ui__react-alert-dialog.mjs";
-const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-iAVqywTF.mjs"));
+const PoterieGalerieTab = reactExports.lazy(() => import("./galerie-tab-qjeO9x2A.mjs"));
 function PoterieDetail() {
   const {
     id

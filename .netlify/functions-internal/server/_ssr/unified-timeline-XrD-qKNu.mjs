@@ -1,16 +1,16 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { P as PhotoLightbox } from "./photo-lightbox-CVCONWKt.mjs";
-import { B as Button, a9 as useFileInput, X as AddPhotoDialog, ab as updatePhotoDate, ac as updatePhotoLegende, ad as deletePhoto, F as Dialog, H as DialogContent, J as DialogHeader, K as DialogTitle, L as Label, aa as SOINS_SELECTABLE, I as Input, T as Textarea, P as DialogFooter, z as savePhoto, u as uid, s as soinEmoji, b as soinLabel, Y as useBlobUrl } from "./router-CpKzFGrm.mjs";
-import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
-import { invalidateCachedPhoto, getCachedPhotoBlob } from "./photo-cache-CHvThkhZ.mjs";
-import { d as deleteJournal, s as saveJournal } from "./journal-BgnU7vFp.mjs";
+import { P as PhotoLightbox } from "./photo-lightbox-BbuaXhJU.mjs";
+import { B as Button, ac as useFileInput, _ as AddPhotoDialog, ae as updatePhotoDate, af as updatePhotoLegende, ag as deletePhoto, H as Dialog, K as DialogContent, M as DialogHeader, N as DialogTitle, L as Label, ad as SOINS_SELECTABLE, I as Input, T as Textarea, U as DialogFooter, C as savePhoto, u as uid, s as soinEmoji, b as soinLabel, $ as useBlobUrl } from "./router-BaPlfOky.mjs";
+import { u as useConfirm } from "./confirm-dialog-DaHuxrcJ.mjs";
+import { invalidateCachedPhoto, getCachedPhotoBlob } from "./photo-cache-p8x8uRxC.mjs";
+import { d as deleteJournal, s as saveJournal } from "./journal-C6YvVDst.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
-import { P as Plus, O as ArrowUpDown, d as Camera, Q as FolderOpen, e as Calendar, X, R as MessageSquarePlus } from "../_libs/lucide-react.mjs";
+import { P as Plus, U as ArrowUpDown, d as Camera, V as FolderOpen, e as Calendar, X, W as MessageSquarePlus } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/react-dom.mjs";
@@ -728,6 +728,7 @@ function UnifiedTimeline({
       PhotoLightbox,
       {
         photo: lightboxPhoto,
+        photos,
         open: !!lightboxPhoto,
         onOpenChange: (o) => {
           if (!o) setLightboxPhoto(null);

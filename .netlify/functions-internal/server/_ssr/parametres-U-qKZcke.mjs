@@ -1,23 +1,23 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { A as AppShell } from "./app-shell-CMAt845e.mjs";
-import { o as useAuth, B as Button, x as saveBonsai, z as savePhoto, y as savePoterie, d as cn, F as Dialog, G as DialogTrigger, H as DialogContent, J as DialogHeader, K as DialogTitle, M as DialogDescription, N as RadioGroup, O as RadioGroupItem, L as Label, I as Input, P as DialogFooter, l as listBonsais$1, a as listPoteries$1, r as listAllPhotos, t as listAllPoteriePhotos, v as getPhotoBlob, w as getPoteriePhoto, C as listPhotos$1, Q as listPoteriePhotos, D as getPoterie, c as styleLabel, E as etapeLabel, m as ageActuel, b as soinLabel, A as savePoterieGalleryPhoto } from "./router-CpKzFGrm.mjs";
-import { C as Checkbox } from "./checkbox-BZvbSth_.mjs";
+import { A as AppShell } from "./app-shell-D55QzivN.mjs";
+import { p as useAuth, B as Button, z as saveBonsai, C as savePhoto, A as savePoterie, W as formatBytes, d as cn, H as Dialog, J as DialogTrigger, K as DialogContent, M as DialogHeader, N as DialogTitle, O as DialogDescription, P as RadioGroup, Q as RadioGroupItem, L as Label, I as Input, U as DialogFooter, l as listBonsais$1, a as listPoteries$1, t as listAllPhotos, v as listAllPoteriePhotos, w as getPhotoBlob, x as resizeImageToBlob, y as getPoteriePhoto, F as listPhotos$1, V as listPoteriePhotos, G as getPoterie, c as styleLabel, e as etapeLabel, f as ageActuel, b as soinLabel, E as savePoterieGalleryPhoto } from "./router-BaPlfOky.mjs";
+import { C as Checkbox } from "./checkbox-D1c8SV3t.mjs";
 import { R as Root, I as Indicator } from "../_libs/radix-ui__react-progress.mjs";
-import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
+import { u as useConfirm } from "./confirm-dialog-DaHuxrcJ.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { J as JSZip } from "../_libs/jszip.mjs";
-import { s as saveJournal, l as listJournal$1 } from "./journal-BgnU7vFp.mjs";
-import { s as saveRappel, l as listRappels$1 } from "./rappel-X1_dv-mM.mjs";
+import { s as saveJournal, l as listJournal$1 } from "./journal-C6YvVDst.mjs";
+import { s as saveRappel, l as listRappels$1 } from "./rappel-DyS2cRZa.mjs";
 import { s as sanitizeForFilesystem } from "./folder-name-GYMsNziU.mjs";
-import { s as saveEvenement, l as listEvenements$1 } from "./evenement-BwQolQbz.mjs";
+import { s as saveEvenement, l as listEvenements$1 } from "./evenement-COECF7_s.mjs";
 import { o as openDB } from "../_libs/idb.mjs";
 import { s as supabase } from "./client-CWZp_xfH.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
-import { s as LogOut, B as Bell, t as BellOff, u as CircleAlert, D as Database, v as CloudUpload, H as HardDriveDownload, w as HardDriveUpload, x as FolderArchive, y as Info } from "../_libs/lucide-react.mjs";
+import { u as LogOut, B as Bell, v as BellOff, w as CircleAlert, D as Database, x as CloudUpload, H as HardDriveDownload, y as HardDriveUpload, z as FolderArchive, E as Info } from "../_libs/lucide-react.mjs";
 import { f as format, p as parseISO, a as fr } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-router.mjs";
@@ -107,50 +107,6 @@ import "../_libs/lie.mjs";
 import "../_libs/immediate.mjs";
 import "../_libs/setimmediate.mjs";
 import "../_libs/pako.mjs";
-async function resizeImageToBlob(blob, maxDimension = 1280, quality = 0.7) {
-  try {
-    const dataUrl = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(blob);
-    });
-    const img = await new Promise((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("Image illisible"));
-      el.src = dataUrl;
-    });
-    const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
-    if (scale >= 1) return blob;
-    const w = Math.round(img.width * scale);
-    const h = Math.round(img.height * scale);
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return blob;
-    ctx.drawImage(img, 0, 0, w, h);
-    const resized = await new Promise(
-      (resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", quality)
-    );
-    return resized ?? blob;
-  } catch {
-    return blob;
-  }
-}
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes < 0) return "taille inconnue";
-  if (bytes < 1024) return `${bytes} o`;
-  const units = ["Ko", "Mo", "Go"];
-  let value = bytes / 1024;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unitIndex]}`;
-}
 async function getBackupSummary() {
   const [bonsais, photos, poteries, poteriePhotos, journal, rappels, evenements] = await Promise.all([
     listBonsais$1(),
@@ -203,7 +159,7 @@ async function exportSupabaseBackup(options = {}) {
   const photosEnc = await Promise.all(
     allPhotos.map(async (p) => {
       const blob = await getPhotoBlob(p);
-      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob) : blob;
       const { data, type } = finalBlob ? await blobToBase64(finalBlob) : { data: "", type: "application/octet-stream" };
       current += 1;
       onProgress?.({ phase: "photos", current, total: total || 1 });
@@ -214,7 +170,7 @@ async function exportSupabaseBackup(options = {}) {
   const poteriePhotosEnc = await Promise.all(
     allPoteriePhotos.map(async (p) => {
       const blob = await getPhotoBlob(p);
-      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const finalBlob = blob && compressPhotos ? await resizeImageToBlob(blob) : blob;
       const { data, type } = finalBlob ? await blobToBase64(finalBlob) : { data: "", type: "application/octet-stream" };
       current += 1;
       onProgress?.({ phase: "photos", current, total: total || 1 });
@@ -229,7 +185,7 @@ async function exportSupabaseBackup(options = {}) {
       current += 1;
       onProgress?.({ phase: "poteries", current, total: total || 1 });
       if (!blob) return rest;
-      const finalBlob = compressPhotos ? await resizeImageToBlob(blob, 1280, 0.7) : blob;
+      const finalBlob = compressPhotos ? await resizeImageToBlob(blob) : blob;
       const { data, type } = await blobToBase64(finalBlob);
       return { ...rest, photoBlobBase64: data, photoBlobType: type };
     })
@@ -1076,60 +1032,86 @@ function notificationStatus() {
   return Notification.permission;
 }
 async function subscribeToPush() {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return { ok: false, reason: "Environnement non navigateur" };
+  }
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    console.warn("Service Worker ou Push API non supporté");
-    return false;
+    return {
+      ok: false,
+      reason: "Ce navigateur ne supporte pas les notifications push (Service Worker / Push API)"
+    };
   }
   try {
     const permission = await requestNotificationPermission();
     if (permission !== "granted") {
-      console.warn("Permission de notification refusée");
-      return false;
+      return {
+        ok: false,
+        reason: permission === "denied" ? "Permission refusée. Réactivez les notifications dans les réglages du navigateur." : "Permission de notification non accordée"
+      };
     }
     const registration = await navigator.serviceWorker.register("/sw.js");
-    if (false) ;
-    const vapidPublicKey = void 0;
+    await navigator.serviceWorker.ready;
+    const activeRegistration = await navigator.serviceWorker.getRegistration() ?? registration;
+    const vapidPublicKey = "BEF3hiM38Bn3r_4aUDexfWf5LL4n3qKYaNcpbym0r9NxqaQRWQGAQSyAP4ab4Y8gx3VxIgDK6BLpp-71mYQ7tsA"?.trim();
     if (!vapidPublicKey) {
       console.error(
-        "VITE_VAPID_PUBLIC_KEY n'est pas défini : impossible de s'abonner aux notifications push."
+        "VITE_VAPID_PUBLIC_KEY manquante : abonnement push impossible. Configurer la variable sur l'environnement de déploiement (même clé publique que VAPID_PUBLIC_KEY côté Edge)."
       );
-      return false;
+      return {
+        ok: false,
+        reason: "Clé VAPID publique absente (VITE_VAPID_PUBLIC_KEY). À configurer dans les variables d'environnement du déploiement."
+      };
     }
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      // Cast nécessaire : le type Uint8Array de la lib DOM utilisée par ce
-      // projet est plus strict que BufferSource (incompatibilité de version
-      // de types, sans conséquence à l'exécution — un Uint8Array est un
-      // BufferSource valide pour l'API Push réelle du navigateur).
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-    });
-    const { data: { user } } = await supabase.auth.getUser();
+    let subscription;
+    try {
+      subscription = await activeRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        // Cast : incompatibilité de types DOM/lib sans impact runtime.
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+    } catch (err) {
+      console.error("pushManager.subscribe failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        ok: false,
+        reason: `Échec de l'abonnement navigateur : ${msg}`
+      };
+    }
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
     if (!user) {
-      console.error("Utilisateur non connecté");
-      return false;
+      return { ok: false, reason: "Utilisateur non connecté" };
     }
     const p256dhKey = subscription.getKey("p256dh");
     const authKey = subscription.getKey("auth");
     if (!p256dhKey || !authKey) {
-      console.error("Clés de chiffrement manquantes sur l'abonnement push.");
-      return false;
+      return { ok: false, reason: "Clés de chiffrement manquantes sur l'abonnement" };
     }
-    const { error } = await supabase.from("push_subscriptions").upsert({
-      user_id: user.id,
-      endpoint: subscription.endpoint,
-      p256dh: btoa(String.fromCharCode(...new Uint8Array(p256dhKey))),
-      auth: btoa(String.fromCharCode(...new Uint8Array(authKey)))
-    }, { onConflict: "endpoint" });
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: arrayBufferToBase64(p256dhKey),
+        auth: arrayBufferToBase64(authKey)
+      },
+      { onConflict: "endpoint" }
+    );
     if (error) {
       console.error("Erreur lors de l'enregistrement de l'abonnement:", error);
-      return false;
+      return {
+        ok: false,
+        reason: `Enregistrement BDD impossible : ${error.message}`
+      };
     }
     if (false) ;
-    return true;
+    return { ok: true };
   } catch (error) {
     console.error("Erreur lors de l'abonnement push:", error);
-    return false;
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : String(error)
+    };
   }
 }
 async function checkPushSubscription() {
@@ -1179,8 +1161,16 @@ function urlBase64ToUint8Array(base64String) {
   }
   return outputArray;
 }
-const APP_VERSION = "1.5.6";
-const APP_VERSION_DATE = "2026-07-30";
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+const APP_VERSION = "2.0.2";
+const APP_VERSION_DATE = "2026-08-01";
 function ParametresPage() {
   const qc = useQueryClient();
   const {
@@ -1256,13 +1246,13 @@ function ParametresPage() {
     }
     setEnablingPush(true);
     try {
-      const success = await subscribeToPush();
-      if (success) {
+      const result = await subscribeToPush();
+      if (result.ok) {
         const hasSubscription = await checkPushSubscription();
         setPushEnabled(hasSubscription);
         toast.success("Notifications push activées");
       } else {
-        toast.error("Impossible d'activer les notifications push");
+        toast.error(result.reason || "Impossible d'activer les notifications push");
       }
     } catch (e) {
       toast.error("Erreur: " + e.message);

@@ -1,17 +1,17 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { m as ageActuel, Z as ETAPES, k as STYLES, c as styleLabel, E as etapeLabel, l as listBonsais, a as listPoteries, r as listAllPhotos } from "./router-CpKzFGrm.mjs";
-import { l as listJournal } from "./journal-BgnU7vFp.mjs";
-import { l as listRappels } from "./rappel-X1_dv-mM.mjs";
-import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { f as ageActuel, a0 as ETAPES, S as STYLES, c as styleLabel, e as etapeLabel, d as cn, l as listBonsais, a as listPoteries, t as listAllPhotos } from "./router-BaPlfOky.mjs";
+import { l as listJournal } from "./journal-C6YvVDst.mjs";
+import { l as listRappels } from "./rappel-DyS2cRZa.mjs";
+import { A as AppShell } from "./app-shell-D55QzivN.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
 import { n as differenceInDays, p as parseISO } from "../_libs/date-fns.mjs";
-import { l as ChartBar, f as Sprout, g as Container, d as Camera, e as Calendar, E as Euro, T as TrendingUp } from "../_libs/lucide-react.mjs";
+import { l as ChartBar, f as Sprout, g as Container, d as Camera, e as Calendar, G as Euro, J as TrendingUp } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -84,6 +84,35 @@ import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
+function KpiCard({
+  icon,
+  label,
+  value,
+  hint,
+  hintPositive,
+  hintNegative,
+  className
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: cn("surface-card p-4", className), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-label", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-muted-foreground", children: icon }),
+      label
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 font-display text-2xl font-semibold tracking-tight", children: value }),
+    hint && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        className: cn(
+          "mt-0.5 text-xs",
+          hintPositive && "text-sage",
+          hintNegative && "text-destructive",
+          !hintPositive && !hintNegative && "text-muted-foreground"
+        ),
+        children: hint
+      }
+    )
+  ] });
+}
 async function loadAllJournal() {
   return listJournal();
 }
@@ -167,8 +196,8 @@ function StatistiquesPage() {
   const maxEtape = Math.max(1, ...stats.parEtape.map((e) => e.count));
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "mb-8", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-[0.22em] text-muted-foreground", children: "Aperçu" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-1 font-display text-4xl font-semibold", children: "Statistiques" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-label", children: "Aperçu" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-1 font-display text-4xl font-semibold tracking-tight", children: "Statistiques" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-1 text-sm text-muted-foreground", children: [
         "Vue d'ensemble de votre collection (",
         stats.actifs,
@@ -187,12 +216,12 @@ function StatistiquesPage() {
       /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/collection", className: "mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground", children: "Aller à la collection" })
     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(KPI, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Sprout, { className: "h-4 w-4" }), label: "Bonsaïs actifs", value: stats.actifs, hint: stats.sortis ? `+${stats.sortis} sortis` : void 0 }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(KPI, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Container, { className: "h-4 w-4" }), label: "Poteries", value: stats.totalPoteries }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(KPI, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Camera, { className: "h-4 w-4" }), label: "Photos", value: stats.totalPhotos }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(KPI, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "h-4 w-4" }), label: "Rappels actifs", value: stats.rappelsActifs }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(KPI, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Euro, { className: "h-4 w-4" }), label: "Prix d'achat", value: `${stats.totalPrix.toLocaleString("fr-FR")} €` }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(KPI, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(TrendingUp, { className: "h-4 w-4" }), label: "Valeur estimée", value: `${stats.totalValeur.toLocaleString("fr-FR")} €`, hint: stats.plusValue !== 0 ? `${stats.plusValue > 0 ? "+" : ""}${stats.plusValue.toLocaleString("fr-FR")} €` : void 0, hintPositive: stats.plusValue > 0, hintNegative: stats.plusValue < 0 })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(KpiCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Sprout, { className: "h-4 w-4" }), label: "Bonsaïs actifs", value: stats.actifs, hint: stats.sortis ? `+${stats.sortis} sortis` : void 0 }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(KpiCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Container, { className: "h-4 w-4" }), label: "Poteries", value: stats.totalPoteries }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(KpiCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Camera, { className: "h-4 w-4" }), label: "Photos", value: stats.totalPhotos }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(KpiCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "h-4 w-4" }), label: "Rappels actifs", value: stats.rappelsActifs }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(KpiCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Euro, { className: "h-4 w-4" }), label: "Prix d'achat", value: `${stats.totalPrix.toLocaleString("fr-FR")} €` }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(KpiCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(TrendingUp, { className: "h-4 w-4" }), label: "Valeur estimée", value: `${stats.totalValeur.toLocaleString("fr-FR")} €`, hint: stats.plusValue !== 0 ? `${stats.plusValue > 0 ? "+" : ""}${stats.plusValue.toLocaleString("fr-FR")} €` : void 0, hintPositive: stats.plusValue > 0, hintNegative: stats.plusValue < 0 })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-8 grid gap-6 lg:grid-cols-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { title: "Répartition par étape", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: stats.parEtape.map((e) => /* @__PURE__ */ jsxRuntimeExports.jsx(Bar, { label: e.label, count: e.count, max: maxEtape }, e.value)) }) }),
@@ -222,30 +251,12 @@ function StatistiquesPage() {
     ] })
   ] });
 }
-function KPI({
-  icon,
-  label,
-  value,
-  hint,
-  hintPositive,
-  hintNegative
-}) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-border bg-card p-4", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground", children: [
-      icon,
-      " ",
-      label
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 font-display text-2xl font-semibold", children: value }),
-    hint && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `mt-0.5 text-xs ${hintPositive ? "text-emerald-600" : hintNegative ? "text-destructive" : "text-muted-foreground"}`, children: hint })
-  ] });
-}
 function Card({
   title,
   children
 }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "rounded-3xl border border-border bg-card p-6", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "font-display text-lg font-semibold", children: title }),
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "surface-card rounded-3xl p-6", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "font-display text-lg font-semibold tracking-tight", children: title }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-4", children })
   ] });
 }

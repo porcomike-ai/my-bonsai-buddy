@@ -1,8 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { I as Input, L as Label, S as Select, g as SelectTrigger, h as SelectValue, i as SelectContent, j as SelectItem, T as Textarea, B as Button, X as AddPhotoDialog, u as uid, y as savePoterie, w as getPoteriePhoto, Y as useBlobUrl, a as listPoteries, l as listBonsais } from "./router-CpKzFGrm.mjs";
-import { A as AppShell } from "./app-shell-CMAt845e.mjs";
+import { I as Input, L as Label, i as Select, j as SelectTrigger, k as SelectValue, m as SelectContent, n as SelectItem, T as Textarea, B as Button, _ as AddPhotoDialog, u as uid, A as savePoterie, y as getPoteriePhoto, $ as useBlobUrl, a as listPoteries, l as listBonsais } from "./router-BaPlfOky.mjs";
+import { A as AppShell } from "./app-shell-D55QzivN.mjs";
+import { S as StatusBadge } from "./status-badge-ShFCJxE8.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -116,8 +117,8 @@ function PoteriesPage() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "mb-8 flex flex-wrap items-end justify-between gap-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-[0.22em] text-muted-foreground", children: "Catalogue" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-1 font-display text-4xl font-semibold", children: "Poteries" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-label", children: "Catalogue" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-1 font-display text-4xl font-semibold tracking-tight", children: "Poteries" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-1 text-sm text-muted-foreground", children: [
           poteries.length,
           " contenant",
@@ -135,12 +136,15 @@ function PoteriesPage() {
       /* @__PURE__ */ jsxRuntimeExports.jsx(Container, { className: "mx-auto h-10 w-10 text-muted-foreground" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mt-4 font-display text-2xl font-semibold", children: "Aucune poterie" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-sm text-muted-foreground", children: "Ajoutez les contenants de votre collection pour les associer à vos bonsaïs." })
-    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3", children: poteries.map((p) => {
+    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3", children: poteries.map((p) => {
       const planted = bonsais.find((b) => b.poterieId === p.id);
       return /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/poterie/$id", params: {
         id: p.id
-      }, className: "group block overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(PoterieImage, { poterie: p }),
+      }, className: "group block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(PoterieImage, { poterie: p }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute left-2.5 top-2.5", children: planted ? /* @__PURE__ */ jsxRuntimeExports.jsx(StatusBadge, { variant: "plantee", label: `Plantée · ${planted.nom}`, size: "sm" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(StatusBadge, { variant: "libre", label: "Libre", size: "sm" }) })
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5 p-4", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "truncate font-display text-lg font-semibold", children: p.nom }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-muted-foreground", children: [p.forme, p.couleur, p.matiere].filter(Boolean).join(" · ") || "—" }),
@@ -148,11 +152,7 @@ function PoteriesPage() {
             [p.longueurCm, p.largeurCm, p.hauteurCm].map((d) => d ?? "?").join(" × "),
             " ",
             "cm"
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] uppercase tracking-wider", children: planted ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-accent", children: [
-            "Plantée · ",
-            planted.nom
-          ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-muted-foreground", children: "Libre" }) })
+          ] })
         ] })
       ] }) }, p.id);
     }) })
@@ -178,7 +178,7 @@ function PoterieImage({
     };
   }, [poterie]);
   const url = useBlobUrl(blob);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-secondary via-muted to-peach/30", children: url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full items-center justify-center text-muted-foreground", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Container, { className: "h-10 w-10 opacity-40" }) }) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-secondary via-muted to-peach/30", children: url ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: url, alt: "", loading: "lazy", decoding: "async", className: "h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full items-center justify-center text-muted-foreground", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Container, { className: "h-10 w-10 opacity-40" }) }) });
 }
 function PoterieForm({
   initial,

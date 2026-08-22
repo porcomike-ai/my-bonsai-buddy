@@ -2,21 +2,21 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQueryClient, a as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { $ as Route$4, e as collectionSearchToFilters, f as filterAndSortBonsais, B as Button, c as styleLabel, E as etapeLabel, m as ageActuel, x as saveBonsai, a0 as deleteBonsai, d as cn, _ as getBonsai, D as getPoterie, C as listPhotos, v as getPhotoBlob, b as soinLabel, l as listBonsais } from "./router-CpKzFGrm.mjs";
-import { l as listJournal } from "./journal-BgnU7vFp.mjs";
-import { l as listRappels } from "./rappel-X1_dv-mM.mjs";
-import { A as AppShell } from "./app-shell-CMAt845e.mjs";
-import { B as BonsaiForm } from "./bonsai-form-NZqddj-q.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
+import { a2 as Route$4, g as collectionSearchToFilters, h as filterAndSortBonsais, B as Button, c as styleLabel, e as etapeLabel, f as ageActuel, z as saveBonsai, a3 as deleteBonsai, d as cn, a1 as getBonsai, G as getPoterie, F as listPhotos, w as getPhotoBlob, b as soinLabel, l as listBonsais } from "./router-BaPlfOky.mjs";
+import { l as listJournal } from "./journal-C6YvVDst.mjs";
+import { l as listRappels } from "./rappel-DyS2cRZa.mjs";
+import { A as AppShell } from "./app-shell-D55QzivN.mjs";
+import { B as BonsaiForm } from "./bonsai-form-VLHS756s.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-DCTMNw5t.mjs";
 import { R as Root2$1, T as Trigger$1, P as Portal2, C as Content2, I as Item2, S as SubTrigger2, a as SubContent2, b as CheckboxItem2, c as ItemIndicator2, d as RadioItem2, L as Label2, e as Separator2 } from "../_libs/radix-ui__react-dropdown-menu.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
-import { u as useConfirm } from "./confirm-dialog-BEfZ8t7L.mjs";
+import { u as useConfirm } from "./confirm-dialog-DaHuxrcJ.mjs";
 import { R as Root2, L as List, T as Trigger, C as Content } from "../_libs/radix-ui__react-tabs.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
 import "../_libs/zod-to-json-schema.mjs";
 import "../_libs/ajv-formats.mjs";
-import { z as ArrowLeft, n as ChevronLeft, o as ChevronRight, G as Pencil, J as Trash2, r as Star, L as Loader, K as Share2, M as Image$1, N as Images, b as Check, c as Circle } from "../_libs/lucide-react.mjs";
+import { K as ArrowLeft, p as ChevronLeft, q as ChevronRight, M as Pencil, N as Trash2, o as Star, L as Loader, O as Share2, Q as Image$1, R as Images, b as Check, c as Circle } from "../_libs/lucide-react.mjs";
 import { f as format, a as fr, p as parseISO } from "../_libs/date-fns.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -94,7 +94,7 @@ import "../_libs/react-hook-form.mjs";
 import "../_libs/hookform__resolvers.mjs";
 import "./folder-name-GYMsNziU.mjs";
 import "../_libs/radix-ui__react-switch.mjs";
-import "./photo-cache-CHvThkhZ.mjs";
+import "./photo-cache-p8x8uRxC.mjs";
 import "../_libs/radix-ui__react-menu.mjs";
 import "fs";
 import "path";
@@ -600,7 +600,7 @@ function BonsaiPrevNextNav({ prevId, nextId, position, search }) {
             title: "Bonsaï précédent (flèche gauche)",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronLeft, { className: "h-4 w-4" }),
-              "Précédent"
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Précédent" })
             ]
           }
         ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -611,11 +611,11 @@ function BonsaiPrevNextNav({ prevId, nextId, position, search }) {
             title: "Aucun arbre précédent dans ce filtre",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronLeft, { className: "h-4 w-4" }),
-              "Précédent"
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Précédent" })
             ]
           }
         ),
-        position && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "px-1 text-xs tabular-nums text-muted-foreground", children: [
+        position && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "min-w-[3.5rem] px-1 text-center text-xs tabular-nums text-muted-foreground", children: [
           position.index,
           " / ",
           position.total
@@ -630,7 +630,7 @@ function BonsaiPrevNextNav({ prevId, nextId, position, search }) {
             "aria-label": "Bonsaï suivant",
             title: "Bonsaï suivant (flèche droite)",
             children: [
-              "Suivant",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Suivant" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-4 w-4" })
             ]
           }
@@ -641,7 +641,7 @@ function BonsaiPrevNextNav({ prevId, nextId, position, search }) {
             "aria-disabled": "true",
             title: "Aucun arbre suivant dans ce filtre",
             children: [
-              "Suivant",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Suivant" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-4 w-4" })
             ]
           }
@@ -687,8 +687,8 @@ const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 TabsContent.displayName = Content.displayName;
-const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-lUdOJRWY.mjs"));
-const RappelsTab = reactExports.lazy(() => import("./rappels-tab--xJlpbom.mjs"));
+const UnifiedTimeline = reactExports.lazy(() => import("./unified-timeline-XrD-qKNu.mjs"));
+const RappelsTab = reactExports.lazy(() => import("./rappels-tab-BuZkJRPW.mjs"));
 function TabFallback() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "pt-4 text-sm text-muted-foreground", children: "Chargement…" });
 }
@@ -887,7 +887,9 @@ function BonsaiDetail() {
     ] });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(AppShell, { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-6 flex flex-wrap items-center justify-between gap-3", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sticky z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-background/95 px-4 py-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:-mx-6 sm:px-6", style: {
+      top: "var(--app-header-h, 4.5rem)"
+    }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/collection", search, className: "inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4" }),
         " Collection"

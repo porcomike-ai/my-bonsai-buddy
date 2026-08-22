@@ -1,4 +1,4 @@
-import { V as currentUserId, W as db, U as fetchAllRows } from "./router-CpKzFGrm.mjs";
+import { Y as currentUserId, Z as db, X as fetchAllRows } from "./router-BaPlfOky.mjs";
 function rowToEvenement(r) {
   return {
     id: r.id,
@@ -25,9 +25,9 @@ async function saveEvenement(e) {
     description: e.description ?? null,
     date_heure: e.dateHeure,
     rappel_minutes: e.rappelMinutes ?? null,
-    notified_at: e.notifiedAt ?? null,
     bonsai_id: e.bonsaiId ?? null,
-    user_id: uidStr
+    user_id: uidStr,
+    ...e.notifiedAt ? { notified_at: e.notifiedAt } : {}
   });
   if (error) throw error;
 }

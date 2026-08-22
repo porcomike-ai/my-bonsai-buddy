@@ -1,11 +1,12 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { a as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { s as soinEmoji, b as soinLabel, c as styleLabel, l as listBonsais, a as listPoteries } from "./router-CpKzFGrm.mjs";
-import { l as listJournal } from "./journal-BgnU7vFp.mjs";
-import { l as listRappels } from "./rappel-X1_dv-mM.mjs";
-import { A as AppShell } from "./app-shell-CMAt845e.mjs";
-import { B as BonsaiPhoto } from "./bonsai-photo-C6HXF19k.mjs";
+import { s as soinEmoji, b as soinLabel, e as etapeLabel, c as styleLabel, l as listBonsais, a as listPoteries } from "./router-BaPlfOky.mjs";
+import { l as listJournal } from "./journal-C6YvVDst.mjs";
+import { l as listRappels } from "./rappel-DyS2cRZa.mjs";
+import { A as AppShell } from "./app-shell-D55QzivN.mjs";
+import { B as BonsaiPhoto } from "./bonsai-photo-DCTMNw5t.mjs";
+import { S as StatusBadge, e as etapeToVariant } from "./status-badge-ShFCJxE8.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/lovable.dev__mcp-js.mjs";
 import "../_libs/modelcontextprotocol__sdk.mjs";
@@ -85,7 +86,7 @@ import "../_libs/ajv.mjs";
 import "../_libs/fast-deep-equal.mjs";
 import "../_libs/json-schema-traverse.mjs";
 import "../_libs/fast-uri.mjs";
-import "./photo-cache-CHvThkhZ.mjs";
+import "./photo-cache-p8x8uRxC.mjs";
 function Dashboard() {
   const bonsais = useQuery({
     queryKey: ["bonsais"],
@@ -132,8 +133,8 @@ function Dashboard() {
       /* @__PURE__ */ jsxRuntimeExports.jsx(StatCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Bell, { className: "h-4 w-4" }), label: "Rappels actifs", value: (rappels.data ?? []).filter((r) => r.actif).length, to: "/calendrier", highlight: enRetard.length > 0 ? `${enRetard.length} en retard` : void 0 }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(StatCard, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(BookOpen, { className: "h-4 w-4" }), label: "Entrées journal", value: journal.data?.length ?? 0, to: "/journal" })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-8 lg:grid-cols-3", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "lg:col-span-2", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-8 md:grid-cols-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "md:col-span-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(SectionHeader, { title: "Soins à venir", subtitle: "7 prochains jours", link: {
           to: "/calendrier",
           label: "Voir le calendrier"
@@ -168,8 +169,11 @@ function Dashboard() {
         } }),
         empty ? /* @__PURE__ */ jsxRuntimeExports.jsx(EmptyBox, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Sprout, { className: "h-5 w-5" }), children: "Votre collection est vide. Commencez en ajoutant votre premier bonsaï." }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "grid grid-cols-2 gap-3", children: dernierAjouts.map((b) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/bonsai/$id", params: {
           id: b.id
-        }, className: "group block overflow-hidden rounded-2xl border border-border bg-card transition hover:border-accent/50", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "aspect-square w-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiPhoto, { photoId: b.photoPrincipale, className: "h-full w-full object-cover transition group-hover:scale-105" }) }),
+        }, className: "group block overflow-hidden rounded-2xl border border-border bg-card transition hover:border-accent/50 hover:shadow-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative aspect-square w-full overflow-hidden", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(BonsaiPhoto, { photoId: b.photoPrincipale, className: "h-full w-full object-cover transition group-hover:scale-105" }),
+            b.etape && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute left-2 top-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(StatusBadge, { variant: etapeToVariant(b.etape), label: etapeLabel(b.etape), size: "sm" }) })
+          ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "truncate font-display text-sm font-semibold", children: b.nom }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "truncate text-[11px] uppercase tracking-wider text-muted-foreground", children: styleLabel(b.style).split(" — ")[0] })
@@ -186,13 +190,13 @@ function StatCard({
   to,
   highlight
 }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to, className: "group rounded-2xl border border-border bg-card p-5 transition hover:border-accent/50 hover:shadow-sm", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to, className: "group surface-card p-5 transition hover:border-accent/50 hover:shadow-md", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-muted-foreground", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-foreground", children: icon }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowRight, { className: "h-4 w-4 opacity-0 transition group-hover:opacity-100" })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 font-display text-3xl font-semibold text-foreground", children: value }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-1 text-xs uppercase tracking-wider text-muted-foreground", children: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 font-display text-3xl font-semibold tracking-tight text-foreground", children: value }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-1 text-label", children: label }),
     highlight && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive", children: highlight })
   ] });
 }
@@ -203,8 +207,8 @@ function SectionHeader({
 }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-4 flex items-end justify-between", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "font-display text-2xl font-semibold", children: title }),
-      subtitle && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: subtitle })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "font-display text-2xl font-semibold tracking-tight", children: title }),
+      subtitle && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-label mt-0.5", children: subtitle })
     ] }),
     link && /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: link.to, className: "text-sm font-medium text-accent hover:underline", children: [
       link.label,
