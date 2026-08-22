@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Camera, Calendar, FileText, Sparkles, Loader as Loader2 } from "lucide-react";
+import { Camera, Calendar, FileText, Sparkles, Wand2, Check, Loader as Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { readExifDate, dateFromFilename } from "@/lib/photo-metadata";
 import { fileToBlob, saveBlobToDevice } from "@/lib/blob-url";
+import { BonsaiPhotoStudio } from "@/components/bonsai-photo-studio";
 import { toast } from "sonner";
 
 export type PhotoSource = "camera" | "gallery";
@@ -56,6 +57,8 @@ export function AddPhotoDialog({
   const [customDate, setCustomDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [legende, setLegende] = useState("");
   const [busy, setBusy] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
+  const [backgroundEdited, setBackgroundEdited] = useState(false);
 
   // Réinitialise/analyse le fichier à chaque ouverture.
   useEffect(() => {
@@ -65,8 +68,14 @@ export function AddPhotoDialog({
       setExifDate(undefined);
       setFilenameDate(undefined);
       setLegende("");
+      setStudioOpen(false);
+      setBackgroundEdited(false);
       return;
     }
+    // Nouvelle photo (y compris suivante dans une file d'attente multi-photos) :
+    // on referme le studio et on oublie l'édition précédente, propres à l'ancienne photo.
+    setStudioOpen(false);
+    setBackgroundEdited(false);
 
     let cancelled = false;
     // Capturée localement (plutôt que relue depuis l'état `preview`), pour que
@@ -191,6 +200,8 @@ export function AddPhotoDialog({
     setLegende("");
     setBlob(null);
     setPreview(undefined);
+    setStudioOpen(false);
+    setBackgroundEdited(false);
     setBusy(false);
   };
 
@@ -216,6 +227,39 @@ export function AddPhotoDialog({
         {preview && (
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
             <img src={preview} alt="Aperçu" className="max-h-64 w-full object-contain" />
+          </div>
+        )}
+
+        {/* Studio photo : détourage / couleur de fond / flou (optionnel) */}
+        {blob && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setStudioOpen((v) => !v)}
+              >
+                <Wand2 className="h-4 w-4" />
+                {studioOpen ? "Masquer le studio photo" : "Retoucher le fond"}
+              </Button>
+              {backgroundEdited && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Check className="h-3.5 w-3.5 text-primary" /> Fond modifié
+                </span>
+              )}
+            </div>
+            {studioOpen && (
+              <BonsaiPhotoStudio
+                originalBlob={blob}
+                onApply={(edited) => {
+                  setBlob(edited);
+                  setBackgroundEdited(true);
+                  setStudioOpen(false);
+                  toast.success("Fond appliqué à la photo");
+                }}
+              />
+            )}
           </div>
         )}
 
