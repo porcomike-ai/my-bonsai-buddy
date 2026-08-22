@@ -103,8 +103,8 @@ function Dashboard() {
         />
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <section className="lg:col-span-2">
+      <div className="grid gap-8 md:grid-cols-3">
+        <section className="md:col-span-2">
           <SectionHeader
             title="Soins à venir"
             subtitle="7 prochains jours"

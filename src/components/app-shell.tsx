@@ -26,18 +26,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
   const headerRef = useRef<HTMLElement>(null);
 
-  // Expose la hauteur réelle du header en CSS var pour les barres sticky enfants
+  // Hauteur réelle du header → CSS var, lue directement par les barres sticky
+  // enfants via `var(--app-header-h, ...)`. Volontairement PAS de React
+  // Context/state ici : une valeur poussée seulement au re-render suivant
+  // arrive trop tard (ou jamais, sur certains mobiles/tablettes) pour que
+  // `position: sticky` s'ancre correctement dès le premier paint.
   useEffect(() => {
     const el = headerRef.current;
     if (!el) return;
     const publish = () => {
-      document.documentElement.style.setProperty("--app-header-h", `${el.offsetHeight}px`);
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--app-header-h", `${h}px`);
     };
     publish();
     const ro = new ResizeObserver(publish);
     ro.observe(el);
+    window.addEventListener("resize", publish);
+    window.addEventListener("orientationchange", publish);
     return () => {
       ro.disconnect();
+      window.removeEventListener("resize", publish);
+      window.removeEventListener("orientationchange", publish);
     };
   }, []);
 
@@ -47,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ref={headerRef}
         className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl"
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
           <Link to="/" className="group flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-sm">
               <Leaf className="h-4.5 w-4.5" strokeWidth={2.25} />
@@ -105,7 +114,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
+      {/* max-w-7xl restauré : proportions correctes sur toutes les pages */}
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
       <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
         Bonsaï Studio · vos données sont synchronisées via Supabase
       </footer>

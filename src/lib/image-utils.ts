@@ -9,8 +9,15 @@
 //  share-pdf.ts garde ses propres dimensions (800 px) adaptées au PDF.
 // ============================================================================
 
-/** Plus grand côté max après redimensionnement (px). */
-export const IMAGE_MAX_DIMENSION = 1280;
+/**
+ * Plus grand côté max après redimensionnement (px).
+ * 1920 px = Full HD exact, cohérent avec un usage vidéoprojecteur/grand écran.A
+ * Poids estimé résultant : ~500-900 Ko/photo (repère comparable : Google
+ * Photos stocke à 1695x1271 px pour ~620 Ko). Ne s'applique qu'aux nouvelles
+ * photos uploadées après ce changement — aucun effet rétroactif, l'original
+ * n'étant jamais conservé côté Supabase.
+ */
+export const IMAGE_MAX_DIMENSION = 1920;
 /** Qualité JPEG (0–1). */
 export const IMAGE_JPEG_QUALITY = 0.75;
 /**
@@ -69,7 +76,7 @@ export async function resizeImageToBlob(
 
 /**
  * Point d'entrée upload : saute la recompression sous IMAGE_SKIP_BELOW_BYTES,
- * sinon applique les paramètres canoniques (1280 px / 0.75).
+ * sinon applique les paramètres canoniques (IMAGE_MAX_DIMENSION / IMAGE_JPEG_QUALITY).
  */
 export async function compressImageBlob(blob: Blob): Promise<Blob> {
   if (blob.size < IMAGE_SKIP_BELOW_BYTES) return blob;

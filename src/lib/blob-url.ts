@@ -17,7 +17,7 @@ export function useBlobUrl(blob: Blob | undefined | null): string | undefined {
 
 /**
  * Normalise un fichier image pour l'upload (compression unifiée via
- * image-utils : max 1280 px, JPEG 0.75, skip si < 800 Ko).
+ * image-utils : max IMAGE_MAX_DIMENSION px, JPEG IMAGE_JPEG_QUALITY, skip si < IMAGE_SKIP_BELOW_BYTES).
  */
 export async function fileToBlob(file: File): Promise<Blob> {
   return compressImageBlob(file);
