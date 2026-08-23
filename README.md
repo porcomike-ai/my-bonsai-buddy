@@ -56,6 +56,21 @@ supabase secrets set VAPID_PRIVATE_KEY="votre_clé_privée"
 
 Ces valeurs se trouvent dans le dashboard Supabase du projet, sous **Project Settings → API**.
 
+## Secrets Supabase (Edge Functions uniquement)
+
+⚠️ Ce qui suit **ne va jamais dans `.env`** — ce sont des secrets propres à l'infrastructure Supabase, lus uniquement par les Edge Functions (runtime Deno, séparé de l'app React/Netlify). Si vous cherchez ces variables dans `.env` après un déploiement Bolt et qu'elles n'y sont pas, c'est normal : Bolt gère `.env` pour l'app, pas les secrets Supabase, qui se configurent uniquement via la CLI ou le Dashboard.
+
+- `PLANTNET_API_KEY` : clé API Pl@ntNet (gratuite, à créer sur [my.plantnet.org](https://my.plantnet.org/)), utilisée par l'Edge Function `identify-species` (module "Espèce" du Studio photo). Sans elle, l'identification renvoie une erreur `not_configured` plutôt qu'un plantage.
+- `PLANTNET_DAILY_LIMIT` : optionnel, nombre max d'identifications par utilisateur et par jour (défaut : 400, avec une marge sous le palier gratuit Pl@ntNet documenté à 500/jour). Au-delà, l'Edge Function répond `429 quota_exceeded`.
+
+```bash
+supabase secrets set PLANTNET_API_KEY="votre_clé_plantnet"
+# Optionnel, seulement pour changer la valeur par défaut :
+supabase secrets set PLANTNET_DAILY_LIMIT="400"
+```
+
+Sans CLI configurée en local : Dashboard Supabase → **Project Settings → Edge Functions → Secrets** → ajouter la clé manuellement.
+
 ## Lancer le projet
 
 ```bash
