@@ -5,6 +5,7 @@ export type BackgroundRemovalErrorCode =
   | "processing_failed"
   | "canvas_unavailable"
   | "unsupported_format"
+  | "timeout"
   | "cancelled";
 
 export type BackgroundRemovalError = AiStudioError<BackgroundRemovalErrorCode>;
@@ -23,6 +24,8 @@ export const BACKGROUND_REMOVAL_ERROR_MESSAGES: Record<BackgroundRemovalErrorCod
     "Votre navigateur ne supporte pas cette fonctionnalité. Essayez avec un navigateur à jour.",
   unsupported_format:
     "Ce format d'image n'est pas pris en charge pour le détourage. Utilisez un JPEG ou PNG.",
+  timeout:
+    "Le détourage prend trop de temps (probablement un souci réseau pour télécharger le modèle) et a été interrompu automatiquement. Réessayez, idéalement hors de l'aperçu Bolt (sur le site déployé), qui restreint parfois les requêtes réseau externes.",
   cancelled: "Traitement annulé.",
 };
 
