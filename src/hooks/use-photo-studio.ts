@@ -14,6 +14,28 @@ type PhotoStudioState =
   | { status: "success"; result: Blob }
   | { status: "error"; error: BackgroundRemovalError; userMessage: string };
 
+// Bolt.new (WebContainer) restreint certaines requêtes réseau externes dans
+// son aperçu — le téléchargement du modèle de détourage (hébergé sur le CDN
+// d'IMG.LY) peut alors rester bloqué indéfiniment sans jamais rejeter ni
+// résoudre. Un timeout matériel garantit que l'UI ne reste jamais figée,
+// indépendamment de la cause exacte du blocage réseau.
+const PROCESS_TIMEOUT_MS = 45_000;
+
+function timeoutAfter(ms: number, controller: AbortController): Promise<never> {
+  return new Promise((_, reject) => {
+    const timer = setTimeout(() => {
+      // On rejette d'abord avec notre propre erreur "timeout", puis on
+      // déclenche l'abort ensuite : ça garantit que le Promise.race externe
+      // se résout avec le message "timeout" plutôt qu'avec le "cancelled"
+      // interne à isolateBonsaiImage (qui écoute le même signal et
+      // rejetterait sinon en premier, masquant la vraie cause).
+      reject(new BackgroundRemovalFailure({ code: "timeout", message: `Timeout après ${ms}ms` }));
+      controller.abort();
+    }, ms);
+    controller.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+  });
+}
+
 /**
  * Pilote le module de détourage/fond depuis un composant React.
  *
@@ -64,7 +86,10 @@ export function usePhotoStudio() {
       setState({ status: "loading" });
 
       try {
-        const cutout = await isolateBonsaiImage(originalBlob, controller.signal);
+        const cutout = await Promise.race([
+          isolateBonsaiImage(originalBlob, controller.signal),
+          timeoutAfter(PROCESS_TIMEOUT_MS, controller),
+        ]);
         const result = await composeBackground(originalBlob, cutout, options);
 
         if (!mountedRef.current || callIdRef.current !== callId) return undefined;
