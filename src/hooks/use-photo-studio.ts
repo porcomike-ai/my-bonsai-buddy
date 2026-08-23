@@ -76,7 +76,10 @@ export function usePhotoStudio() {
         const bgError: BackgroundRemovalError =
           err instanceof BackgroundRemovalFailure
             ? err.cause_
-            : { code: "processing_failed", message: err instanceof Error ? err.message : String(err) };
+            : {
+                code: "processing_failed",
+                message: err instanceof Error ? err.message : String(err),
+              };
 
         // Une annulation volontaire ne doit pas s'afficher comme une erreur
         // à l'utilisateur : on repasse simplement à l'état idle.
