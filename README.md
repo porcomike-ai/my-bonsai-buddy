@@ -32,6 +32,8 @@ SUPABASE_SERVICE_ROLE_KEY=
 VITE_VAPID_PUBLIC_KEY=
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
+PLANTNET_API_KEY=
+PLANTNET_DAILY_LIMIT=
 ```
 
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` : utilisées côté client (build Vite).
@@ -40,6 +42,8 @@ VAPID_PRIVATE_KEY=
 - `SUPABASE_SERVICE_ROLE_KEY` : clé admin, réservée aux routes serveur (`client.server.ts`). Ne jamais l'exposer côté client.
 - `VITE_VAPID_PUBLIC_KEY` : clé publique VAPID pour les notifications push (côté client). Obligatoire : aucune valeur par défaut n'est fournie si elle est absente.
 - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` : clés VAPID pour l'envoi des notifications push (côté serveur).
+- `PLANTNET_API_KEY` : clé API Pl@ntNet (gratuite), utilisée uniquement côté serveur par l'Edge Function `identify-species` (module "Espèce" du Studio photo). Sans elle, l'identification renvoie une erreur `not_configured` plutôt qu'un plantage.
+- `PLANTNET_DAILY_LIMIT` : optionnel, nombre max d'identifications par utilisateur et par jour (défaut : 400, avec une marge sous le palier gratuit Pl@ntNet documenté à 500/jour). Au-delà, l'Edge Function répond `429 quota_exceeded`.
 
 Pour générer les clés VAPID :
 ```bash
@@ -55,6 +59,11 @@ supabase secrets set VAPID_PRIVATE_KEY="votre_clé_privée"
 ```
 
 Ces valeurs se trouvent dans le dashboard Supabase du projet, sous **Project Settings → API**.
+
+Pour le module d'identification d'espèce (Pl@ntNet), créez une clé gratuite sur [my.plantnet.org](https://my.plantnet.org/), puis configurez le secret côté Edge Function :
+```bash
+supabase secrets set PLANTNET_API_KEY="votre_clé_plantnet"
+```
 
 ## Lancer le projet
 
