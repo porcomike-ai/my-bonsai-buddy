@@ -43,10 +43,7 @@ export class BackgroundRemovalFailure extends Error {
  * ignoré, ce qui est le comportement attendu pour ce cas d'usage (aucune
  * fuite mémoire critique, juste un calcul dont le résultat n'est pas exploité).
  */
-export async function isolateBonsaiImage(
-  imageSource: Blob,
-  signal?: AbortSignal,
-): Promise<Blob> {
+export async function isolateBonsaiImage(imageSource: Blob, signal?: AbortSignal): Promise<Blob> {
   if (signal?.aborted) {
     throw new BackgroundRemovalFailure({ code: "cancelled", message: "Annulé avant démarrage" });
   }
@@ -60,7 +57,10 @@ export async function isolateBonsaiImage(
   const abortPromise = new Promise<never>((_, reject) => {
     signal.addEventListener(
       "abort",
-      () => reject(new BackgroundRemovalFailure({ code: "cancelled", message: "Annulé par l'utilisateur" })),
+      () =>
+        reject(
+          new BackgroundRemovalFailure({ code: "cancelled", message: "Annulé par l'utilisateur" }),
+        ),
       { once: true },
     );
   });
