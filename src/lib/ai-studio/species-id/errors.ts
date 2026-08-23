@@ -5,6 +5,9 @@ export type SpeciesIdErrorCode =
   | "no_match"
   | "invalid_image"
   | "not_configured"
+  | "unauthorized"
+  | "quota_check_failed"
+  | "provider_failed"
   | "network_failed"
   | "unexpected_error";
 
@@ -19,10 +22,26 @@ export const SPECIES_ID_ERROR_MESSAGES: Record<SpeciesIdErrorCode, string> = {
   invalid_image: "Cette image n'a pas pu être envoyée pour identification.",
   not_configured:
     "L'identification d'espèce n'est pas encore configurée sur ce projet (clé Pl@ntNet manquante côté serveur).",
+  unauthorized: "Votre session a expiré. Reconnectez-vous puis réessayez.",
+  quota_check_failed:
+    "Le service n'a pas pu vérifier votre quota (la table ai_usage_counters a-t-elle bien été créée en base ?).",
+  provider_failed:
+    "Le service d'identification externe (Pl@ntNet) a répondu en erreur. Réessayez dans un instant.",
   network_failed:
     "Impossible de contacter le service d'identification. Vérifiez votre connexion et réessayez.",
   unexpected_error: "L'identification a échoué de façon inattendue. Réessayez.",
 };
+
+/** Codes renvoyés tels quels par l'Edge Function `identify-species` (voir son code source). */
+const KNOWN_EDGE_FUNCTION_CODES: readonly SpeciesIdErrorCode[] = [
+  "quota_exceeded",
+  "no_match",
+  "invalid_image",
+  "not_configured",
+  "unauthorized",
+  "quota_check_failed",
+  "provider_failed",
+];
 
 /** Classe la réponse d'erreur de l'Edge Function (ou une exception réseau) en code stable. */
 export function toSpeciesIdError(payload: unknown, httpStatus?: number): SpeciesIdError {
@@ -32,13 +51,8 @@ export function toSpeciesIdError(payload: unknown, httpStatus?: number): Species
   if (payload && typeof payload === "object" && "code" in payload) {
     const code = String((payload as { code?: unknown }).code ?? "");
     const message = String((payload as { error?: unknown }).error ?? code);
-    if (
-      code === "quota_exceeded" ||
-      code === "no_match" ||
-      code === "invalid_image" ||
-      code === "not_configured"
-    ) {
-      return { code, message };
+    if ((KNOWN_EDGE_FUNCTION_CODES as string[]).includes(code)) {
+      return { code: code as SpeciesIdErrorCode, message };
     }
   }
   const raw =
