@@ -16,6 +16,18 @@ describe("toSpeciesIdError", () => {
     );
   });
 
+  test("reconnaît les codes propres à l'Edge Function identify-species", () => {
+    expect(toSpeciesIdError({ code: "unauthorized", error: "Missing token" }).code).toBe(
+      "unauthorized",
+    );
+    expect(toSpeciesIdError({ code: "quota_check_failed", error: "table manquante" }).code).toBe(
+      "quota_check_failed",
+    );
+    expect(toSpeciesIdError({ code: "provider_failed", error: "Pl@ntNet 502" }).code).toBe(
+      "provider_failed",
+    );
+  });
+
   test("ignore un code non reconnu et retombe sur une classification par message", () => {
     expect(toSpeciesIdError({ code: "some_unknown_code", error: "fetch failed" }).code).toBe(
       "network_failed",
