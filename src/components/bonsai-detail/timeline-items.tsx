@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar as CalendarIcon, MessageSquarePlus, X } from "lucide-react";
+import { Calendar as CalendarIcon, MessageSquarePlus, Wand2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { soinEmoji, soinLabel } from "@/lib/bonsai-meta";
 import type { Photo, JournalEntry } from "@/lib/supabase-data";
 
 export type TimelineItem =
-  | { kind: "photo"; data: Photo; dateKey: string }
+  | { kind: "photo"; data: Photo; dateKey: string; version?: number }
   | { kind: "journal"; data: JournalEntry; dateKey: string };
 
 export function TimelineDateGroup({
@@ -24,6 +24,7 @@ export function TimelineDateGroup({
   onPhotoLegende,
   onPhotoDate,
   onPhotoClick,
+  onPhotoRetouch,
   onJournalEdit,
   onJournalDelete,
 }: {
@@ -35,6 +36,7 @@ export function TimelineDateGroup({
   onPhotoLegende: (p: Photo, legende: string) => void;
   onPhotoDate: (p: Photo, date: string) => void;
   onPhotoClick: (p: Photo) => void;
+  onPhotoRetouch: (p: Photo) => void;
   onJournalEdit: (e: JournalEntry) => void;
   onJournalDelete: (e: JournalEntry) => void;
 }) {
@@ -58,7 +60,7 @@ export function TimelineDateGroup({
             />
           ) : (
             <PhotoItem
-              key={`photo-${item.data.id}`}
+              key={`photo-${item.data.id}-${item.version ?? 0}`}
               photo={item.data}
               isMain={item.data.id === mainId}
               onSetMain={() => onSetMain(item.data.id)}
@@ -66,6 +68,7 @@ export function TimelineDateGroup({
               onLegende={(t) => onPhotoLegende(item.data, t)}
               onDate={(d) => onPhotoDate(item.data, d)}
               onClick={() => onPhotoClick(item.data)}
+              onRetouch={() => onPhotoRetouch(item.data)}
             />
           ),
         )}
@@ -120,6 +123,7 @@ function PhotoItem({
   onLegende,
   onDate,
   onClick,
+  onRetouch,
 }: {
   photo: Photo;
   isMain: boolean;
@@ -128,6 +132,7 @@ function PhotoItem({
   onLegende: (t: string) => void;
   onDate: (d: string) => void;
   onClick: () => void;
+  onRetouch: () => void;
 }) {
   const url = usePhotoUrl(photo);
   const [editing, setEditing] = useState(false);
@@ -208,15 +213,26 @@ function PhotoItem({
               Définir comme principale
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Supprimer cette photo"
-            onClick={onDelete}
-            className="text-destructive hover:text-destructive"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Retoucher le fond de cette photo"
+              onClick={onRetouch}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Wand2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Supprimer cette photo"
+              onClick={onDelete}
+              className="text-destructive hover:text-destructive"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
