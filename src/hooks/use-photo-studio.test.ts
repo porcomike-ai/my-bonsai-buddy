@@ -124,4 +124,30 @@ describe("usePhotoStudio", () => {
     const text = await result.current.result?.text();
     expect(text).toBe("cutout-2");
   });
+
+  test("un traitement qui ne se termine jamais est interrompu par un timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      mockIsolate.mockImplementation(() => new Promise<Blob>(() => {})); // ne se résout jamais
+
+      const { result } = renderHook(() => usePhotoStudio());
+
+      let processPromise!: Promise<Blob | undefined>;
+      act(() => {
+        processPromise = result.current.process(new Blob(["original"]), { mode: "transparent" });
+      });
+      expect(result.current.status).toBe("loading");
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(45_000);
+        await processPromise;
+      });
+
+      expect(result.current.status).toBe("error");
+      expect(result.current.error?.code).toBe("timeout");
+      expect(result.current.errorMessage).toMatch(/trop de temps/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
