@@ -1,17 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, ArrowUpDown } from "lucide-react";
+import { Plus, ArrowUpDown, Loader as Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useConfirm } from "@/components/confirm-dialog";
-import { invalidateCachedPhoto } from "@/lib/photo-cache";
+import { invalidateCachedPhoto, getCachedPhotoBlob, setCachedPhotoBlob } from "@/lib/photo-cache";
+import { BonsaiPhotoStudio } from "@/components/bonsai-photo-studio";
+import type { SpeciesCandidate } from "@/lib/ai-studio/species-id";
 import {
   deletePhoto,
   deleteJournal,
   updatePhotoDate,
   updatePhotoLegende,
+  replacePhotoBlob,
+  saveBonsai,
   type Photo,
   type JournalEntry,
   type Bonsai,
@@ -53,9 +58,84 @@ export function UnifiedTimeline({
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
+  // Studio de retouche (fond) sur une photo déjà enregistrée
+  const [retouchPhoto, setRetouchPhoto] = useState<Photo | null>(null);
+  const [retouchBlob, setRetouchBlob] = useState<Blob | undefined>(undefined);
+  const [retouchLoading, setRetouchLoading] = useState(false);
+  const [retouchSaving, setRetouchSaving] = useState(false);
+  // Incrémenté par photo pour forcer le remontage de sa vignette après une
+  // retouche : le storage_path ne change pas (upsert au même chemin), donc
+  // le cache par storagePath est mis à jour mais le composant déjà monté ne
+  // relirait pas spontanément un cache dont la clé de dépendance (le chemin)
+  // n'a pas bougé.
+  const [photoVersion, setPhotoVersion] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!retouchPhoto) {
+      setRetouchBlob(undefined);
+      return;
+    }
+    let cancelled = false;
+    setRetouchLoading(true);
+    getCachedPhotoBlob(retouchPhoto)
+      .then((b) => {
+        if (!cancelled) setRetouchBlob(b);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error("Impossible de charger la photo pour la retoucher.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRetouchLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [retouchPhoto]);
+
+  const closeRetouch = () => {
+    if (retouchSaving) return; // évite de fermer pendant un enregistrement en cours
+    setRetouchPhoto(null);
+  };
+
+  const applySpecies = (candidate: SpeciesCandidate) => {
+    onUpdateBonsai({ ...bonsai, espece: candidate.scientificName });
+    toast.success(`Espèce mise à jour : ${candidate.scientificName}`);
+  };
+
+  const applyRetouch = async (edited: Blob) => {
+    if (!retouchPhoto) return;
+    setRetouchSaving(true);
+    try {
+      await replacePhotoBlob(retouchPhoto, edited);
+      if (retouchPhoto.storagePath) {
+        await setCachedPhotoBlob(retouchPhoto.storagePath, edited);
+      }
+      setPhotoVersion((v) => ({
+        ...v,
+        [retouchPhoto.id]: (v[retouchPhoto.id] ?? 0) + 1,
+      }));
+      qc.invalidateQueries({ queryKey: ["photos", bonsaiId] });
+      toast.success("Fond appliqué à la photo");
+      setRetouchPhoto(null);
+    } catch (err) {
+      toast.error(
+        "Échec de l'enregistrement : " + (err instanceof Error ? err.message : "erreur inconnue"),
+      );
+    } finally {
+      setRetouchSaving(false);
+    }
+  };
+
   // Build merged timeline
   const timeline: TimelineItem[] = [
-    ...photos.map((p) => ({ kind: "photo" as const, data: p, dateKey: getDateKey(p.date) })),
+    ...photos.map((p) => ({
+      kind: "photo" as const,
+      data: p,
+      dateKey: getDateKey(p.date),
+      version: photoVersion[p.id] ?? 0,
+    })),
     ...entries.map((e) => ({ kind: "journal" as const, data: e, dateKey: getDateKey(e.date) })),
   ];
 
@@ -69,7 +149,9 @@ export function UnifiedTimeline({
     if (a.kind === "journal" && b.kind === "photo") return -1;
     if (a.kind === "photo" && b.kind === "journal") return 1;
     // Both same kind: sort by exact timestamp
-    return sortDesc ? b.data.date.localeCompare(a.data.date) : a.data.date.localeCompare(b.data.date);
+    return sortDesc
+      ? b.data.date.localeCompare(a.data.date)
+      : a.data.date.localeCompare(b.data.date);
   });
 
   // Group by date for display
@@ -182,6 +264,7 @@ export function UnifiedTimeline({
               onPhotoLegende={updateLegende}
               onPhotoDate={updateDate}
               onPhotoClick={setLightboxPhoto}
+              onPhotoRetouch={setRetouchPhoto}
               onJournalEdit={openEditJournal}
               onJournalDelete={removeJournal}
             />
@@ -211,6 +294,35 @@ export function UnifiedTimeline({
 
       {/* Confirm dialog */}
       {confirmDialog}
+
+      {/* Studio de retouche du fond, sur une photo déjà enregistrée */}
+      <Dialog open={!!retouchPhoto} onOpenChange={(o) => !o && closeRetouch()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Retoucher le fond</DialogTitle>
+          </DialogHeader>
+          {retouchLoading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Chargement de la photo…
+            </div>
+          ) : retouchBlob ? (
+            <BonsaiPhotoStudio
+              originalBlob={retouchBlob}
+              onApply={applyRetouch}
+              onSpeciesIdentified={applySpecies}
+            />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Impossible de charger cette photo.
+            </p>
+          )}
+          {retouchSaving && (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Enregistrement…
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
