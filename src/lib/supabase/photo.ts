@@ -138,3 +138,17 @@ export async function updatePhotoDate(id: string, date: string): Promise<void> {
   const { error } = await db.from("photos").update({ date }).eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * Remplace le blob d'une photo de bonsaï existante (ex. après retouche du
+ * fond) sans changer sa date ni sa légende. Réutilise `savePhoto`, qui
+ * réécrit au même `storage_path` déterministe (`uidStr/bonsaiId/photoId.jpg`,
+ * upload en `upsert: true`) — donc aucune nouvelle ligne, aucun nouveau
+ * fichier orphelin, juste un remplacement en place.
+ */
+export async function replacePhotoBlob(photo: Photo, blob: Blob): Promise<string> {
+  if (!photo.bonsaiId) {
+    throw new Error("replacePhotoBlob: uniquement pour les photos de bonsaï (bonsaiId manquant)");
+  }
+  return savePhoto({ ...photo, blob });
+}
