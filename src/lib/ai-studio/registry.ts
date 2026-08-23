@@ -21,8 +21,8 @@ export const AI_STUDIO_MODULES: readonly AiModuleDescriptor[] = [
   {
     id: "species-id",
     label: "Identification d'espèce",
-    availability: "planned",
-    isFree: true, // Pl@ntNet : gratuit jusqu'à 500 requêtes/jour, à intégrer plus tard.
+    availability: "api-quota",
+    isFree: true, // Pl@ntNet : gratuit jusqu'à 500 requêtes/jour (marge prise à 400 côté Edge Function).
   },
   {
     id: "health-diagnostic",
